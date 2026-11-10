@@ -317,17 +317,27 @@
                 <!-- Sync note & Quick Transfer Code option -->
                 <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex flex-col space-y-1.5 text-[11px] text-blue-200/80">
                     <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-cloud-arrow-up text-cyan-400 mt-0.5 shrink-0"></i>
-                        <span>Dữ liệu đăng ký được đồng bộ lên máy chủ đám mây trực tuyến để bạn đăng nhập trên điện thoại và máy tính khác.</span>
+                        <i class="fa-solid fa-file-circle-check text-cyan-400 mt-0.5 shrink-0 text-sm"></i>
+                        <span id="authNoticeText">Khi đăng ký, hệ thống sẽ tự động lưu và tải về 1 file tài khoản (.json). Chỉ cần gửi file này sang điện thoại là đăng nhập được ngay!</span>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2">
-                    <span id="authSubmitBtnText">Đăng nhập & Đồng bộ</span>
+                    <span id="authSubmitBtnText">Đăng nhập tài khoản</span>
                     <i id="authLoadingSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
             </form>
+
+            <!-- TÙY CHỌN ĐĂNG NHẬP NHANH BẰNG FILE TÀI KHOẢN -->
+            <div class="border-t border-slate-700/60 mt-4 pt-3 text-center">
+                <p class="text-[11px] text-cyan-300 font-semibold mb-2">Đăng nhập nhanh qua File trên máy khác:</p>
+                <label class="w-full py-2.5 px-4 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 font-bold border border-emerald-500/50 flex items-center justify-center gap-2 transition cursor-pointer shadow-md">
+                    <i class="fa-solid fa-file-arrow-up text-sm"></i>
+                    <span>Chọn file tài khoản (.json) để Đăng nhập</span>
+                    <input type="file" id="importFileInputAuth" accept=".json,.txt" class="hidden" onchange="importAccountFromFile(event)">
+                </label>
+            </div>
         </div>
     </div>
 
@@ -450,8 +460,20 @@
                             <span data-i18n="profile">Hồ sơ cá nhân</span>
                         </button>
 
+                        <!-- XUẤT / NHẬP FILE TÀI KHOẢN VÀ TỪ VỰNG -->
+                        <button onclick="exportAccountToFile()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-blue-600 font-medium">
+                            <i class="fa-solid fa-file-arrow-down w-4"></i>
+                            <span>Xuất tài khoản & từ vựng ra file (.json)</span>
+                        </button>
+
+                        <label class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-emerald-600 font-medium cursor-pointer">
+                            <i class="fa-solid fa-file-arrow-up w-4"></i>
+                            <span>Nhập file tài khoản từ máy khác</span>
+                            <input type="file" accept=".json,.txt" class="hidden" onchange="importAccountFromFile(event)">
+                        </label>
+
                         <!-- Backup / Sync Code Button -->
-                        <button onclick="openBackupCodeModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-blue-600 font-medium">
+                        <button onclick="openBackupCodeModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-slate-600 font-medium">
                             <i class="fa-solid fa-key w-4"></i>
                             <span>Mã đồng bộ nhanh tài khoản</span>
                         </button>
@@ -1522,15 +1544,18 @@
                     streakData.totalSolved = 0;
                     vocabList = [...DEFAULT_VOCABULARY];
 
-                    // Lưu đồng thời lên Local + Đám mây để máy kia đọc được ngay lập tức
+                    // Lưu đồng thời lên Local + Đám mây
                     await saveCurrentAccountData();
+
+                    // TỰ ĐỘNG XUẤT VÀ TẢI FILE TÀI KHOẢN VỀ MÁY NGAY KHI ĐĂNG KÝ
+                    exportAccountToFile();
 
                     closeAuthModal();
                     updateStreakUI();
                     updateAuthStatusUI();
                     currentIndex = 0;
                     renderQuestion();
-                    showToast(`Đăng ký thành công! Đã lưu đám mây cho tài khoản ${streakData.userName} 🎉`);
+                    showToast(`Tạo tài khoản thành công! Đã tự động tải file "${cleanEmailOrUser}_account.json" về máy 🎉`);
                 } else {
                     // ĐĂNG NHẬP (Từ điện thoại hoặc máy tính)
                     let account = registry[targetKey];
@@ -1543,6 +1568,240 @@
                         registry[targetKey] = account;
                         localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
                     }
+
+                    // Quét kiểm tra thêm theo email trong registry local nếu có
+                    if (!account) {
+                        for (const k in registry) {
+                            if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
+                                account = registry[k];
+                                foundKey = k;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Nếu vẫn không thấy tài khoản nào (cả local và cloud đều rỗng)
+                    if (!account) {
+                        showToast("Tài khoản chưa có trên máy này! Hãy chọn nút 'Chọn file tài khoản (.json)' ở dưới để nạp vào ngay.");
+                        return;
+                    }
+
+                    // So khớp mật khẩu
+                    if (account.password !== passwordInput) {
+                        showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
+                        return;
+                    }
+
+                    // Đăng nhập thành công! Thiết lập session cho thiết bị này
+                    currentAccountKey = foundKey;
+                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                    streakData.isLoggedIn = true;
+                    streakData.userName = account.displayName || rawIdentifier;
+                    streakData.userEmail = account.email || cleanEmailOrUser;
+
+                    // Tải ngay toàn bộ câu từ vựng và chuỗi streak từ máy tính về điện thoại
+                    if (cloudAccountData) {
+                        if (cloudAccountData.streakData) {
+                            streakData = Object.assign(streakData, cloudAccountData.streakData);
+                        }
+                        if (cloudAccountData.vocabList && cloudAccountData.vocabList.length > 0) {
+                            vocabList = cloudAccountData.vocabList;
+                        }
+                    }
+
+                    await syncAccountData();
+
+                    closeAuthModal();
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng nhập thành công! Đã đồng bộ ${vocabList.length} câu từ vựng ✨`);
+                }
+            } catch (err) {
+                console.error("Auth error:", err);
+                showToast("Có lỗi xảy ra khi xác thực, vui lòng thử lại!");
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // MÃ ĐỒNG BỘ NHANH LIÊN THIẾT BỊ (BACKUP CODE)
+        // ==========================================
+        function openBackupCodeModal() {
+            profileDropdown.classList.add('hidden');
+            let authPass = "";
+            try {
+                const reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
+            } catch (e) {}
+
+            const syncPacket = {
+                k: currentAccountKey,
+                u: streakData.userName,
+                e: streakData.userEmail,
+                p: authPass,
+                s: streakData,
+                v: vocabList
+            };
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(syncPacket))));
+            document.getElementById('currentAccountSyncCode').value = code;
+            document.getElementById('backupCodeModal').classList.remove('hidden');
+        }
+
+        function closeBackupCodeModal() {
+            document.getElementById('backupCodeModal').classList.add('hidden');
+        }
+
+        function copySyncCode() {
+            const input = document.getElementById('currentAccountSyncCode');
+            input.select();
+            document.execCommand('copy');
+            showToast("Đã chép mã đồng bộ vào Clipboard! Bạn có thể dán sang máy khác.");
+        }
+
+        async function importAccountBySyncCode() {
+            const code = document.getElementById('inputImportSyncCode').value.trim();
+            if (!code) {
+                showToast("Vui lòng dán mã đồng bộ vào ô!");
+                return;
+            }
+            try {
+                const decodedStr = decodeURIComponent(escape(atob(code)));
+                const data = JSON.parse(decodedStr);
+
+                if (!data.k || !data.s) {
+                    throw new Error("Mã không hợp lệ");
+                }
+
+                currentAccountKey = data.k;
+                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+
+                if (data.p) {
+                    let reg = {};
+                    try {
+                        reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                    } catch (e) {}
+                    reg[currentAccountKey] = {
+                        username: data.e || currentAccountKey,
+                        password: data.p,
+                        displayName: data.u || "Người dùng",
+                        email: data.e || `${currentAccountKey}@dailylexis.com`
+                    };
+                    localStorage.setItem('dailylexis_auth_registry', JSON.stringify(reg));
+                }
+
+                streakData = Object.assign(streakData, data.s);
+                streakData.isLoggedIn = true;
+                if (data.v && data.v.length > 0) {
+                    vocabList = data.v;
+                }
+
+                await saveCurrentAccountData();
+                closeBackupCodeModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Nạp tài khoản thành công! Đã khôi phục ${vocabList.length} câu từ vựng 🎉`);
+            } catch (err) {
+                showToast("Mã đồng bộ không hợp lệ! Vui lòng sao chép đúng chuỗi mã.");
+            }
+        }
+
+        // ==========================================
+        // XUẤT VÀ NHẬP TÀI KHOẢN & TỪ VỰNG BẰNG FILE (.JSON)
+        // ==========================================
+        function exportAccountToFile() {
+            let authPass = "";
+            try {
+                const reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
+            } catch (e) {}
+
+            const exportData = {
+                appName: "DailyLexis",
+                exportedAt: new Date().toISOString(),
+                accountKey: currentAccountKey,
+                authInfo: {
+                    username: streakData.userEmail || currentAccountKey,
+                    password: authPass,
+                    displayName: streakData.userName,
+                    email: streakData.userEmail
+                },
+                streakData: streakData,
+                vocabList: vocabList
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const dlAnchor = document.createElement('a');
+            const cleanName = (streakData.userEmail || streakData.userName || "account").replace(/[^a-zA-Z0-9]/g, '_');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `dailylexis_${cleanName}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        async function importAccountFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const content = e.target.result;
+                    const data = JSON.parse(content);
+
+                    if (!data.accountKey || !data.streakData) {
+                        showToast("❌ File không đúng định dạng tài khoản DailyLexis!");
+                        return;
+                    }
+
+                    // Thiết lập tài khoản từ file
+                    currentAccountKey = data.accountKey;
+                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
+
+                    // Lưu thông tin đăng nhập vào registry
+                    if (data.authInfo) {
+                        let reg = {};
+                        try {
+                            const regStr = localStorage.getItem('dailylexis_auth_registry');
+                            if (regStr) reg = JSON.parse(regStr);
+                        } catch (err) {}
+                        reg[currentAccountKey] = data.authInfo;
+                        localStorage.setItem('dailylexis_auth_registry', JSON.stringify(reg));
+                    }
+
+                    // Cập nhật streak và từ vựng
+                    streakData = Object.assign(streakData, data.streakData);
+                    streakData.isLoggedIn = true;
+                    if (data.vocabList && Array.isArray(data.vocabList) && data.vocabList.length > 0) {
+                        vocabList = data.vocabList;
+                    }
+
+                    // Lưu vào localStorage thiết bị hiện tại
+                    await saveCurrentAccountData();
+
+                    // Đóng modal đăng nhập nếu đang mở
+                    closeAuthModal();
+                    if (profileDropdown) profileDropdown.classList.add('hidden');
+
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng nhập thành công từ file! Đã nạp tài khoản ${streakData.userName} (${vocabList.length} câu) 🎉`);
+                } catch (err) {
+                    console.error("Lỗi đọc file:", err);
+                    showToast("❌ Có lỗi xảy ra khi đọc file tài khoản!");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input để có thể chọn lại file
+        }
 
                     // Quét kiểm tra thêm theo email trong registry local nếu có
                     if (!account) {
@@ -1686,1115 +1945,28 @@
             }
         }
 
-        function handleProfileAuthAction() {
-            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
-                openLogoutModal();
-            } else {
-                openAuthModal('login');
-            }
-        }
-
-        function confirmLogoutAction() {
-            closeLogoutModal();
-            currentAccountKey = "guest";
-            localStorage.setItem('dailylexis_current_user', currentAccountKey);
-
-            streakData.isLoggedIn = false;
-            streakData.userName = "Khách (Chưa đăng nhập)";
-            streakData.userEmail = "guest@dailylexis.com";
-            streakData.userAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80";
-            streakData.todayPoints = 0;
-
-            syncAccountData();
-            showToast("Đã đăng xuất. Bạn có thể Đăng nhập để đồng bộ lại dữ liệu bất cứ lúc nào.");
-        }
-
         // ==========================================
-        // MECHANICAL KEYBOARD SOUND GENERATOR (Web Audio API)
+        // XUẤT VÀ NHẬP TÀI KHOẢN & TỪ VỰNG BẰNG FILE (.JSON)
         // ==========================================
-        let audioCtx = null;
-
-        function getAudioContext() {
-            if (!audioCtx) {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (AudioContextClass) {
-                    audioCtx = new AudioContextClass();
-                }
-            }
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            return audioCtx;
-        }
-
-        // Realistic Clicky Mechanical Key Sound
-        function playKeyClack() {
+        function exportAccountToFile() {
+            let authPass = "";
             try {
-                const ctx = getAudioContext();
-                if (!ctx) return;
-                const now = ctx.currentTime;
-
-                // High click snap (blue switch click)
-                const osc = ctx.createOscillator();
-                const clickGain = ctx.createGain();
-                const freq = 1800 + (Math.random() * 600 - 300); // Natural pitch variance
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(freq, now);
-                osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
-
-                clickGain.gain.setValueAtTime(0.28, now);
-                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
-
-                osc.connect(clickGain);
-                clickGain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.05);
-
-                // Deep body clack (key bottom-out thump)
-                const bufferSize = ctx.sampleRate * 0.04;
-                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.008));
-                }
-                const noise = ctx.createBufferSource();
-                noise.buffer = buffer;
-
-                const filter = ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(950 + (Math.random() * 200 - 100), now);
-
-                const noiseGain = ctx.createGain();
-                noiseGain.gain.setValueAtTime(0.35, now);
-                noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-
-                noise.connect(filter);
-                filter.connect(noiseGain);
-                noiseGain.connect(ctx.destination);
-
-                noise.start(now);
-            } catch (err) {}
-        }
-
-        // Error Sound (Deep muted thud)
-        function playErrorSound() {
-            try {
-                const ctx = getAudioContext();
-                if (!ctx) return;
-                const now = ctx.currentTime;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(140, now);
-                osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
-
-                gain.gain.setValueAtTime(0.25, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.13);
+                const reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
             } catch (e) {}
-        }
 
-        // Success Chime (Crystal Bell)
-        function playSuccessChime() {
-            try {
-                const ctx = getAudioContext();
-                if (!ctx) return;
-                const now = ctx.currentTime;
-                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-                notes.forEach((freq, idx) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    const noteTime = now + idx * 0.08;
-
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, noteTime);
-
-                    gain.gain.setValueAtTime(0.18, noteTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
-
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-
-                    osc.start(noteTime);
-                    osc.stop(noteTime + 0.36);
-                });
-            } catch (e) {}
-        }
-
-        // Sparkle Particles Effect for Correct Typing
-        function spawnSparkles(el) {
-            const rect = el.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const colors = ['#38ef7d', '#38bdf8', '#fbbf24', '#ffffff', '#a7f3d0'];
-
-            for (let i = 0; i < 7; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'sparkle-particle';
-                const size = Math.random() * 4 + 3;
-                const angle = (Math.PI * 2 * i) / 7 + (Math.random() * 0.4 - 0.2);
-                const distance = Math.random() * 32 + 20;
-
-                const tx = Math.cos(angle) * distance;
-                const ty = Math.sin(angle) * distance;
-
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${centerX}px`;
-                particle.style.top = `${centerY}px`;
-                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                particle.style.setProperty('--tx', `${tx}px`);
-                particle.style.setProperty('--ty', `${ty}px`);
-                particle.style.boxShadow = `0 0 6px ${particle.style.backgroundColor}`;
-
-                document.body.appendChild(particle);
-                setTimeout(() => particle.remove(), 600);
-            }
-        }
-
-        // Language Dictionary
-        const I18N = {
-            vi: {
-                importVocab: "Nhập từ",
-                leaderboard: "Bảng xếp hạng",
-                profile: "Hồ sơ cá nhân",
-                changeName: "Đổi tên hiển thị",
-                showOnLeaderboard: "Hiện trên bảng xếp hạng",
-                showOnLeaderboardDesc: "Chỉ công khai tên và ảnh đại diện",
-                settings: "CÀI ĐẶT",
-                darkMode: "Giao diện tối",
-                darkModeDesc: "Tắt để dùng giao diện sáng",
-                language: "Ngôn ngữ giao diện",
-                reminder: "Nhắc học",
-                reminderDesc: "Nhận thông báo theo lịch của bạn",
-                logout: "Đăng xuất",
-                currentStreak: "Chuỗi hiện tại",
-                longestStreak: "Chuỗi dài nhất",
-                streakRules: "Đạt 10 điểm/ngày: mỗi câu Nghe hoặc Viết (kể cả bỏ qua câu Viết) = 1 điểm; hoàn thành bài Từ vựng = 10 điểm.",
-                vietnameseSentence: "Câu tiếng Việt",
-                answerBadge: "Câu trả lời",
-                revealAnswer: "Xem đáp án",
-                typingHint: "Gõ trực tiếp bàn phím để điền ký tự tiếp theo. Nhấn Xem đáp án hoặc Bỏ qua nếu cần.",
-                skipBtn: "Bỏ qua",
-                nextBtn: "Câu tiếp",
-                correctNice: "Chính xác tuyệt vời!",
-                listenAgain: "Nghe lại",
-                profileModalTitle: "Hồ sơ cá nhân",
-                chooseAvatar: "Chọn ảnh đại diện nhanh:",
-                fullName: "Họ và tên hiển thị",
-                currentLevel: "Trình độ hiện tại",
-                totalSolved: "Tổng câu đã làm",
-                streakDays: "Chuỗi ngày học",
-                cancel: "Đóng / Hủy",
-                save: "Lưu thay đổi",
-                changeNameModalTitle: "Đổi tên hiển thị",
-                changeNameModalDesc: "Tên hiển thị sẽ xuất hiện trên bài học và bảng xếp hạng.",
-                reminderSettings: "Cài đặt giờ nhắc học",
-                reminderSettingsDesc: "Hệ thống sẽ gửi thông báo mỗi ngày để bạn duy trì chuỗi Streak học tiếng Anh.",
-                reminderTime: "Giờ nhắc nhở mỗi ngày:",
-                saveReminder: "Bật nhắc nhở",
-                confirmLogout: "Xác nhận đăng xuất?",
-                confirmLogoutDesc: "Bạn có muốn đăng xuất khỏi tài khoản? Dữ liệu streak và từ vựng vẫn được lưu an toàn trên đám mây của tài khoản này."
-            },
-            en: {
-                importVocab: "Import Vocab",
-                leaderboard: "Leaderboard",
-                profile: "Personal Profile",
-                changeName: "Change Display Name",
-                showOnLeaderboard: "Show on Leaderboard",
-                showOnLeaderboardDesc: "Only publicly display name and avatar",
-                settings: "SETTINGS",
-                darkMode: "Dark Mode",
-                darkModeDesc: "Turn off to use light theme",
-                language: "Interface Language",
-                reminder: "Daily Reminder",
-                reminderDesc: "Receive reminders on your schedule",
-                logout: "Log out",
-                currentStreak: "Current streak",
-                longestStreak: "Longest streak",
-                streakRules: "Earn 10 pts/day: each sentence = 1 pt; completing vocabulary set = 10 pts.",
-                vietnameseSentence: "Vietnamese Sentence",
-                answerBadge: "Your Answer",
-                revealAnswer: "Show answer",
-                typingHint: "Type letters directly to fill characters. Press Show answer or Skip if needed.",
-                skipBtn: "Skip",
-                nextBtn: "Next",
-                correctNice: "Excellent! Correct!",
-                listenAgain: "Replay",
-                profileModalTitle: "Personal Profile",
-                chooseAvatar: "Quick avatar select:",
-                fullName: "Display Name",
-                currentLevel: "Current Level",
-                totalSolved: "Total completed",
-                streakDays: "Streak days",
-                cancel: "Close",
-                save: "Save Changes",
-                changeNameModalTitle: "Change Display Name",
-                changeNameModalDesc: "Display name will appear on lessons and leaderboards.",
-                reminderSettings: "Study Reminder Time",
-                reminderSettingsDesc: "System will send daily notification to help maintain your streak.",
-                reminderTime: "Daily reminder time:",
-                saveReminder: "Enable Reminder",
-                confirmLogout: "Confirm Logout?",
-                confirmLogoutDesc: "Are you sure you want to log out? Your streak and vocab remain securely saved."
-            }
-        };
-
-        // Elements
-        const vietnamesePrompt = document.getElementById('vietnamesePrompt');
-        const maskedSentenceContainer = document.getElementById('maskedSentenceContainer');
-        const questionCounter = document.getElementById('questionCounter');
-        const progressPercent = document.getElementById('progressPercent');
-        const progressBar = document.getElementById('progressBar');
-        const categoryHeader = document.getElementById('categoryHeader');
-        const topicBreadcrumb = document.getElementById('topicBreadcrumb');
-        const completionBanner = document.getElementById('completionBanner');
-        const fullEnglishSentence = document.getElementById('fullEnglishSentence');
-        const hiddenKeyboardInput = document.getElementById('hiddenKeyboardInput');
-        const vocabModal = document.getElementById('vocabModal');
-        const summaryModal = document.getElementById('summaryModal');
-        const shortcutModal = document.getElementById('shortcutModal');
-        const profileDropdown = document.getElementById('profileDropdown');
-
-        // Modals elements
-        const profileModal = document.getElementById('profileModal');
-        const changeNameModal = document.getElementById('changeNameModal');
-        const reminderModal = document.getElementById('reminderModal');
-        const logoutModal = document.getElementById('logoutModal');
-        const toastNotice = document.getElementById('toastNotice');
-        const toastMessage = document.getElementById('toastMessage');
-
-        // Toast Helper
-        function showToast(msg) {
-            toastMessage.innerText = msg;
-            toastNotice.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
-            toastNotice.classList.add('opacity-100', 'translate-y-0');
-            setTimeout(() => {
-                toastNotice.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
-                toastNotice.classList.remove('opacity-100', 'translate-y-0');
-            }, 2600);
-        }
-
-        function addStreakPoints(pts = 1) {
-            streakData.todayPoints = Math.min(10, streakData.todayPoints + pts);
-            streakData.totalSolved = (streakData.totalSolved || 0) + 1;
-            saveCurrentAccountData();
-            updateStreakUI();
-        }
-
-        function updateStreakUI() {
-            document.getElementById('currentStreakDisplay').innerText = streakData.currentStreak;
-            document.getElementById('longestStreakDisplay').innerText = streakData.longestStreak;
-            document.getElementById('streakPointsLabel').innerText = `${streakData.todayPoints}/10 điểm streak hôm nay`;
-            const pct = Math.min(100, Math.round((streakData.todayPoints / 10) * 100));
-            document.getElementById('streakProgressBar').style.width = `${pct}%`;
-            
-            // Name & Email & Avatar
-            document.getElementById('userDisplayName').innerText = streakData.userName;
-            document.getElementById('userDisplayNameHeader').innerText = streakData.userName;
-            document.getElementById('userEmailDisplay').innerText = streakData.userEmail;
-            document.getElementById('userAvatarHeader').src = streakData.userAvatar;
-            document.getElementById('userAvatarDropdown').src = streakData.userAvatar;
-
-            // Toggles
-            document.getElementById('leaderboardToggle').checked = streakData.showOnLeaderboard;
-            document.getElementById('darkModeToggle').checked = streakData.isDarkMode;
-            document.getElementById('languageSelect').value = streakData.language || "vi";
-            document.getElementById('reminderToggle').checked = streakData.reminderEnabled;
-            if (streakData.reminderEnabled) {
-                document.getElementById('reminderStatusDesc').innerText = `Nhắc nhở lúc ${streakData.reminderTime}`;
-            }
-        }
-
-        // ==========================================
-        // 1. HỒ SƠ CÁ NHÂN (Profile Modal)
-        // ==========================================
-        function openProfileModal() {
-            profileDropdown.classList.add('hidden');
-            document.getElementById('profileEditName').value = streakData.userName;
-            document.getElementById('profileEditEmail').value = streakData.userEmail;
-            document.getElementById('profileEditLevel').value = streakData.level || "A1";
-            document.getElementById('profileEditAvatarPreview').src = streakData.userAvatar;
-            document.getElementById('profileTotalSolved').innerText = `${streakData.totalSolved || 0} câu`;
-            document.getElementById('profileStreakDisplay').innerText = `${streakData.currentStreak} ngày 🔥`;
-            profileModal.classList.remove('hidden');
-        }
-
-        function closeProfileModal() {
-            profileModal.classList.add('hidden');
-        }
-
-        function selectPresetAvatar(url) {
-            document.getElementById('profileEditAvatarPreview').src = url;
-        }
-
-        function saveProfileChanges() {
-            const name = document.getElementById('profileEditName').value.trim();
-            const email = document.getElementById('profileEditEmail').value.trim();
-            const level = document.getElementById('profileEditLevel').value;
-            const avatar = document.getElementById('profileEditAvatarPreview').src;
-
-            if (name) streakData.userName = name;
-            if (email) streakData.userEmail = email;
-            streakData.level = level;
-            streakData.userAvatar = avatar;
-
-            saveCurrentAccountData();
-            updateStreakUI();
-            closeProfileModal();
-            showToast("Đã cập nhật và đồng bộ hồ sơ cá nhân thành công! ✨");
-        }
-
-        // ==========================================
-        // 3. ĐỔI TÊN HIỂN THỊ (Quick Name Change)
-        // ==========================================
-        function openChangeNameModal() {
-            profileDropdown.classList.add('hidden');
-            document.getElementById('quickNameInput').value = streakData.userName;
-            changeNameModal.classList.remove('hidden');
-        }
-
-        function closeChangeNameModal() {
-            changeNameModal.classList.add('hidden');
-        }
-
-        function saveQuickName() {
-            const val = document.getElementById('quickNameInput').value.trim();
-            if (val) {
-                streakData.userName = val;
-                saveCurrentAccountData();
-                updateStreakUI();
-                closeChangeNameModal();
-                showToast(`Đã đổi tên thành công: ${val}`);
-            }
-        }
-
-        // ==========================================
-        // 4. HIỆN TRÊN BẢNG XẾP HẠNG (Toggle)
-        // ==========================================
-        function toggleLeaderboardPreference(val) {
-            streakData.showOnLeaderboard = val;
-            saveCurrentAccountData();
-            if (val) {
-                showToast("Đã bật: Hiện tên & ảnh trên bảng xếp hạng 🏆");
-            } else {
-                showToast("Đã tắt: Ẩn thông tin khỏi bảng xếp hạng");
-            }
-        }
-
-        function showLeaderboardToast() {
-            showToast("Bảng xếp hạng tuần: Bạn đang đứng hạng 3! 🏆");
-        }
-
-        // ==========================================
-        // 5. GIAO DIỆN TỐI / SÁNG (Dark Mode Toggle)
-        // ==========================================
-        function toggleDarkMode(isDark) {
-            streakData.isDarkMode = isDark;
-            saveCurrentAccountData();
-            applyTheme(isDark);
-            showToast(isDark ? "Đã chuyển sang Giao diện tối 🌙" : "Đã chuyển sang Giao diện sáng ☀️");
-        }
-
-        function applyTheme(isDark) {
-            if (isDark) {
-                document.body.classList.remove('light-mode');
-            } else {
-                document.body.classList.add('light-mode');
-            }
-        }
-
-        // ==========================================
-        // 6. NGÔN NGỮ GIAO DIỆN (Language Selector)
-        // ==========================================
-        function changeLanguage(lang) {
-            streakData.language = lang;
-            saveCurrentAccountData();
-            applyLanguage(lang);
-            showToast(lang === 'vi' ? "Đã đổi sang Tiếng Việt" : "Language set to English");
-        }
-
-        function applyLanguage(lang) {
-            const dict = I18N[lang] || I18N.vi;
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.dataset.i18n;
-                if (dict[key]) {
-                    el.innerText = dict[key];
-                }
-            });
-        }
-
-        // ==========================================
-        // 7. NHẮC HỌC (Reminder Toggle & Modal)
-        // ==========================================
-        function handleReminderToggle(checked) {
-            if (checked) {
-                openReminderModal();
-            } else {
-                streakData.reminderEnabled = false;
-                saveCurrentAccountData();
-                document.getElementById('reminderStatusDesc').innerText = "Nhận thông báo theo lịch của bạn";
-                showToast("Đã tắt nhắc học hàng ngày");
-            }
-        }
-
-        function openReminderModal() {
-            profileDropdown.classList.add('hidden');
-            document.getElementById('reminderTimeInput').value = streakData.reminderTime || "20:00";
-            reminderModal.classList.remove('hidden');
-        }
-
-        function closeReminderModal() {
-            reminderModal.classList.add('hidden');
-            document.getElementById('reminderToggle').checked = streakData.reminderEnabled;
-        }
-
-        function saveReminderSettings() {
-            const time = document.getElementById('reminderTimeInput').value;
-            streakData.reminderEnabled = true;
-            streakData.reminderTime = time;
-            saveCurrentAccountData();
-            closeReminderModal();
-            showToast(`Đã bật nhắc học vào lúc ${time} hàng ngày! ⏰`);
-        }
-
-        // ==========================================
-        // 8. ĐĂNG XUẤT (Logout Modal)
-        // ==========================================
-        function openLogoutModal() {
-            profileDropdown.classList.add('hidden');
-            logoutModal.classList.remove('hidden');
-        }
-
-        function closeLogoutModal() {
-            logoutModal.classList.add('hidden');
-        }
-
-        function toggleProfileDropdown() {
-            profileDropdown.classList.toggle('hidden');
-        }
-
-        // Close dropdown when clicking outside
-        window.addEventListener('click', (e) => {
-            if (!profileDropdown.contains(e.target) && !e.target.closest('#userDisplayNameHeader') && !e.target.closest('button[onclick="toggleProfileDropdown()"]')) {
-                profileDropdown.classList.add('hidden');
-            }
-        });
-
-        // Shortcut Modal
-        function openShortcutModal() {
-            shortcutModal.classList.remove('hidden');
-        }
-
-        function closeShortcutModal() {
-            shortcutModal.classList.add('hidden');
-        }
-
-        // Feature: Peek/Preview current active word while holding Ctrl
-        function peekCurrentWord() {
-            if (isCompleted || currentCharIndex >= currentTarget.length || isCtrlPeeking) return;
-            isCtrlPeeking = true;
-
-            // Find boundary of current word
-            let start = currentCharIndex;
-            while (start > 0 && currentTarget[start - 1] !== ' ') {
-                start--;
-            }
-            let end = currentCharIndex;
-            while (end < currentTarget.length && currentTarget[end] !== ' ') {
-                end++;
-            }
-
-            for (let i = start; i < end; i++) {
-                const slot = document.getElementById(`slot-${i}`);
-                if (slot && !isPunctuationChar(currentTarget[i])) {
-                    if (!slot.classList.contains('filled')) {
-                        slot.innerText = currentTarget[i];
-                        slot.classList.add('preview-hint');
-                    }
-                }
-            }
-        }
-
-        // Hide preview immediately when Ctrl is released
-        function hideCurrentWordPeek() {
-            if (!isCtrlPeeking) return;
-            isCtrlPeeking = false;
-
-            let start = currentCharIndex;
-            while (start > 0 && currentTarget[start - 1] !== ' ') {
-                start--;
-            }
-            let end = currentCharIndex;
-            while (end < currentTarget.length && currentTarget[end] !== ' ') {
-                end++;
-            }
-
-            for (let i = start; i < end; i++) {
-                const slot = document.getElementById(`slot-${i}`);
-                if (slot && !isPunctuationChar(currentTarget[i])) {
-                    if (!slot.classList.contains('filled')) {
-                        slot.innerText = "*";
-                        slot.classList.remove('preview-hint');
-                    }
-                }
-            }
-
-            updateActiveSlot();
-        }
-
-        // Render current question
-        function renderQuestion() {
-            if (vocabList.length === 0) {
-                vietnamesePrompt.innerText = "Chưa có từ vựng trong tài khoản này. Hãy bấm 'Nhập từ' phía trên để thêm!";
-                maskedSentenceContainer.innerHTML = "";
-                return;
-            }
-
-            if (currentIndex >= vocabList.length) {
-                showSummaryScreen();
-                return;
-            }
-
-            const item = vocabList[currentIndex];
-            currentVi = item.vi;
-            currentTarget = item.en.trim();
-            currentCharIndex = 0;
-            isCompleted = false;
-
-            // Update UI Counters & Headers
-            const currentNumber = currentIndex + 1;
-            const total = vocabList.length;
-            const percent = Math.round((currentNumber / total) * 100);
-
-            questionCounter.innerText = `Câu ${currentNumber} / ${total}`;
-            progressPercent.innerText = `${percent}%`;
-            progressBar.style.width = `${percent}%`;
-
-            vietnamesePrompt.innerText = currentVi;
-            categoryHeader.innerText = item.category || "Luyện viết · A1 · Daily Conversation";
-            topicBreadcrumb.innerText = item.category ? item.category.split('·')[1]?.trim() || "Tiếng Anh" : "Tự do";
-
-            completionBanner.classList.add('hidden');
-            fullEnglishSentence.innerText = "";
-
-            renderCharacterSlots();
-            skipToNextValidChar();
-            focusTyping();
-        }
-
-        // Generate character slots with word grouping (similar to DailyLexis)
-        function renderCharacterSlots() {
-            maskedSentenceContainer.innerHTML = "";
-            const words = currentTarget.split(' ');
-            let globalIndex = 0;
-
-            words.forEach((word, wIdx) => {
-                const wordWrap = document.createElement('div');
-                wordWrap.className = "flex items-center space-x-1 sm:space-x-1.5 my-1 mr-3 sm:mr-4";
-
-                for (let i = 0; i < word.length; i++) {
-                    const char = word[i];
-                    const charSlot = document.createElement('div');
-                    charSlot.id = `slot-${globalIndex}`;
-                    charSlot.dataset.index = globalIndex;
-                    charSlot.dataset.char = char;
-
-                    // Check if punctuation
-                    const isPunctuation = isPunctuationChar(char);
-
-                    if (isPunctuation) {
-                        charSlot.className = "w-4 sm:w-6 h-8 sm:h-11 flex items-center justify-center font-bold text-slate-300 text-lg sm:text-2xl";
-                        charSlot.innerText = char;
-                    } else {
-                        // Regular letter slot
-                        charSlot.className = "char-slot w-7 h-9 sm:w-9 sm:h-11 rounded-lg sm:rounded-xl border border-blue-400/30 bg-slate-900/60 flex items-center justify-center font-bold text-base sm:text-xl transition-all duration-150 cursor-pointer shadow-sm";
-                        charSlot.innerText = "*";
-                        charSlot.onclick = (e) => {
-                            e.stopPropagation();
-                            focusTyping(true);
-                        };
-                    }
-
-                    wordWrap.appendChild(charSlot);
-                    globalIndex++;
-                }
-
-                maskedSentenceContainer.appendChild(wordWrap);
-
-                if (wIdx < words.length - 1) {
-                    globalIndex++; // representing space
-                }
-            });
-
-            updateActiveSlot();
-        }
-
-        // Helper to identify punctuation
-        function isPunctuationChar(c) {
-            return /[.,!?;:'"()–—-]/.test(c);
-        }
-
-        // Advance index past spaces or punctuation if needed
-        function skipToNextValidChar() {
-            while (currentCharIndex < currentTarget.length) {
-                const ch = currentTarget[currentCharIndex];
-                if (ch === ' ') {
-                    currentCharIndex++;
-                } else if (isPunctuationChar(ch)) {
-                    currentCharIndex++;
-                } else {
-                    break;
-                }
-            }
-            updateActiveSlot();
-
-            if (currentCharIndex >= currentTarget.length) {
-                completeCurrentSentence();
-            }
-        }
-
-        // Update active slot glowing border
-        function updateActiveSlot() {
-            document.querySelectorAll('.char-slot').forEach(slot => slot.classList.remove('active'));
-
-            const targetSlot = document.getElementById(`slot-${currentCharIndex}`);
-            if (targetSlot) {
-                targetSlot.classList.add('active');
-                // Đã loại bỏ hoàn toàn lệnh scrollIntoView tự động tại đây để màn hình không bị nhảy giật mỗi khi gõ chữ
-            }
-        }
-
-        // Handle user typing key with mechanical sound & visual effects
-        function handleKeyInput(char) {
-            if (isCompleted || currentCharIndex >= currentTarget.length) return;
-
-            totalKeystrokes++;
-            const expectedChar = currentTarget[currentCharIndex];
-
-            // Case-insensitive comparison
-            if (char.toLowerCase() === expectedChar.toLowerCase()) {
-                correctKeystrokes++;
-                playKeyClack();
-                triggerHaptic('light');
-
-                const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
-                if (activeSlot) {
-                    activeSlot.innerText = expectedChar;
-                    activeSlot.classList.remove('active');
-                    activeSlot.classList.add('filled', 'correct-pop');
-                    spawnSparkles(activeSlot);
-                }
-
-                currentCharIndex++;
-                skipToNextValidChar();
-            } else {
-                playErrorSound();
-                triggerHaptic('error');
-                const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
-                if (activeSlot) {
-                    activeSlot.classList.add('error');
-                    setTimeout(() => {
-                        activeSlot.classList.remove('error');
-                    }, 350);
-                }
-            }
-        }
-
-        // Reveal full answer
-        function revealAnswer() {
-            for (let i = 0; i < currentTarget.length; i++) {
-                const slot = document.getElementById(`slot-${i}`);
-                if (slot && !isPunctuationChar(currentTarget[i])) {
-                    slot.innerText = currentTarget[i];
-                    slot.classList.add('filled');
-                    slot.classList.remove('active');
-                }
-            }
-            completeCurrentSentence(false);
-        }
-
-        // Completion logic
-        function completeCurrentSentence(triggerAudio = true) {
-            if (isCompleted) return;
-            isCompleted = true;
-
-            completionBanner.classList.remove('hidden');
-            fullEnglishSentence.innerText = currentTarget;
-
-            playSuccessChime();
-            triggerHaptic('success');
-            addStreakPoints(1);
-
-            if (triggerAudio) {
-                setTimeout(() => {
-                    speakSentence();
-                }, 400);
-            }
-        }
-
-        // Next question
-        function nextQuestion() {
-            currentIndex++;
-            renderQuestion();
-        }
-
-        // Skip question
-        function skipQuestion() {
-            revealAnswer();
-            addStreakPoints(1);
-            setTimeout(() => {
-                nextQuestion();
-            }, 600);
-        }
-
-        // Speak English sentence with Web Speech API
-        function speakSentence() {
-            if (!('speechSynthesis' in window)) {
-                return;
-            }
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(currentTarget || "Hello");
-            utterance.lang = 'en-US';
-            utterance.rate = 0.95;
-            utterance.pitch = 1.0;
-            window.speechSynthesis.speak(utterance);
-        }
-
-        // Event Listeners for Keyboard
-        function setupEventListeners() {
-            window.addEventListener('keydown', (e) => {
-                if (vocabModal.classList.contains('hidden') === false) return;
-                if (summaryModal.classList.contains('hidden') === false) return;
-                if (document.getElementById('authModal').classList.contains('hidden') === false) return;
-                if (profileModal.classList.contains('hidden') === false) return;
-                if (changeNameModal.classList.contains('hidden') === false) return;
-
-                if (e.key === 'Control') {
-                    peekCurrentWord();
-                    e.preventDefault();
-                    return;
-                }
-
-                if (e.key === 'Escape') {
-                    if (!shortcutModal.classList.contains('hidden')) {
-                        closeShortcutModal();
-                    } else {
-                        skipQuestion();
-                    }
-                    e.preventDefault();
-                    return;
-                }
-
-                if (e.key === 'Enter') {
-                    if (isCompleted) {
-                        nextQuestion();
-                    }
-                    return;
-                }
-
-                if (e.key === 'Backspace') {
-                    handleBackspace();
-                    return;
-                }
-
-                if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                    handleKeyInput(e.key);
-                }
-            });
-
-            window.addEventListener('keyup', (e) => {
-                if (e.key === 'Control') {
-                    hideCurrentWordPeek();
-                    e.preventDefault();
-                }
-            });
-
-            window.addEventListener('blur', () => {
-                hideCurrentWordPeek();
-            });
-
-            hiddenKeyboardInput.addEventListener('input', (e) => {
-                const val = e.target.value;
-                if (val && val.length > 0) {
-                    const lastChar = val[val.length - 1];
-                    handleKeyInput(lastChar);
-                    hiddenKeyboardInput.value = "";
-                }
-            });
-        }
-
-        function handleBackspace() {
-            if (currentCharIndex <= 0) return;
-
-            let prevIdx = currentCharIndex - 1;
-            while (prevIdx >= 0) {
-                if (currentTarget[prevIdx] === ' ' || isPunctuationChar(currentTarget[prevIdx])) {
-                    prevIdx--;
-                } else {
-                    break;
-                }
-            }
-
-            if (prevIdx >= 0) {
-                currentCharIndex = prevIdx;
-                const slot = document.getElementById(`slot-${currentCharIndex}`);
-                if (slot) {
-                    slot.innerText = "*";
-                    slot.classList.remove('filled');
-                }
-                isCompleted = false;
-                completionBanner.classList.add('hidden');
-                updateActiveSlot();
-            }
-        }
-
-        function focusTyping(forceMobile = false) {
-            if (forceMobile || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 640) {
-                // Focus vào input với preventScroll để trình duyệt không tự ý cuộn màn hình
-                hiddenKeyboardInput.focus({ preventScroll: true });
-                // Giữ vị trí cuộn luôn ở đỉnh màn hình (0,0) tuyệt đối không cho kéo lên
-                window.scrollTo(0, 0);
-            }
-        }
-
-        // ==========================================
-        // VOCABULARY MANAGER MODAL FUNCTIONS
-        // ==========================================
-        function openVocabManager() {
-            vocabModal.classList.remove('hidden');
-            renderVocabManagerList();
-            switchModalTab('list');
-        }
-
-        function closeVocabManager() {
-            vocabModal.classList.add('hidden');
-            renderQuestion();
-        }
-
-        function switchModalTab(tab) {
-            const tabList = document.getElementById('tabList');
-            const tabImport = document.getElementById('tabImport');
-            const tabListBtn = document.getElementById('tabListBtn');
-            const tabImportBtn = document.getElementById('tabImportBtn');
-
-            if (tab === 'list') {
-                tabList.classList.remove('hidden');
-                tabImport.classList.add('hidden');
-                tabListBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
-                tabImportBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
-            } else {
-                tabList.classList.add('hidden');
-                tabImport.classList.remove('hidden');
-                tabImportBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
-                tabListBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
-            }
-        }
-
-        function renderVocabManagerList() {
-            const container = document.getElementById('vocabListContainer');
-            container.innerHTML = "";
-            document.getElementById('vocabCount').innerText = vocabList.length;
-
-            if (vocabList.length === 0) {
-                container.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">Chưa có câu nào trong tài khoản này. Hãy nhấn "Nhập danh sách câu mới".</div>`;
-                return;
-            }
-
-            vocabList.forEach((item, index) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = "p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3 text-xs";
-                itemDiv.innerHTML = `
-                    <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-white truncate">${index + 1}. ${escapeHtml(item.vi)}</div>
-                        <div class="text-cyan-300/80 font-mono truncate text-[11px]">${escapeHtml(item.en)}</div>
-                    </div>
-                    <div class="flex items-center space-x-1 shrink-0">
-                        <button onclick="jumpToQuestion(${index})" title="Học câu này ngay" class="p-1.5 text-blue-400 hover:text-white rounded hover:bg-slate-800">
-                            <i class="fa-solid fa-play"></i>
-                        </button>
-                        <button onclick="deleteVocabItem(${index})" title="Xoá câu này" class="p-1.5 text-red-400 hover:text-red-300 rounded hover:bg-slate-800">
-                            <i class="fa-regular fa-trash-can"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(itemDiv);
-            });
-        }
-
-        async function deleteVocabItem(idx) {
-            vocabList.splice(idx, 1);
-            if (currentIndex >= vocabList.length) {
-                currentIndex = Math.max(0, vocabList.length - 1);
-            }
-            await saveCurrentAccountData();
-            renderVocabManagerList();
-            showToast("Đã xoá và cập nhật lên tài khoản");
-        }
-
-        function jumpToQuestion(idx) {
-            currentIndex = idx;
-            closeVocabManager();
-        }
-
-        function parseBulkInput(text) {
-            const lines = text.split('\n');
-            const parsed = [];
-
-            lines.forEach(line => {
-                const trimmed = line.trim();
-                if (!trimmed) return;
-
-                let vi = "";
-                let en = "";
-
-                if (trimmed.includes('|')) {
-                    const parts = trimmed.split('|');
-                    vi = parts[0].trim();
-                    en = parts[1].trim();
-                } else if (trimmed.includes('-')) {
-                    const parts = trimmed.split('-');
-                    vi = parts[0].trim();
-                    en = parts[1].trim();
-                } else {
-                    vi = trimmed;
-                    en = trimmed;
-                }
-
-                if (vi && en) {
-                    parsed.push({
-                        vi: vi,
-                        en: en,
-                        category: "Bộ từ vựng của " + (streakData.userName || "bạn")
-                    });
-                }
-            });
-
-            return parsed;
-        }
-
-        async function appendImportedVocab() {
-            const text = document.getElementById('bulkImportInput').value;
-            const newItems = parseBulkInput(text);
-            if (newItems.length === 0) {
-                return;
-            }
-            vocabList = vocabList.concat(newItems);
-            await saveCurrentAccountData();
-            document.getElementById('bulkImportInput').value = "";
-            switchModalTab('list');
-            renderVocabManagerList();
-            showToast(`Đã lưu thêm ${newItems.length} câu vào tài khoản! ☁️`);
-        }
-
-        async function replaceImportedVocab() {
-            const text = document.getElementById('bulkImportInput').value;
-            const newItems = parseBulkInput(text);
-            if (newItems.length === 0) {
-                return;
-            }
-            vocabList = newItems;
-            currentIndex = 0;
-            await saveCurrentAccountData();
-            document.getElementById('bulkImportInput').value = "";
-            switchModalTab('list');
-            renderVocabManagerList();
-            showToast(`Đã thay thế bộ từ vựng cho tài khoản! ☁️`);
-        }
-
-        async function resetDefaultVocab() {
-            vocabList = [...DEFAULT_VOCABULARY];
-            currentIndex = 0;
-            await saveCurrentAccountData();
-            renderVocabManagerList();
-            showToast("Đã khôi phục các câu mẫu mặc định!");
-        }
-
-        // Summary Screen
-        function showSummaryScreen() {
-            summaryModal.classList.remove('hidden');
-            document.getElementById('summaryTotal').innerText = vocabList.length;
-            const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
-            document.getElementById('summaryAccuracy').innerText = `${acc}%`;
-        }
-
-        function restartQuiz() {
-            currentIndex = 0;
-            correctKeystrokes = 0;
-            totalKeystrokes = 0;
-            summaryModal.classList.add('hidden');
-            renderQuestion();
-        }
-
-        function closeSummaryAndOpenManager() {
-            summaryModal.classList.add('hidden');
-            openVocabManager();
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-
-        // ==========================================
-        // TWINKLING STAR CANVAS BACKGROUND
-        // ==========================================
-        function initStarCanvas() {
-            const canvas = document.getElementById('starsCanvas');
-            const ctx = canvas.getContext('2d');
-            let stars = [];
-            let width = window.innerWidth;
-            let height = window.innerHeight;
-
-            function resize() {
-                width = window.innerWidth;
-                height = window.innerHeight;
-                canvas.width = width;
-                canvas.height = height;
-                createStars();
-            }
-
-            function createStars() {
-                stars = [];
-                const count = Math.floor((width * height) / 3800);
-                for (let i = 0; i < count; i++) {
-                    stars.push({
-                        x: Math.random() * width,
-                        y: Math.random() * height,
-                        radius: Math.random() * 1.3 + 0.3,
-                        alpha: Math.random() * 0.8 + 0.2,
-                        speed: Math.random() * 0.015 + 0.005,
-                        color: Math.random() > 0.4 ? '#ffffff' : (Math.random() > 0.5 ? '#93c5fd' : '#67e8f9')
-                    });
-                }
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, width, height);
-
-                stars.forEach(star => {
-                    star.alpha += star.speed;
-                    if (star.alpha > 0.95 || star.alpha < 0.15) {
-                        star.speed = -star.speed;
-                    }
-
-                    ctx.beginPath();
-                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = star.color;
-                    ctx.globalAlpha = Math.max(0, Math.min(1, star.alpha));
-                    ctx.fill();
-                });
-
-                requestAnimationFrame(animate);
-            }
-
-            window.addEventListener('resize', resize);
-            resize();
-            animate();
-        }
-    </script>
-</body>
-</html>
+            const exportData = {
+                appName: "DailyLexis",
+                exportedAt: new Date().toISOString(),
+                accountKey: currentAccountKey,
+                authInfo: {
+                    username: streakData.userEmail || currentAccountKey,
+                    password: authPass,
+                    displayName: streakData.userName,
+                    email: streakData.userEmail
+                },
+                streakData: streakData,
+                vocabList: vocabList
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(
