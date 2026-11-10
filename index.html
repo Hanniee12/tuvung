@@ -168,6 +168,18 @@
             opacity: 0.18;
         }
 
+        /* Mobile On-screen keyboard keys styling */
+        .mobile-key {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            transition: all 0.1s ease;
+        }
+        .mobile-key:active {
+            transform: scale(0.92);
+            filter: brightness(1.3);
+        }
+
         /* Toast notification styling */
         #toastNotice {
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -776,29 +788,66 @@
                 </button>
             </div>
 
-            <!-- Sentence Completed Banner (Shown on correct finish) -->
-            <div id="completionBanner" class="hidden mt-6 p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 flex items-center justify-between animate-fade-in">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold text-white text-sm">Chính xác tuyệt vời!</div>
-                        <div class="text-xs text-emerald-300" id="fullEnglishSentence"></div>
-                    </div>
-                </div>
-                <button onclick="speakSentence()" class="p-2 rounded-lg bg-emerald-800/40 hover:bg-emerald-700/50 text-white text-xs flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-volume-high"></i> Nghe lại
-                </button>
-            </div>
-
         </div>
 
-        <!-- Mobile Touch Keyboard toggle button (for smartphones) -->
-        <div class="sm:hidden mt-4 w-full flex justify-center">
-            <button onclick="focusTyping(true)" class="px-4 py-2 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-cyan-300 flex items-center gap-2">
-                <i class="fa-solid fa-keyboard"></i> Mở bàn phím ảo điện thoại
+        <!-- Mobile Floating Dock (Điều khiển nhanh vừa tầm tay cái trên điện thoại) -->
+        <div class="sm:hidden mt-5 w-full flex items-center justify-center gap-2">
+            <button onclick="toggleMobileKeyboard()" class="px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-cyan-500/40 text-xs font-semibold text-cyan-300 flex items-center gap-1.5 shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-keyboard"></i>
+                <span id="mobileKeyboardToggleText">Bàn phím</span>
             </button>
+            <button ontouchstart="peekCurrentWord()" ontouchend="hideCurrentWordPeek()" onmousedown="peekCurrentWord()" onmouseup="hideCurrentWordPeek()" class="px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-amber-500/40 text-xs font-semibold text-amber-300 flex items-center gap-1.5 shadow-lg active:scale-95 transition">
+                <i class="fa-regular fa-eye"></i>
+                <span>Xem từ</span>
+            </button>
+            <button onclick="speakSentence()" class="w-10 h-10 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-200 flex items-center justify-center shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-volume-high text-xs"></i>
+            </button>
+            <button onclick="focusTyping(true)" title="Mở bàn phím gốc điện thoại" class="w-10 h-10 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-300 flex items-center justify-center shadow-lg active:scale-95 transition">
+                <i class="fa-solid fa-font text-xs"></i>
+            </button>
+        </div>
+
+        <!-- VIRTUAL ON-SCREEN KEYBOARD FOR MOBILE (Không bị bàn phím hệ thống che) -->
+        <div id="mobileKeyboardContainer" class="sm:hidden w-full mt-4 p-2 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-blue-900/50 shadow-2xl space-y-1.5 select-none transition-all">
+            <!-- Row 1 -->
+            <div class="flex justify-center gap-1">
+                <button onclick="handleKeyInput('q')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">Q</button>
+                <button onclick="handleKeyInput('w')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">W</button>
+                <button onclick="handleKeyInput('e')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">E</button>
+                <button onclick="handleKeyInput('r')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">R</button>
+                <button onclick="handleKeyInput('t')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">T</button>
+                <button onclick="handleKeyInput('y')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">Y</button>
+                <button onclick="handleKeyInput('u')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">U</button>
+                <button onclick="handleKeyInput('i')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">I</button>
+                <button onclick="handleKeyInput('o')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">O</button>
+                <button onclick="handleKeyInput('p')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">P</button>
+            </div>
+            <!-- Row 2 -->
+            <div class="flex justify-center gap-1 px-2">
+                <button onclick="handleKeyInput('a')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">A</button>
+                <button onclick="handleKeyInput('s')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">S</button>
+                <button onclick="handleKeyInput('d')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">D</button>
+                <button onclick="handleKeyInput('f')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">F</button>
+                <button onclick="handleKeyInput('g')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">G</button>
+                <button onclick="handleKeyInput('h')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">H</button>
+                <button onclick="handleKeyInput('j')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">J</button>
+                <button onclick="handleKeyInput('k')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">K</button>
+                <button onclick="handleKeyInput('l')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">L</button>
+            </div>
+            <!-- Row 3 -->
+            <div class="flex justify-center gap-1">
+                <button onclick="handleKeyInput('z')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">Z</button>
+                <button onclick="handleKeyInput('x')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">X</button>
+                <button onclick="handleKeyInput('c')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">C</button>
+                <button onclick="handleKeyInput('v')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">V</button>
+                <button onclick="handleKeyInput('b')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">B</button>
+                <button onclick="handleKeyInput('n')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">N</button>
+                <button onclick="handleKeyInput('m')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">M</button>
+                <button onclick="handleBackspace()" class="mobile-key w-12 py-2.5 bg-slate-700/90 hover:bg-slate-600 rounded-lg text-rose-300 font-bold text-xs border border-slate-600 shadow flex items-center justify-center">
+                    <i class="fa-solid fa-delete-left text-sm"></i>
+                </button>
+            </div>
         </div>
     </main>
 
@@ -1108,17 +1157,62 @@
             initStarCanvas();
             renderQuestion();
             setupEventListeners();
+            setupTouchGestures();
 
             // Nếu chưa có tài khoản nào đăng nhập trên máy này, tự động hiện popup đăng ký ngay
             checkInitialAuthPrompt();
         });
 
         // ==========================================
-        // AUTHENTICATION & MULTI-DEVICE CLOUD SYNC
+        // MOBILE UTILITIES & TOUCH INTERACTIONS
         // ==========================================
-        function getAccountStoreKey(identifier) {
-            // Chuẩn hóa định danh: chữ thường, cắt khoảng trắng, đảm bảo 100% giống nhau giữa 2 thiết bị
-            return 'acc_' + identifier.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
+        function toggleMobileKeyboard() {
+            const kb = document.getElementById('mobileKeyboardContainer');
+            const toggleText = document.getElementById('mobileKeyboardToggleText');
+            if (kb.classList.contains('hidden')) {
+                kb.classList.remove('hidden');
+                if (toggleText) toggleText.innerText = "Ẩn phím";
+            } else {
+                kb.classList.add('hidden');
+                if (toggleText) toggleText.innerText = "Bàn phím";
+            }
+        }
+
+        // Haptic feedback for mobile touches
+        function triggerHaptic(type = 'light') {
+            if ('vibrate' in navigator) {
+                if (type === 'light') navigator.vibrate(12);
+                else if (type === 'error') navigator.vibrate([25, 40, 25]);
+                else if (type === 'success') navigator.vibrate([15, 30, 20]);
+            }
+        }
+
+        // Swipe Gestures for Mobile (Vuốt màn hình để đổi câu / nghe lại)
+        function setupTouchGestures() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            const quizCard = document.getElementById('quizCard');
+
+            quizCard.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            quizCard.addEventListener('touchend', (e) => {
+                const diffX = e.changedTouches[0].screenX - touchStartX;
+                const diffY = e.changedTouches[0].screenY - touchStartY;
+
+                // Only consider horizontal swipes with minimal vertical scrolling
+                if (Math.abs(diffX) > 60 && Math.abs(diffY) < 50) {
+                    if (diffX < 0) {
+                        // Swipe Left: Next question if completed or Skip
+                        if (isCompleted) nextQuestion();
+                    } else {
+                        // Swipe Right: Replay pronunciation audio
+                        speakSentence();
+                    }
+                }
+            }, { passive: true });
         }
 
         function checkInitialAuthPrompt() {
@@ -2488,6 +2582,7 @@
             if (char.toLowerCase() === expectedChar.toLowerCase()) {
                 correctKeystrokes++;
                 playKeyClack();
+                triggerHaptic('light');
 
                 const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
                 if (activeSlot) {
@@ -2501,6 +2596,7 @@
                 skipToNextValidChar();
             } else {
                 playErrorSound();
+                triggerHaptic('error');
                 const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
                 if (activeSlot) {
                     activeSlot.classList.add('error');
@@ -2533,6 +2629,7 @@
             fullEnglishSentence.innerText = currentTarget;
 
             playSuccessChime();
+            triggerHaptic('success');
             addStreakPoints(1);
 
             if (triggerAudio) {
