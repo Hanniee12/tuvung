@@ -208,6 +208,32 @@
             z-index: 1;
         }
 
+        /* KHÓA CỨNG MÀN HÌNH ĐIỆN THOẠI: Chống 100% hiện tượng màn hình bị kéo tuột lên trên */
+        @media (max-width: 640px) {
+            html, body {
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                touch-action: pan-x;
+            }
+            main {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
+                justify-content: flex-start !important;
+            }
+            #quizCard {
+                margin-top: 0.25rem;
+                padding: 1rem 1.25rem !important;
+            }
+            #vietnamesePrompt {
+                font-size: 1.15rem !important;
+                line-height: 1.4 !important;
+            }
+        }
+
         /* Custom scrollbar for vocab list */
         ::-webkit-scrollbar {
             width: 6px;
@@ -227,7 +253,8 @@
     <canvas id="starsCanvas"></canvas>
 
     <!-- Invisible input to capture mobile keyboard seamlessly without jumping page -->
-    <input type="text" id="hiddenKeyboardInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="fixed opacity-0 pointer-events-none w-1 h-1 -top-10 left-0" />
+    <!-- Đặt input cố định ở chính giữa phần hiển thị để bàn phím không bao giờ kéo màn hình lên -->
+    <input type="text" id="hiddenKeyboardInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="fixed opacity-0 pointer-events-none w-px h-px top-1/4 left-1/2 -translate-x-1/2" style="font-size: 16px;" />
 
     <!-- AUTH MODAL (Đăng ký / Đăng nhập đồng bộ đám mây) -->
     <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden">
@@ -2559,11 +2586,7 @@
             const targetSlot = document.getElementById(`slot-${currentCharIndex}`);
             if (targetSlot) {
                 targetSlot.classList.add('active');
-
-                // Trên điện thoại, tự động giữ vùng ô đang gõ nằm trọn trong tầm nhìn, không bị bàn phím che
-                if (window.innerWidth <= 640) {
-                    targetSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                }
+                // Đã loại bỏ hoàn toàn lệnh scrollIntoView tự động tại đây để màn hình không bị nhảy giật mỗi khi gõ chữ
             }
         }
 
@@ -2753,14 +2776,10 @@
 
         function focusTyping(forceMobile = false) {
             if (forceMobile || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 640) {
-                hiddenKeyboardInput.focus();
-                // Ngăn hiện tượng viewport bị giật nhảy lên trên khi mở bàn phím
-                setTimeout(() => {
-                    const activeSlot = document.getElementById(`slot-${currentCharIndex}`) || document.getElementById('quizCard');
-                    if (activeSlot) {
-                        activeSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 300);
+                // Focus vào input với preventScroll để trình duyệt không tự ý cuộn màn hình
+                hiddenKeyboardInput.focus({ preventScroll: true });
+                // Giữ vị trí cuộn luôn ở đỉnh màn hình (0,0) tuyệt đối không cho kéo lên
+                window.scrollTo(0, 0);
             }
         }
 
