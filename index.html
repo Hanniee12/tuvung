@@ -287,14 +287,61 @@
             </div>
 
             <!-- Tab Switcher (Đăng ký / Đăng nhập) -->
-            <div class="flex p-1 bg-slate-900/90 rounded-2xl border border-slate-800 mb-5">
-                <button id="authTabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm">
-                    Đăng ký mới
-                </button>
-                <button id="authTabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
-                    Đăng nhập
-                </button>
+        <div class="flex p-1 bg-slate-900/90 rounded-2xl border border-slate-800 mb-5">
+            <button id="authTabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm">
+                Đăng ký mới
+            </button>
+            <button id="authTabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
+                Đăng nhập
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form onsubmit="handleAuthSubmit(event)" class="space-y-3.5 text-xs">
+            <!-- Field: Tên hiển thị (chỉ hiện khi Đăng ký) -->
+            <div id="authDisplayNameField">
+                <label class="block text-slate-300 font-semibold mb-1">Họ và tên hiển thị</label>
+                <div class="relative">
+                    <i class="fa-regular fa-user absolute left-3.5 top-3 text-slate-400"></i>
+                    <input type="text" id="authDisplayName" placeholder="Ví dụ: Trần Hưng Tài" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                </div>
             </div>
+
+            <!-- Field: Username / Email -->
+            <div>
+                <label class="block text-slate-300 font-semibold mb-1">Tên tài khoản hoặc Email</label>
+                <div class="relative">
+                    <i class="fa-regular fa-envelope absolute left-3.5 top-3 text-slate-400"></i>
+                    <input type="text" id="authUsername" required placeholder="Nhập tên đăng nhập hoặc email..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                </div>
+            </div>
+
+            <!-- Field: Password -->
+            <div>
+                <label class="block text-slate-300 font-semibold mb-1">Mật khẩu</label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400"></i>
+                    <input type="password" id="authPassword" required placeholder="Nhập mật khẩu..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    <button type="button" onclick="togglePasswordVisibility('authPassword')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200">
+                        <i class="fa-regular fa-eye text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cloud Sync Status notice -->
+            <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex items-center space-x-2 text-[11px] text-blue-200/80">
+                <i class="fa-solid fa-server text-cyan-400 shrink-0 text-sm"></i>
+                <span id="authNoticeText">Tài khoản lưu trực tiếp trên máy chủ. Đăng nhập cùng tài khoản trên điện thoại là tự tải từ vựng về.</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2">
+                <span id="authSubmitBtnText">Tạo tài khoản</span>
+                <i id="authLoadingSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+            </button>
+        </form>
+    </div>
+</div>
 
             <!-- Form -->
             <form onsubmit="handleAuthSubmit(event)" class="space-y-3.5 text-xs">
@@ -328,30 +375,18 @@
                     </div>
                 </div>
 
-                <!-- Sync note & Auto-download notice -->
-                <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex flex-col space-y-1.5 text-[11px] text-blue-200/80">
-                    <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-file-circle-check text-cyan-400 mt-0.5 shrink-0 text-sm"></i>
-                        <span id="authNoticeText">Khi đăng ký, hệ thống tự động lưu và tải file tài khoản (.json). Chỉ cần chọn file này trên điện thoại là đăng nhập ngay!</span>
-                    </div>
+                <!-- Cloud Sync Status notice -->
+                <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex items-center space-x-2 text-[11px] text-blue-200/80">
+                    <i class="fa-solid fa-cloud-arrow-up text-cyan-400 shrink-0 text-sm"></i>
+                    <span id="authNoticeText">Tài khoản được lưu trên máy chủ đám mây, đăng nhập được trên cả điện thoại và máy tính.</span>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2">
-                    <span id="authSubmitBtnText">Tạo tài khoản & Tải file lưu</span>
+                    <span id="authSubmitBtnText">Tạo tài khoản</span>
                     <i id="authLoadingSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
             </form>
-
-            <!-- TÙY CHỌN ĐĂNG NHẬP NHANH BẰNG FILE TÀI KHOẢN -->
-            <div class="border-t border-slate-700/60 mt-4 pt-3 text-center">
-                <p class="text-[11px] text-cyan-300 font-semibold mb-2">Đăng nhập nhanh qua File trên máy khác:</p>
-                <label class="w-full py-2.5 px-4 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 font-bold border border-emerald-500/50 flex items-center justify-center gap-2 transition cursor-pointer shadow-md">
-                    <i class="fa-solid fa-file-arrow-up text-sm"></i>
-                    <span>Chọn file tài khoản (.json) để Đăng nhập</span>
-                    <input type="file" id="importFileInputAuth" accept=".json,.txt" class="hidden" onchange="importAccountFromFile(event)">
-                </label>
-            </div>
         </div>
     </div>
 
@@ -472,19 +507,6 @@
                             <i class="fa-regular fa-user text-slate-500 w-4"></i>
                             <span>Hồ sơ cá nhân</span>
                         </button>
-
-                        <!-- Xuất file tài khoản (.json) -->
-                        <button onclick="exportAccountToFile()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-blue-600 font-medium">
-                            <i class="fa-solid fa-file-arrow-down w-4"></i>
-                            <span>Tải file lưu tài khoản & từ vựng (.json)</span>
-                        </button>
-
-                        <!-- Nhập file tài khoản -->
-                        <label class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-emerald-600 font-medium cursor-pointer">
-                            <i class="fa-solid fa-file-arrow-up w-4"></i>
-                            <span>Nhập file tài khoản từ thiết bị khác</span>
-                            <input type="file" accept=".json,.txt" class="hidden" onchange="importAccountFromFile(event)">
-                        </label>
 
                         <!-- Đổi tên hiển thị -->
                         <button onclick="openChangeNameModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left">
@@ -960,1286 +982,1297 @@
     </div>
 
     <!-- JAVASCRIPT LOGIC HOÀN CHỈNH -->
-    <script>
-        // Sample sentences
-        const DEFAULT_VOCABULARY = [
-            {
-                vi: "Hai lát bánh mì được cho vào máy nướng bánh.",
-                en: "Two slices of bread are put into the toaster.",
-                category: "Luyện viết · A1 · Cooking Breakfast"
-            },
-            {
-                vi: "Tôi thích uống một tách trà nóng vào mỗi buổi sáng sớm.",
-                en: "I like to drink a cup of hot tea early every morning.",
-                category: "Luyện viết · A1 · Daily Habits"
-            },
-            {
-                vi: "Anh ấy đánh răng trước khi đi ngủ mỗi tối.",
-                en: "He brushes his teeth before going to bed every night.",
-                category: "Luyện viết · A1 · Daily Routine"
-            },
-            {
-                vi: "Mẹ tôi đang chuẩn bị một bữa sáng ngon miệng trong bếp.",
-                en: "My mother is preparing a delicious breakfast in the kitchen.",
-                category: "Luyện viết · A1 · Cooking Breakfast"
-            },
-            {
-                vi: "Trứng ốp la và xúc xích là món ăn sáng yêu thích của tôi.",
-                en: "Fried eggs and sausages are my favorite breakfast.",
-                category: "Luyện viết · A1 · Cooking Breakfast"
-            },
-            {
-                vi: "Cô ấy thường đọc vài trang sách trước khi đi làm.",
-                en: "She usually reads a few book pages before going to work.",
-                category: "Luyện viết · A2 · Daily Routine"
-            },
-            {
-                vi: "Thời tiết hôm nay thật đẹp để đi dạo trong công viên.",
-                en: "The weather today is wonderful for walking in the park.",
-                category: "Luyện viết · A2 · Weather & Nature"
-            },
-            {
-                vi: "Đừng quên tắt máy nướng bánh mì khi bạn dùng xong.",
-                en: "Do not forget to turn off the toaster when you finish.",
-                category: "Luyện viết · A2 · Kitchen Safety"
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Khởi tạo Firebase trực tiếp để kết nối máy chủ dữ liệu đám mây
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dailylexis-default-app';
+    let db = null;
+    let auth = null;
+    let isCloudReady = false;
+
+    async function initCloudDatabase() {
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                isCloudReady = true;
             }
-        ];
+        } catch (err) {
+            console.warn("Firebase init note:", err);
+        }
+    }
 
-        // App State
-        let vocabList = [];
-        let currentIndex = 0;
-        let currentTarget = "";
-        let currentVi = "";
-        let currentCharIndex = 0;
-        let isCompleted = false;
-        let correctKeystrokes = 0;
-        let totalKeystrokes = 0;
-        let isCtrlPeeking = false;
+    // Cơ chế lưu và lấy dữ liệu trực tiếp trên máy chủ đám mây
+    const BACKUP_SERVER_URL = "https://api.restful-api.dev/objects";
 
-        // Active Account Key
-        let currentAccountKey = "guest";
-        let authCurrentTab = "register";
+    async function saveAccountToServer(accKey, dataObj) {
+        // 1. Lưu lên Firestore (Máy chủ chính)
+        if (db && isCloudReady) {
+            try {
+                const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', accKey);
+                await setDoc(accountDocRef, {
+                    ...dataObj,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (e) {
+                console.warn("Firestore save error:", e);
+            }
+        }
 
-        // Streak & Profile State
-        let streakData = {
-            currentStreak: 0,
-            longestStreak: 0,
-            todayPoints: 0,
-            lastDate: new Date().toDateString(),
-            userName: "Khách (Chưa đăng nhập)",
-            userEmail: "Nhấn để đăng nhập / đăng ký",
-            userAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
-            level: "A1",
-            totalSolved: 0,
-            showOnLeaderboard: false,
-            isDarkMode: true,
-            language: "vi",
-            reminderEnabled: false,
-            reminderTime: "20:00",
-            isLoggedIn: false
+        // 2. Đồng bộ lên máy chủ REST API dự phòng để điện thoại luôn lấy được dù ở bất kỳ mạng nào
+        try {
+            await fetch(BACKUP_SERVER_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: "lexis_user_" + accKey,
+                    data: dataObj
+                })
+            });
+        } catch (e) {
+            console.warn("Backup server save error:", e);
+        }
+    }
+
+    async function getAccountFromServer(accKey) {
+        // 1. Tìm trên Firestore trước
+        if (db && isCloudReady) {
+            try {
+                const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', accKey);
+                const snapshot = await getDoc(accountDocRef);
+                if (snapshot.exists()) {
+                    return snapshot.data();
+                }
+            } catch (e) {
+                console.warn("Firestore fetch error:", e);
+            }
+        }
+
+        // 2. Tìm trên máy chủ REST API nếu Firestore chưa phản hồi
+        try {
+            const res = await fetch(BACKUP_SERVER_URL);
+            if (res.ok) {
+                const list = await res.json();
+                const targetName = "lexis_user_" + accKey;
+                const matches = list.filter(item => item && item.name === targetName);
+                if (matches.length > 0) {
+                    return matches[matches.length - 1].data;
+                }
+            }
+        } catch (e) {
+            console.warn("Backup server fetch error:", e);
+        }
+        return null;
+    }
+
+    // Đưa hàm ra window để form HTML gọi trực tiếp
+    window.saveAccountToServer = saveAccountToServer;
+    window.getAccountFromServer = getAccountFromServer;
+    window.initCloudDatabase = initCloudDatabase;
+
+    // Kích hoạt máy chủ ngay khi tải trang
+    initCloudDatabase();
+</script>
+
+<script>
+    // Sample sentences
+    const DEFAULT_VOCABULARY = [
+        {
+            vi: "Hai lát bánh mì được cho vào máy nướng bánh.",
+            en: "Two slices of bread are put into the toaster.",
+            category: "Luyện viết · A1 · Cooking Breakfast"
+        },
+        {
+            vi: "Tôi thích uống một tách trà nóng vào mỗi buổi sáng sớm.",
+            en: "I like to drink a cup of hot tea early every morning.",
+            category: "Luyện viết · A1 · Daily Habits"
+        },
+        {
+            vi: "Anh ấy đánh răng trước khi đi ngủ mỗi tối.",
+            en: "He brushes his teeth before going to bed every night.",
+            category: "Luyện viết · A1 · Daily Routine"
+        },
+        {
+            vi: "Mẹ tôi đang chuẩn bị một bữa sáng ngon miệng trong bếp.",
+            en: "My mother is preparing a delicious breakfast in the kitchen.",
+            category: "Luyện viết · A1 · Cooking Breakfast"
+        },
+        {
+            vi: "Trứng ốp la và xúc xích là món ăn sáng yêu thích của tôi.",
+            en: "Fried eggs and sausages are my favorite breakfast.",
+            category: "Luyện viết · A1 · Cooking Breakfast"
+        },
+        {
+            vi: "Cô ấy thường đọc vài trang sách trước khi đi làm.",
+            en: "She usually reads a few book pages before going to work.",
+            category: "Luyện viết · A2 · Daily Routine"
+        },
+        {
+            vi: "Thời tiết hôm nay thật đẹp để đi dạo trong công viên.",
+            en: "The weather today is wonderful for walking in the park.",
+            category: "Luyện viết · A2 · Weather & Nature"
+        },
+        {
+            vi: "Đừng quên tắt máy nướng bánh mì khi bạn dùng xong.",
+            en: "Do not forget to turn off the toaster when you finish.",
+            category: "Luyện viết · A2 · Kitchen Safety"
+        }
+    ];
+
+    // App State
+    let vocabList = [];
+    let currentIndex = 0;
+    let currentTarget = "";
+    let currentVi = "";
+    let currentCharIndex = 0;
+    let isCompleted = false;
+    let correctKeystrokes = 0;
+    let totalKeystrokes = 0;
+    let isCtrlPeeking = false;
+
+    // Active Account Key
+    let currentAccountKey = "guest";
+    let authCurrentTab = "register";
+
+    // Streak & Profile State
+    let streakData = {
+        currentStreak: 0,
+        longestStreak: 0,
+        todayPoints: 0,
+        lastDate: new Date().toDateString(),
+        userName: "Khách (Chưa đăng nhập)",
+        userEmail: "Nhấn để đăng nhập / đăng ký",
+        userAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
+        level: "A1",
+        totalSolved: 0,
+        showOnLeaderboard: false,
+        isDarkMode: true,
+        language: "vi",
+        reminderEnabled: false,
+        reminderTime: "20:00",
+        isLoggedIn: false
+    };
+
+    // Web Audio Synthesizer (Tiếng phím cơ & chime)
+    let audioCtx = null;
+    function getAudioContext() {
+        if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        return audioCtx;
+    }
+
+    function playKeySound(type = 'click') {
+        try {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            if (type === 'click') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(1200 + Math.random() * 200, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.04);
+            } else if (type === 'error') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.linearRampToValueAtTime(70, now + 0.12);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'success') {
+                [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                    gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + idx * 0.06);
+                    osc.stop(now + idx * 0.06 + 0.35);
+                });
+            }
+        } catch (e) {}
+    }
+
+    function getAccountStoreKey(rawIdentifier) {
+        if (!rawIdentifier) return 'user_guest';
+        const clean = rawIdentifier.trim().toLowerCase().replace(/[@.]/g, '_').replace(/[^a-z0-9_]/g, '');
+        return 'user_' + clean;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        loadCurrentSession();
+        syncAccountData();
+        applyTheme(streakData.isDarkMode);
+        applyLanguage(streakData.language);
+        initStarCanvas();
+        renderQuestion();
+        setupEventListeners();
+        setupTouchGestures();
+        setupMobileCtrlButton();
+
+        if (!streakData.isLoggedIn || currentAccountKey === "guest") {
+            openAuthModal('register');
+        }
+    });
+
+    function loadCurrentSession() {
+        try {
+            const sessionKey = localStorage.getItem('dailylexis_current_user');
+            currentAccountKey = sessionKey ? sessionKey : "guest";
+        } catch (e) {
+            currentAccountKey = "guest";
+        }
+    }
+
+    function syncAccountData() {
+        try {
+            const localData = localStorage.getItem('dailylexis_data_' + currentAccountKey);
+            if (localData) {
+                const parsed = JSON.parse(localData);
+                streakData = Object.assign(streakData, parsed.streakData || {});
+                vocabList = parsed.vocabList || [];
+            }
+        } catch (e) {}
+
+        if (!vocabList || vocabList.length === 0) {
+            vocabList = [...DEFAULT_VOCABULARY];
+        }
+
+        streakData.isLoggedIn = currentAccountKey !== "guest";
+        saveCurrentAccountData();
+        updateStreakUI();
+        updateAuthStatusUI();
+    }
+
+    function saveCurrentAccountData() {
+        let authInfo = null;
+        try {
+            const regStr = localStorage.getItem('dailylexis_auth_registry');
+            if (regStr) {
+                const reg = JSON.parse(regStr);
+                if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
+            }
+        } catch (e) {}
+
+        const payload = {
+            accountKey: currentAccountKey,
+            streakData: streakData,
+            vocabList: vocabList,
+            authInfo: authInfo
         };
 
-        // Web Audio Synthesizer (Tiếng phím cơ & chime)
-        let audioCtx = null;
-        function getAudioContext() {
-            if (!audioCtx) {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (AudioContextClass) audioCtx = new AudioContextClass();
-            }
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            return audioCtx;
+        try {
+            localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
+        } catch (e) {}
+
+        // Tự động đẩy lên máy chủ đám mây
+        if (streakData.isLoggedIn && currentAccountKey !== "guest" && window.saveAccountToServer) {
+            window.saveAccountToServer(currentAccountKey, payload);
         }
 
-        function playKeySound(type = 'click') {
+        const countEl = document.getElementById('vocabCount');
+        if (countEl) countEl.innerText = vocabList.length;
+    }
+
+    function updateAuthStatusUI() {
+        const authStatusText = document.getElementById('authStatusText');
+        const profileAuthActionText = document.getElementById('profileAuthActionText');
+        const authTriggerBtn = document.getElementById('authTriggerBtn');
+
+        if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+            if (authStatusText) authStatusText.innerText = "Tài khoản";
+            if (profileAuthActionText) profileAuthActionText.innerText = "Đăng xuất";
+            if (authTriggerBtn) {
+                authTriggerBtn.classList.remove('border-amber-500/30', 'text-amber-200');
+                authTriggerBtn.classList.add('border-cyan-500/30', 'text-cyan-200');
+            }
+        } else {
+            if (authStatusText) authStatusText.innerText = "Đăng nhập";
+            if (profileAuthActionText) profileAuthActionText.innerText = "Đăng nhập";
+            if (authTriggerBtn) {
+                authTriggerBtn.classList.add('border-amber-500/30', 'text-amber-200');
+                authTriggerBtn.classList.remove('border-cyan-500/30', 'text-cyan-200');
+            }
+        }
+    }
+
+    function openAuthModal(defaultTab = 'register') {
+        const dropdown = document.getElementById('profileDropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+        switchAuthTab(defaultTab);
+        document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+        document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function switchAuthTab(tab) {
+        authCurrentTab = tab;
+        const loginBtn = document.getElementById('authTabLoginBtn');
+        const registerBtn = document.getElementById('authTabRegisterBtn');
+        const nameField = document.getElementById('authDisplayNameField');
+        const title = document.getElementById('authModalTitle');
+        const submitBtnText = document.getElementById('authSubmitBtnText');
+
+        if (tab === 'login') {
+            loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+            registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+            nameField.classList.add('hidden');
+            title.innerText = "Đăng nhập tài khoản";
+            submitBtnText.innerText = "Đăng nhập";
+        } else {
+            registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+            loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+            nameField.classList.remove('hidden');
+            title.innerText = "Đăng ký tài khoản mới";
+            submitBtnText.innerText = "Tạo tài khoản";
+        }
+    }
+
+    function togglePasswordVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        if (input) input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function handleAuthSubmit(e) {
+        e.preventDefault();
+        const rawIdentifier = document.getElementById('authUsername').value.trim();
+        const passwordInput = document.getElementById('authPassword').value.trim();
+        const displayNameInput = document.getElementById('authDisplayName').value.trim();
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const spinner = document.getElementById('authLoadingSpinner');
+
+        if (!rawIdentifier || !passwordInput) {
+            showToast("Vui lòng điền đầy đủ thông tin!");
+            return;
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.classList.remove('hidden');
+
+        try {
+            const cleanEmailOrUser = rawIdentifier.toLowerCase();
+            const targetKey = getAccountStoreKey(cleanEmailOrUser);
+
+            let registry = {};
             try {
-                const ctx = getAudioContext();
-                if (!ctx) return;
-                const now = ctx.currentTime;
+                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                if (regStr) registry = JSON.parse(regStr);
+            } catch (err) {}
 
-                if (type === 'click') {
-                    // Click đanh
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(1200 + Math.random() * 200, now);
-                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now);
-                    osc.stop(now + 0.04);
-                } else if (type === 'error') {
-                    // Thud lỗi
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(140, now);
-                    osc.frequency.linearRampToValueAtTime(70, now + 0.12);
-                    gain.gain.setValueAtTime(0.18, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now);
-                    osc.stop(now + 0.12);
-                } else if (type === 'success') {
-                    // Chime chuông
-                    [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-                        const osc = ctx.createOscillator();
-                        const gain = ctx.createGain();
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
-                        gain.gain.setValueAtTime(0.12, now + idx * 0.06);
-                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
-                        osc.connect(gain);
-                        gain.connect(ctx.destination);
-                        osc.start(now + idx * 0.06);
-                        osc.stop(now + idx * 0.06 + 0.35);
-                    });
+            if (authCurrentTab === 'register') {
+                // Kiểm tra xem tài khoản đã có trên máy chủ hoặc local chưa
+                let serverAccount = null;
+                if (window.getAccountFromServer) {
+                    serverAccount = await window.getAccountFromServer(targetKey);
                 }
-            } catch (e) {}
+
+                if (registry[targetKey] || serverAccount) {
+                    showToast("❌ Tài khoản này đã tồn tại trên máy chủ! Hãy chuyển sang Đăng nhập.");
+                    return;
+                }
+
+                const accountInfo = {
+                    username: cleanEmailOrUser,
+                    password: passwordInput,
+                    displayName: displayNameInput || rawIdentifier.split('@')[0],
+                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
+                };
+
+                registry[targetKey] = accountInfo;
+                localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+
+                currentAccountKey = targetKey;
+                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+
+                streakData.userName = accountInfo.displayName;
+                streakData.userEmail = accountInfo.email;
+                streakData.isLoggedIn = true;
+                streakData.currentStreak = 1;
+                streakData.longestStreak = 1;
+                streakData.todayPoints = 0;
+                streakData.totalSolved = 0;
+                vocabList = [...DEFAULT_VOCABULARY];
+
+                // Ghi thẳng lên máy chủ cơ sở dữ liệu
+                const payload = {
+                    accountKey: targetKey,
+                    authInfo: accountInfo,
+                    streakData: streakData,
+                    vocabList: vocabList
+                };
+                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
+
+                if (window.saveAccountToServer) {
+                    await window.saveAccountToServer(targetKey, payload);
+                }
+
+                closeAuthModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Đã tạo tài khoản và lưu lên máy chủ thành công 🎉`);
+            } else {
+                // ĐĂNG NHẬP (Lấy dữ liệu từ máy chủ về nếu thiết bị chưa có)
+                let account = registry[targetKey];
+                let serverData = null;
+
+                if (!account && window.getAccountFromServer) {
+                    serverData = await window.getAccountFromServer(targetKey);
+                    if (serverData && serverData.authInfo) {
+                        account = serverData.authInfo;
+                        registry[targetKey] = account;
+                        localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                    }
+                }
+
+                if (!account) {
+                    showToast("Tài khoản chưa tồn tại trên hệ thống! Vui lòng chọn Đăng ký.");
+                    return;
+                }
+
+                if (account.password !== passwordInput) {
+                    showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
+                    return;
+                }
+
+                currentAccountKey = targetKey;
+                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                streakData.isLoggedIn = true;
+                streakData.userName = account.displayName || rawIdentifier;
+                streakData.userEmail = account.email || cleanEmailOrUser;
+
+                // Nạp từ vựng và tiến độ từ máy chủ về thiết bị này
+                if (serverData) {
+                    if (serverData.streakData) streakData = Object.assign(streakData, serverData.streakData);
+                    if (serverData.vocabList && serverData.vocabList.length > 0) vocabList = serverData.vocabList;
+                } else {
+                    syncAccountData();
+                }
+
+                saveCurrentAccountData();
+                closeAuthModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Đăng nhập thành công! Đã đồng bộ từ vựng từ máy chủ ✨`);
+            }
+        } catch (err) {
+            console.error("Auth error:", err);
+            showToast("Có lỗi xảy ra, vui lòng thử lại!");
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+            if (spinner) spinner.classList.add('hidden');
+        }
+    }
+
+    // ==========================================
+    // KHẢO TỪ VỰNG & GÕ PHÍM
+    // ==========================================
+    function renderQuestion() {
+        if (!vocabList || vocabList.length === 0) return;
+        if (currentIndex >= vocabList.length) {
+            showSummaryScreen();
+            return;
         }
 
-        // Tạo key chuẩn
-        function getAccountStoreKey(rawIdentifier) {
-            if (!rawIdentifier) return 'user_guest';
-            const clean = rawIdentifier.trim().toLowerCase().replace(/[@.]/g, '_').replace(/[^a-z0-9_]/g, '');
-            return 'user_' + clean;
-        }
+        const item = vocabList[currentIndex];
+        currentVi = item.vi;
+        currentTarget = item.en.trim();
+        currentCharIndex = 0;
+        isCompleted = false;
 
-        // Khởi động ứng dụng
-        window.addEventListener('DOMContentLoaded', () => {
-            loadCurrentSession();
-            syncAccountData();
-            applyTheme(streakData.isDarkMode);
-            applyLanguage(streakData.language);
-            initStarCanvas();
-            renderQuestion();
-            setupEventListeners();
-            setupTouchGestures();
-            setupMobileCtrlButton();
+        document.getElementById('categoryHeader').innerText = item.category || `Luyện viết · A1 · Bài ${currentIndex + 1}`;
+        document.getElementById('questionCounter').innerText = `Câu ${currentIndex + 1} / ${vocabList.length}`;
+        
+        const pct = Math.round(((currentIndex) / vocabList.length) * 100);
+        document.getElementById('progressPercent').innerText = `${pct}%`;
+        document.getElementById('progressBar').style.width = `${pct}%`;
 
-            // Nếu chưa có tài khoản nào, tự động hiện popup đăng ký
-            if (!streakData.isLoggedIn || currentAccountKey === "guest") {
-                openAuthModal('register');
+        document.getElementById('vietnamesePrompt').innerText = currentVi;
+        document.getElementById('completionBanner').classList.add('hidden');
+
+        const nextBtn = document.getElementById('nextBtn');
+        nextBtn.classList.remove('opacity-50', 'pointer-events-none');
+        document.getElementById('nextBtnText').innerText = "Câu tiếp";
+
+        renderSlots();
+        focusTyping();
+    }
+
+    function renderSlots() {
+        const container = document.getElementById('maskedSentenceContainer');
+        container.innerHTML = '';
+
+        const words = currentTarget.split(' ');
+        let charGlobalIndex = 0;
+
+        words.forEach((word, wordIdx) => {
+            const wordWrapper = document.createElement('div');
+            wordWrapper.className = 'flex items-center gap-1 mr-2 sm:mr-3.5 my-1';
+
+            for (let i = 0; i < word.length; i++) {
+                const char = word[i];
+                const slot = document.createElement('div');
+                slot.className = 'char-slot';
+                slot.dataset.expected = char;
+                slot.dataset.index = charGlobalIndex;
+
+                const isPunctuation = !/^[a-zA-Z0-9]$/.test(char);
+                if (isPunctuation) {
+                    slot.innerText = char;
+                    slot.classList.add('filled', 'border-transparent', 'bg-transparent', '!w-auto', '!px-1');
+                } else {
+                    slot.innerText = '*';
+                }
+
+                wordWrapper.appendChild(slot);
+                charGlobalIndex++;
+            }
+
+            container.appendChild(wordWrapper);
+
+            if (wordIdx < words.length - 1) {
+                charGlobalIndex++;
             }
         });
 
-        function loadCurrentSession() {
-            try {
-                const sessionKey = localStorage.getItem('dailylexis_current_user');
-                currentAccountKey = sessionKey ? sessionKey : "guest";
-            } catch (e) {
-                currentAccountKey = "guest";
-            }
-        }
-
-        function syncAccountData() {
-            try {
-                const localData = localStorage.getItem('dailylexis_data_' + currentAccountKey);
-                if (localData) {
-                    const parsed = JSON.parse(localData);
-                    streakData = Object.assign(streakData, parsed.streakData || {});
-                    vocabList = parsed.vocabList || [];
-                }
-            } catch (e) {}
-
-            if (!vocabList || vocabList.length === 0) {
-                vocabList = [...DEFAULT_VOCABULARY];
-            }
-
-            streakData.isLoggedIn = currentAccountKey !== "guest";
-            saveCurrentAccountData();
-            updateStreakUI();
-            updateAuthStatusUI();
-        }
-
-        function saveCurrentAccountData() {
-            let authInfo = null;
-            try {
-                const regStr = localStorage.getItem('dailylexis_auth_registry');
-                if (regStr) {
-                    const reg = JSON.parse(regStr);
-                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
-                }
-            } catch (e) {}
-
-            const payload = {
-                accountKey: currentAccountKey,
-                streakData: streakData,
-                vocabList: vocabList,
-                authInfo: authInfo
-            };
-
-            try {
-                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
-            } catch (e) {}
-
-            const countEl = document.getElementById('vocabCount');
-            if (countEl) countEl.innerText = vocabList.length;
-        }
-
-        function updateAuthStatusUI() {
-            const authStatusText = document.getElementById('authStatusText');
-            const profileAuthActionText = document.getElementById('profileAuthActionText');
-            const authTriggerBtn = document.getElementById('authTriggerBtn');
-
-            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
-                if (authStatusText) authStatusText.innerText = "Tài khoản";
-                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng xuất";
-                if (authTriggerBtn) {
-                    authTriggerBtn.classList.remove('border-amber-500/30', 'text-amber-200');
-                    authTriggerBtn.classList.add('border-cyan-500/30', 'text-cyan-200');
-                }
-            } else {
-                if (authStatusText) authStatusText.innerText = "Đăng nhập";
-                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng nhập";
-                if (authTriggerBtn) {
-                    authTriggerBtn.classList.add('border-amber-500/30', 'text-amber-200');
-                    authTriggerBtn.classList.remove('border-cyan-500/30', 'text-cyan-200');
-                }
-            }
-        }
-
-        // Auth Modal Controls
-        function openAuthModal(defaultTab = 'register') {
-            const dropdown = document.getElementById('profileDropdown');
-            if (dropdown) dropdown.classList.add('hidden');
-            switchAuthTab(defaultTab);
-            document.getElementById('authModal').classList.remove('hidden');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('authModal').classList.add('hidden');
-        }
-
-        function switchAuthTab(tab) {
-            authCurrentTab = tab;
-            const loginBtn = document.getElementById('authTabLoginBtn');
-            const registerBtn = document.getElementById('authTabRegisterBtn');
-            const nameField = document.getElementById('authDisplayNameField');
-            const title = document.getElementById('authModalTitle');
-            const submitBtnText = document.getElementById('authSubmitBtnText');
-
-            if (tab === 'login') {
-                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
-                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
-                nameField.classList.add('hidden');
-                title.innerText = "Đăng nhập tài khoản";
-                submitBtnText.innerText = "Đăng nhập";
-            } else {
-                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
-                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
-                nameField.classList.remove('hidden');
-                title.innerText = "Đăng ký tài khoản mới";
-                submitBtnText.innerText = "Tạo tài khoản & Tải file lưu";
-            }
-        }
-
-        function togglePasswordVisibility(inputId) {
-            const input = document.getElementById(inputId);
-            if (input) input.type = input.type === 'password' ? 'text' : 'password';
-        }
-
-        function handleAuthSubmit(e) {
-            e.preventDefault();
-            const rawIdentifier = document.getElementById('authUsername').value.trim();
-            const passwordInput = document.getElementById('authPassword').value.trim();
-            const displayNameInput = document.getElementById('authDisplayName').value.trim();
-            const submitBtn = document.getElementById('authSubmitBtn');
-            const spinner = document.getElementById('authLoadingSpinner');
-
-            if (!rawIdentifier || !passwordInput) {
-                showToast("Vui lòng điền đầy đủ thông tin!");
-                return;
-            }
-
-            if (submitBtn) submitBtn.disabled = true;
-            if (spinner) spinner.classList.remove('hidden');
-
-            try {
-                const cleanEmailOrUser = rawIdentifier.toLowerCase();
-                const targetKey = getAccountStoreKey(cleanEmailOrUser);
-
-                let registry = {};
-                try {
-                    const regStr = localStorage.getItem('dailylexis_auth_registry');
-                    if (regStr) registry = JSON.parse(regStr);
-                } catch (err) {}
-
-                if (authCurrentTab === 'register') {
-                    // Đăng ký mới
-                    const isTaken = Object.keys(registry).some(k => {
-                        const item = registry[k];
-                        return k === targetKey || 
-                               (item.email && item.email.toLowerCase() === cleanEmailOrUser) || 
-                               (item.username && item.username.toLowerCase() === cleanEmailOrUser);
-                    });
-
-                    if (isTaken) {
-                        showToast("❌ Email hoặc tài khoản này đã được tạo! Hãy bấm Đăng nhập.");
-                        return;
-                    }
-
-                    const accountInfo = {
-                        username: cleanEmailOrUser,
-                        password: passwordInput,
-                        displayName: displayNameInput || rawIdentifier.split('@')[0],
-                        email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
-                    };
-
-                    registry[targetKey] = accountInfo;
-                    localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
-
-                    currentAccountKey = targetKey;
-                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
-
-                    streakData.userName = accountInfo.displayName;
-                    streakData.userEmail = accountInfo.email;
-                    streakData.isLoggedIn = true;
-                    streakData.currentStreak = 1;
-                    streakData.longestStreak = 1;
-                    streakData.todayPoints = 0;
-                    streakData.totalSolved = 0;
-                    vocabList = [...DEFAULT_VOCABULARY];
-
-                    saveCurrentAccountData();
-
-                    // TỰ ĐỘNG TẢI FILE TÀI KHOẢN VỀ MÁY NGAY KHI ĐĂNG KÝ
-                    exportAccountToFile();
-
-                    closeAuthModal();
-                    updateStreakUI();
-                    updateAuthStatusUI();
-                    currentIndex = 0;
-                    renderQuestion();
-                    showToast(`Tạo thành công! Đã tự tải file lưu tài khoản về máy để gửi qua điện thoại 🎉`);
-                } else {
-                    // Đăng nhập
-                    let account = registry[targetKey];
-                    let foundKey = targetKey;
-
-                    if (!account) {
-                        for (const k in registry) {
-                            if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
-                                account = registry[k];
-                                foundKey = k;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!account) {
-                        showToast("Tài khoản chưa có trên thiết bị này! Hãy bấm 'Chọn file tài khoản (.json)' ở dưới.");
-                        return;
-                    }
-
-                    if (account.password !== passwordInput) {
-                        showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
-                        return;
-                    }
-
-                    currentAccountKey = foundKey;
-                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
-                    streakData.isLoggedIn = true;
-                    streakData.userName = account.displayName || rawIdentifier;
-                    streakData.userEmail = account.email || cleanEmailOrUser;
-
-                    syncAccountData();
-                    closeAuthModal();
-                    updateStreakUI();
-                    updateAuthStatusUI();
-                    currentIndex = 0;
-                    renderQuestion();
-                    showToast(`Đăng nhập thành công! Chào mừng ${streakData.userName} ✨`);
-                }
-            } catch (err) {
-                console.error("Auth error:", err);
-                showToast("Có lỗi xảy ra, vui lòng thử lại!");
-            } finally {
-                if (submitBtn) submitBtn.disabled = false;
-                if (spinner) spinner.classList.add('hidden');
-            }
-        }
-
-        // ==========================================
-        // XUẤT & NHẬP FILE TÀI KHOẢN (.JSON)
-        // ==========================================
-        function exportAccountToFile() {
-            let authPass = "";
-            try {
-                const reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
-                if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
-            } catch (e) {}
-
-            const exportData = {
-                appName: "DailyLexis",
-                exportedAt: new Date().toISOString(),
-                accountKey: currentAccountKey,
-                authInfo: {
-                    username: streakData.userEmail || currentAccountKey,
-                    password: authPass,
-                    displayName: streakData.userName,
-                    email: streakData.userEmail
-                },
-                streakData: streakData,
-                vocabList: vocabList
-            };
-
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-            const dlAnchor = document.createElement('a');
-            const cleanName = (streakData.userEmail || streakData.userName || "account").replace(/[^a-zA-Z0-9]/g, '_');
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `dailylexis_${cleanName}.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-        }
-
-        function importAccountFromFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const content = e.target.result;
-                    const data = JSON.parse(content);
-
-                    if (!data.accountKey || !data.streakData) {
-                        showToast("❌ File không đúng định dạng tài khoản DailyLexis!");
-                        return;
-                    }
-
-                    currentAccountKey = data.accountKey;
-                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
-
-                    if (data.authInfo) {
-                        let reg = {};
-                        try {
-                            const regStr = localStorage.getItem('dailylexis_auth_registry');
-                            if (regStr) reg = JSON.parse(regStr);
-                        } catch (err) {}
-                        reg[currentAccountKey] = data.authInfo;
-                        localStorage.setItem('dailylexis_auth_registry', JSON.stringify(reg));
-                    }
-
-                    streakData = Object.assign(streakData, data.streakData);
-                    streakData.isLoggedIn = true;
-                    if (data.vocabList && Array.isArray(data.vocabList) && data.vocabList.length > 0) {
-                        vocabList = data.vocabList;
-                    }
-
-                    saveCurrentAccountData();
-
-                    closeAuthModal();
-                    const dropdown = document.getElementById('profileDropdown');
-                    if (dropdown) dropdown.classList.add('hidden');
-
-                    updateStreakUI();
-                    updateAuthStatusUI();
-                    currentIndex = 0;
-                    renderQuestion();
-                    showToast(`Đăng nhập thành công từ file! Đã nạp tài khoản ${streakData.userName} (${vocabList.length} câu) 🎉`);
-                } catch (err) {
-                    console.error("Lỗi đọc file:", err);
-                    showToast("❌ Có lỗi xảy ra khi đọc file tài khoản!");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        // ==========================================
-        // KHẢO TỪ VỰNG & GÕ PHÍM
-        // ==========================================
-        function renderQuestion() {
-            if (!vocabList || vocabList.length === 0) return;
-            if (currentIndex >= vocabList.length) {
-                showSummaryScreen();
-                return;
-            }
-
-            const item = vocabList[currentIndex];
-            currentVi = item.vi;
-            currentTarget = item.en.trim();
-            currentCharIndex = 0;
-            isCompleted = false;
-
-            document.getElementById('categoryHeader').innerText = item.category || `Luyện viết · A1 · Bài ${currentIndex + 1}`;
-            document.getElementById('questionCounter').innerText = `Câu ${currentIndex + 1} / ${vocabList.length}`;
-            
-            const pct = Math.round(((currentIndex) / vocabList.length) * 100);
-            document.getElementById('progressPercent').innerText = `${pct}%`;
-            document.getElementById('progressBar').style.width = `${pct}%`;
-
-            document.getElementById('vietnamesePrompt').innerText = currentVi;
-            document.getElementById('completionBanner').classList.add('hidden');
-
-            const nextBtn = document.getElementById('nextBtn');
-            nextBtn.classList.remove('opacity-50', 'pointer-events-none');
-            document.getElementById('nextBtnText').innerText = "Câu tiếp";
-
-            renderSlots();
-            focusTyping();
-        }
-
-        function renderSlots() {
-            const container = document.getElementById('maskedSentenceContainer');
-            container.innerHTML = '';
-
-            const words = currentTarget.split(' ');
-            let charGlobalIndex = 0;
-
-            words.forEach((word, wordIdx) => {
-                const wordWrapper = document.createElement('div');
-                wordWrapper.className = 'flex items-center gap-1 mr-2 sm:mr-3.5 my-1';
-
-                for (let i = 0; i < word.length; i++) {
-                    const char = word[i];
-                    const slot = document.createElement('div');
-                    slot.className = 'char-slot';
-                    slot.dataset.expected = char;
-                    slot.dataset.index = charGlobalIndex;
-
-                    const isPunctuation = !/^[a-zA-Z0-9]$/.test(char);
-                    if (isPunctuation) {
-                        slot.innerText = char;
-                        slot.classList.add('filled', 'border-transparent', 'bg-transparent', '!w-auto', '!px-1');
-                    } else {
-                        slot.innerText = '*';
-                    }
-
-                    wordWrapper.appendChild(slot);
-                    charGlobalIndex++;
-                }
-
-                container.appendChild(wordWrapper);
-
-                if (wordIdx < words.length - 1) {
-                    charGlobalIndex++;
-                }
-            });
-
-            // Tự động bỏ qua các dấu câu mở đầu nếu có
-            skipPunctuationForward();
-            updateActiveSlot();
-        }
-
-        function skipPunctuationForward() {
-            while (currentCharIndex < currentTarget.length) {
-                const ch = currentTarget[currentCharIndex];
-                if (ch === ' ' || !/^[a-zA-Z0-9]$/.test(ch)) {
-                    currentCharIndex++;
-                } else {
-                    break;
-                }
-            }
-        }
-
-        function updateActiveSlot() {
-            const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
-            allSlots.forEach(s => s.classList.remove('active'));
-
-            if (isCompleted || currentCharIndex >= currentTarget.length) return;
-
-            const targetSlot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${currentCharIndex}"]`);
-            if (targetSlot) {
-                targetSlot.classList.add('active');
-            }
-        }
-
-        function handleCharacterInput(charTyped) {
-            if (isCompleted || currentCharIndex >= currentTarget.length) return;
-
-            totalKeystrokes++;
-            const expectedChar = currentTarget[currentCharIndex];
-            const targetSlot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${currentCharIndex}"]`);
-
-            if (charTyped.toLowerCase() === expectedChar.toLowerCase()) {
-                // ĐÚNG KÝ TỰ
-                correctKeystrokes++;
-                playKeySound('click');
-                triggerHaptic('light');
-
-                if (targetSlot) {
-                    targetSlot.innerText = expectedChar;
-                    targetSlot.classList.remove('active', 'error');
-                    targetSlot.classList.add('filled', 'correct-pop');
-                    spawnSparkles(targetSlot);
-                }
-
+        skipPunctuationForward();
+        updateActiveSlot();
+    }
+
+    function skipPunctuationForward() {
+        while (currentCharIndex < currentTarget.length) {
+            const ch = currentTarget[currentCharIndex];
+            if (ch === ' ' || !/^[a-zA-Z0-9]$/.test(ch)) {
                 currentCharIndex++;
-                skipPunctuationForward();
-
-                if (currentCharIndex >= currentTarget.length) {
-                    finishQuestionSuccess();
-                } else {
-                    updateActiveSlot();
-                }
             } else {
-                // SAI KÝ TỰ
-                playKeySound('error');
-                triggerHaptic('error');
-                if (targetSlot) {
-                    targetSlot.classList.add('error');
-                    setTimeout(() => targetSlot.classList.remove('error'), 350);
-                }
+                break;
             }
         }
+    }
 
-        function spawnSparkles(element) {
-            if (!element) return;
-            const rect = element.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const colors = ['#38ef7d', '#38bdf8', '#34d399', '#67e8f9', '#ffffff'];
+    function updateActiveSlot() {
+        const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
+        allSlots.forEach(s => s.classList.remove('active'));
 
-            for (let i = 0; i < 7; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'sparkle-particle';
-                const size = Math.random() * 6 + 4;
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                particle.style.left = `${cx}px`;
-                particle.style.top = `${cy}px`;
+        if (isCompleted || currentCharIndex >= currentTarget.length) return;
 
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 35 + 20;
-                particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-                particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-
-                document.body.appendChild(particle);
-                setTimeout(() => particle.remove(), 550);
-            }
+        const targetSlot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${currentCharIndex}"]`);
+        if (targetSlot) {
+            targetSlot.classList.add('active');
         }
+    }
 
-        function finishQuestionSuccess() {
-            isCompleted = true;
-            playKeySound('success');
-            triggerHaptic('success');
+    function handleCharacterInput(charTyped) {
+        if (isCompleted || currentCharIndex >= currentTarget.length) return;
 
-            const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
-            allSlots.forEach(s => s.classList.remove('active'));
+        totalKeystrokes++;
+        const expectedChar = currentTarget[currentCharIndex];
+        const targetSlot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${currentCharIndex}"]`);
 
-            document.getElementById('fullEnglishSentence').innerText = currentTarget;
-            document.getElementById('completionBanner').classList.remove('hidden');
+        if (charTyped.toLowerCase() === expectedChar.toLowerCase()) {
+            correctKeystrokes++;
+            playKeySound('click');
+            triggerHaptic('light');
 
-            streakData.todayPoints = Math.min(10, (streakData.todayPoints || 0) + 1);
-            streakData.totalSolved = (streakData.totalSolved || 0) + 1;
-            saveCurrentAccountData();
-            updateStreakUI();
-
-            speakSentence();
-        }
-
-        function nextQuestion() {
-            currentIndex++;
-            renderQuestion();
-        }
-
-        function skipQuestion() {
-            streakData.todayPoints = Math.min(10, (streakData.todayPoints || 0) + 1);
-            saveCurrentAccountData();
-            updateStreakUI();
-            currentIndex++;
-            renderQuestion();
-        }
-
-        function revealAnswer() {
-            const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
-            allSlots.forEach(s => {
-                const exp = s.dataset.expected;
-                if (exp) {
-                    s.innerText = exp;
-                    s.classList.add('filled');
-                    s.classList.remove('active');
-                }
-            });
-            finishQuestionSuccess();
-        }
-
-        function speakSentence() {
-            if (!('speechSynthesis' in window) || !currentTarget) return;
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(currentTarget);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.95;
-            window.speechSynthesis.speak(utterance);
-        }
-
-        // ==========================================
-        // LOGIC PHÍM CTRL (GIỮ LÀ HIỆN, THẢ LÀ ẨN)
-        // ==========================================
-        function peekCurrentWord() {
-            if (isCompleted || isCtrlPeeking || currentCharIndex >= currentTarget.length) return;
-            isCtrlPeeking = true;
-
-            // Tìm từ đang gõ
-            let start = currentCharIndex;
-            while (start > 0 && currentTarget[start - 1] !== ' ') {
-                start--;
-            }
-            let end = currentCharIndex;
-            while (end < currentTarget.length && currentTarget[end] !== ' ') {
-                end++;
+            if (targetSlot) {
+                targetSlot.innerText = expectedChar;
+                targetSlot.classList.remove('active', 'error');
+                targetSlot.classList.add('filled', 'correct-pop');
+                spawnSparkles(targetSlot);
             }
 
-            for (let i = start; i < end; i++) {
-                const slot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${i}"]`);
-                if (slot && !slot.classList.contains('filled')) {
-                    slot.innerText = slot.dataset.expected;
-                    slot.classList.add('preview-hint');
-                }
+            currentCharIndex++;
+            skipPunctuationForward();
+
+            if (currentCharIndex >= currentTarget.length) {
+                finishQuestionSuccess();
+            } else {
+                updateActiveSlot();
+            }
+        } else {
+            playKeySound('error');
+            triggerHaptic('error');
+            if (targetSlot) {
+                targetSlot.classList.add('error');
+                setTimeout(() => targetSlot.classList.remove('error'), 350);
             }
         }
+    }
 
-        function hideCurrentWordPeek() {
-            if (!isCtrlPeeking) return;
-            isCtrlPeeking = false;
+    function spawnSparkles(element) {
+        if (!element) return;
+        const rect = element.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const colors = ['#38ef7d', '#38bdf8', '#34d399', '#67e8f9', '#ffffff'];
 
-            const peekSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot.preview-hint');
-            peekSlots.forEach(slot => {
-                slot.innerText = '*';
-                slot.classList.remove('preview-hint');
-            });
-            updateActiveSlot();
+        for (let i = 0; i < 7; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'sparkle-particle';
+            const size = Math.random() * 6 + 4;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.left = `${cx}px`;
+            particle.style.top = `${cy}px`;
+
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 35 + 20;
+            particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+            particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 550);
+        }
+    }
+
+    function finishQuestionSuccess() {
+        isCompleted = true;
+        playKeySound('success');
+        triggerHaptic('success');
+
+        const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
+        allSlots.forEach(s => s.classList.remove('active'));
+
+        document.getElementById('fullEnglishSentence').innerText = currentTarget;
+        document.getElementById('completionBanner').classList.remove('hidden');
+
+        streakData.todayPoints = Math.min(10, (streakData.todayPoints || 0) + 1);
+        streakData.totalSolved = (streakData.totalSolved || 0) + 1;
+        saveCurrentAccountData();
+        updateStreakUI();
+
+        speakSentence();
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        renderQuestion();
+    }
+
+    function skipQuestion() {
+        streakData.todayPoints = Math.min(10, (streakData.todayPoints || 0) + 1);
+        saveCurrentAccountData();
+        updateStreakUI();
+        currentIndex++;
+        renderQuestion();
+    }
+
+    function revealAnswer() {
+        const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
+        allSlots.forEach(s => {
+            const exp = s.dataset.expected;
+            if (exp) {
+                s.innerText = exp;
+                s.classList.add('filled');
+                s.classList.remove('active');
+            }
+        });
+        finishQuestionSuccess();
+    }
+
+    function speakSentence() {
+        if (!('speechSynthesis' in window) || !currentTarget) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(currentTarget);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function peekCurrentWord() {
+        if (isCompleted || isCtrlPeeking || currentCharIndex >= currentTarget.length) return;
+        isCtrlPeeking = true;
+
+        let start = currentCharIndex;
+        while (start > 0 && currentTarget[start - 1] !== ' ') {
+            start--;
+        }
+        let end = currentCharIndex;
+        while (end < currentTarget.length && currentTarget[end] !== ' ') {
+            end++;
         }
 
-        // ==========================================
-        // CÁC SỰ KIỆN PHÍM BẤM & TƯƠNG TÁC
-        // ==========================================
-        function setupEventListeners() {
-            window.addEventListener('keydown', (e) => {
-                // Giữ Ctrl
-                if (e.key === 'Control') {
-                    peekCurrentWord();
-                    return;
-                }
-
-                // Enter sang câu tiếp theo
-                if (e.key === 'Enter') {
-                    if (isCompleted) {
-                        nextQuestion();
-                    }
-                    return;
-                }
-
-                // Esc bỏ qua
-                if (e.key === 'Escape') {
-                    skipQuestion();
-                    return;
-                }
-
-                // Gõ ký tự thông thường
-                if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                    handleCharacterInput(e.key);
-                }
-            });
-
-            window.addEventListener('keyup', (e) => {
-                if (e.key === 'Control') {
-                    hideCurrentWordPeek();
-                }
-            });
-
-            window.addEventListener('blur', () => {
-                hideCurrentWordPeek();
-            });
-
-            // Focus typing qua input ẩn để bàn phím điện thoại hoạt động mà không che chữ
-            const hiddenInput = document.getElementById('hiddenKeyboardInput');
-            if (hiddenInput) {
-                hiddenInput.addEventListener('input', (e) => {
-                    const val = hiddenInput.value;
-                    if (val && val.length > 0) {
-                        const charTyped = val[val.length - 1];
-                        handleCharacterInput(charTyped);
-                        hiddenInput.value = '';
-                    }
-                });
+        for (let i = start; i < end; i++) {
+            const slot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${i}"]`);
+            if (slot && !slot.classList.contains('filled')) {
+                slot.innerText = slot.dataset.expected;
+                slot.classList.add('preview-hint');
             }
         }
+    }
 
-        function focusTyping(force = false) {
-            const hiddenInput = document.getElementById('hiddenKeyboardInput');
-            if (hiddenInput) {
-                hiddenInput.focus({ preventScroll: true });
-            }
-        }
+    function hideCurrentWordPeek() {
+        if (!isCtrlPeeking) return;
+        isCtrlPeeking = false;
 
-        function setupMobileCtrlButton() {
-            const btn = document.getElementById('mobileCtrlPeekBtn');
-            if (!btn) return;
+        const peekSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot.preview-hint');
+        peekSlots.forEach(slot => {
+            slot.innerText = '*';
+            slot.classList.remove('preview-hint');
+        });
+        updateActiveSlot();
+    }
 
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
+    function setupEventListeners() {
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Control') {
                 peekCurrentWord();
-                triggerHaptic('light');
-                btn.classList.add('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
-            }, { passive: false });
+                return;
+            }
 
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                hideCurrentWordPeek();
-                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
-                focusTyping(true);
-            }, { passive: false });
+            if (e.key === 'Enter') {
+                if (isCompleted) {
+                    nextQuestion();
+                }
+                return;
+            }
 
-            btn.addEventListener('touchcancel', () => {
+            if (e.key === 'Escape') {
+                skipQuestion();
+                return;
+            }
+
+            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                handleCharacterInput(e.key);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'Control') {
                 hideCurrentWordPeek();
-                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            hideCurrentWordPeek();
+        });
+
+        const hiddenInput = document.getElementById('hiddenKeyboardInput');
+        if (hiddenInput) {
+            hiddenInput.addEventListener('input', (e) => {
+                const val = hiddenInput.value;
+                if (val && val.length > 0) {
+                    const charTyped = val[val.length - 1];
+                    handleCharacterInput(charTyped);
+                    hiddenInput.value = '';
+                }
             });
         }
+    }
 
-        function triggerHaptic(type = 'light') {
-            if ('vibrate' in navigator) {
-                if (type === 'light') navigator.vibrate(12);
-                else if (type === 'error') navigator.vibrate([25, 40, 25]);
-                else if (type === 'success') navigator.vibrate([15, 30, 20]);
-            }
+    function focusTyping(force = false) {
+        const hiddenInput = document.getElementById('hiddenKeyboardInput');
+        if (hiddenInput) {
+            hiddenInput.focus({ preventScroll: true });
         }
+    }
 
-        function setupTouchGestures() {
-            let touchStartX = 0;
-            let touchStartY = 0;
-            const quizCard = document.getElementById('quizCard');
+    function setupMobileCtrlButton() {
+        const btn = document.getElementById('mobileCtrlPeekBtn');
+        if (!btn) return;
 
-            quizCard.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            peekCurrentWord();
+            triggerHaptic('light');
+            btn.classList.add('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+        }, { passive: false });
 
-            quizCard.addEventListener('touchend', (e) => {
-                const diffX = e.changedTouches[0].screenX - touchStartX;
-                const diffY = e.changedTouches[0].screenY - touchStartY;
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            hideCurrentWordPeek();
+            btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            focusTyping(true);
+        }, { passive: false });
 
-                if (Math.abs(diffX) > 60 && Math.abs(diffY) < 50) {
-                    if (diffX < 0) {
-                        if (isCompleted) nextQuestion();
-                    } else {
-                        speakSentence();
-                    }
+        btn.addEventListener('touchcancel', () => {
+            hideCurrentWordPeek();
+            btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+        });
+    }
+
+    function triggerHaptic(type = 'light') {
+        if ('vibrate' in navigator) {
+            if (type === 'light') navigator.vibrate(12);
+            else if (type === 'error') navigator.vibrate([25, 40, 25]);
+            else if (type === 'success') navigator.vibrate([15, 30, 20]);
+        }
+    }
+
+    function setupTouchGestures() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const quizCard = document.getElementById('quizCard');
+
+        quizCard.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        quizCard.addEventListener('touchend', (e) => {
+            const diffX = e.changedTouches[0].screenX - touchStartX;
+            const diffY = e.changedTouches[0].screenY - touchStartY;
+
+            if (Math.abs(diffX) > 60 && Math.abs(diffY) < 50) {
+                if (diffX < 0) {
+                    if (isCompleted) nextQuestion();
+                } else {
+                    speakSentence();
                 }
-            }, { passive: true });
-        }
+            }
+        }, { passive: true });
+    }
 
-        // ==========================================
-        // QUẢN LÝ TỪ VỰNG (NHẬP TỪ / RESET / XÓA)
-        // ==========================================
-        function openVocabManager() {
+    // ==========================================
+    // QUẢN LÝ TỪ VỰNG (NHẬP TỪ / RESET / XÓA)
+    // ==========================================
+    function openVocabManager() {
+        renderVocabList();
+        switchModalTab('list');
+        document.getElementById('vocabModal').classList.remove('hidden');
+    }
+
+    function closeVocabManager() {
+        document.getElementById('vocabModal').classList.add('hidden');
+        focusTyping();
+    }
+
+    function switchModalTab(tab) {
+        const listTab = document.getElementById('tabList');
+        const importTab = document.getElementById('tabImport');
+        const listBtn = document.getElementById('tabListBtn');
+        const importBtn = document.getElementById('tabImportBtn');
+
+        if (tab === 'list') {
+            listTab.classList.remove('hidden');
+            importTab.classList.add('hidden');
+            listBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
+            importBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+        } else {
+            listTab.classList.add('hidden');
+            importTab.classList.remove('hidden');
+            importBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
+            listBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+        }
+    }
+
+    function renderVocabList() {
+        const container = document.getElementById('vocabListContainer');
+        container.innerHTML = '';
+        document.getElementById('vocabCount').innerText = vocabList.length;
+
+        vocabList.forEach((item, idx) => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-200';
+            row.innerHTML = `
+                <div class="min-w-0 flex-1 pr-3">
+                    <div class="font-bold text-white truncate">${idx + 1}. ${item.en}</div>
+                    <div class="text-[11px] text-blue-300/70 truncate">${item.vi}</div>
+                </div>
+                <button onclick="deleteVocabItem(${idx})" class="p-2 text-rose-400 hover:text-rose-300 transition" title="Xóa câu này">
+                    <i class="fa-regular fa-trash-can"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function deleteVocabItem(idx) {
+        if (vocabList.length <= 1) {
+            showToast("Cần giữ lại ít nhất 1 câu để luyện tập!");
+            return;
+        }
+        vocabList.splice(idx, 1);
+        saveCurrentAccountData();
+        renderVocabList();
+        if (currentIndex >= vocabList.length) {
+            currentIndex = 0;
+        }
+        renderQuestion();
+        showToast("Đã xóa câu thành công!");
+    }
+
+    function appendImportedVocab() {
+        const raw = document.getElementById('bulkImportInput').value.trim();
+        if (!raw) {
+            showToast("Vui lòng nhập nội dung câu theo định dạng Tiếng Việt | Tiếng Anh");
+            return;
+        }
+        const lines = raw.split('\n');
+        let addedCount = 0;
+
+        lines.forEach(line => {
+            const parts = line.split('|');
+            if (parts.length >= 2) {
+                const vi = parts[0].trim();
+                const en = parts[1].trim();
+                if (vi && en) {
+                    vocabList.push({
+                        vi: vi,
+                        en: en,
+                        category: `Luyện viết · Tự chọn`
+                    });
+                    addedCount++;
+                }
+            }
+        });
+
+        if (addedCount > 0) {
+            saveCurrentAccountData();
+            document.getElementById('bulkImportInput').value = '';
             renderVocabList();
             switchModalTab('list');
-            document.getElementById('vocabModal').classList.remove('hidden');
+            showToast(`Đã thêm ${addedCount} câu vào máy chủ!`);
+        } else {
+            showToast("Không tìm thấy câu hợp lệ! Định dạng: Tiếng Việt | Tiếng Anh");
         }
+    }
 
-        function closeVocabManager() {
-            document.getElementById('vocabModal').classList.add('hidden');
-            focusTyping();
+    function replaceImportedVocab() {
+        const raw = document.getElementById('bulkImportInput').value.trim();
+        if (!raw) {
+            showToast("Vui lòng nhập nội dung câu!");
+            return;
         }
+        const lines = raw.split('\n');
+        const newList = [];
 
-        function switchModalTab(tab) {
-            const listTab = document.getElementById('tabList');
-            const importTab = document.getElementById('tabImport');
-            const listBtn = document.getElementById('tabListBtn');
-            const importBtn = document.getElementById('tabImportBtn');
-
-            if (tab === 'list') {
-                listTab.classList.remove('hidden');
-                importTab.classList.add('hidden');
-                listBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
-                importBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
-            } else {
-                listTab.classList.add('hidden');
-                importTab.classList.remove('hidden');
-                importBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
-                listBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
-            }
-        }
-
-        function renderVocabList() {
-            const container = document.getElementById('vocabListContainer');
-            container.innerHTML = '';
-            document.getElementById('vocabCount').innerText = vocabList.length;
-
-            vocabList.forEach((item, idx) => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center justify-between p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-200';
-                row.innerHTML = `
-                    <div class="min-w-0 flex-1 pr-3">
-                        <div class="font-bold text-white truncate">${idx + 1}. ${item.en}</div>
-                        <div class="text-[11px] text-blue-300/70 truncate">${item.vi}</div>
-                    </div>
-                    <button onclick="deleteVocabItem(${idx})" class="p-2 text-rose-400 hover:text-rose-300 transition" title="Xóa câu này">
-                        <i class="fa-regular fa-trash-can"></i>
-                    </button>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        function deleteVocabItem(idx) {
-            if (vocabList.length <= 1) {
-                showToast("Cần giữ lại ít nhất 1 câu để luyện tập!");
-                return;
-            }
-            vocabList.splice(idx, 1);
-            saveCurrentAccountData();
-            renderVocabList();
-            if (currentIndex >= vocabList.length) {
-                currentIndex = 0;
-            }
-            renderQuestion();
-            showToast("Đã xóa câu thành công!");
-        }
-
-        function appendImportedVocab() {
-            const raw = document.getElementById('bulkImportInput').value.trim();
-            if (!raw) {
-                showToast("Vui lòng nhập nội dung câu theo định dạng Tiếng Việt | Tiếng Anh");
-                return;
-            }
-            const lines = raw.split('\n');
-            let addedCount = 0;
-
-            lines.forEach(line => {
-                const parts = line.split('|');
-                if (parts.length >= 2) {
-                    const vi = parts[0].trim();
-                    const en = parts[1].trim();
-                    if (vi && en) {
-                        vocabList.push({
-                            vi: vi,
-                            en: en,
-                            category: `Luyện viết · Tự chọn`
-                        });
-                        addedCount++;
-                    }
-                }
-            });
-
-            if (addedCount > 0) {
-                saveCurrentAccountData();
-                document.getElementById('bulkImportInput').value = '';
-                renderVocabList();
-                switchModalTab('list');
-                showToast(`Đã thêm ${addedCount} câu vào kho từ vựng!`);
-            } else {
-                showToast("Không tìm thấy câu hợp lệ! Định dạng: Tiếng Việt | Tiếng Anh");
-            }
-        }
-
-        function replaceImportedVocab() {
-            const raw = document.getElementById('bulkImportInput').value.trim();
-            if (!raw) {
-                showToast("Vui lòng nhập nội dung câu!");
-                return;
-            }
-            const lines = raw.split('\n');
-            const newList = [];
-
-            lines.forEach(line => {
-                const parts = line.split('|');
-                if (parts.length >= 2) {
-                    const vi = parts[0].trim();
-                    const en = parts[1].trim();
-                    if (vi && en) {
-                        newList.push({
-                            vi: vi,
-                            en: en,
-                            category: `Luyện viết · Bài mới`
-                        });
-                    }
-                }
-            });
-
-            if (newList.length > 0) {
-                vocabList = newList;
-                currentIndex = 0;
-                saveCurrentAccountData();
-                document.getElementById('bulkImportInput').value = '';
-                renderVocabList();
-                switchModalTab('list');
-                renderQuestion();
-                showToast(`Đã thay thế toàn bộ bằng ${newList.length} câu mới!`);
-            } else {
-                showToast("Không tìm thấy câu hợp lệ!");
-            }
-        }
-
-        function resetDefaultVocab() {
-            vocabList = [...DEFAULT_VOCABULARY];
-            currentIndex = 0;
-            saveCurrentAccountData();
-            renderVocabList();
-            renderQuestion();
-            showToast("Đã khôi phục bộ câu mẫu A1-A2 ban đầu!");
-        }
-
-        // ==========================================
-        // PROFILE, STREAK & MODALS
-        // ==========================================
-        function toggleProfileDropdown() {
-            const dropdown = document.getElementById('profileDropdown');
-            dropdown.classList.toggle('hidden');
-        }
-
-        function updateStreakUI() {
-            document.getElementById('userDisplayName').innerText = streakData.userName;
-            document.getElementById('userDisplayNameHeader').innerText = streakData.userName;
-            document.getElementById('userEmailDisplay').innerText = streakData.userEmail;
-            document.getElementById('userAvatarHeader').src = streakData.userAvatar;
-            document.getElementById('userAvatarDropdown').src = streakData.userAvatar;
-
-            document.getElementById('currentStreakDisplay').innerText = streakData.currentStreak || 0;
-            document.getElementById('longestStreakDisplay').innerText = streakData.longestStreak || 0;
-
-            const pts = streakData.todayPoints || 0;
-            document.getElementById('streakPointsLabel').innerText = `${pts}/10 điểm streak hôm nay`;
-            document.getElementById('streakProgressBar').style.width = `${Math.min(100, pts * 10)}%`;
-
-            document.getElementById('profileTotalSolved').innerText = `${streakData.totalSolved || 0} câu`;
-            document.getElementById('profileStreakDisplay').innerText = `${streakData.currentStreak || 0} ngày 🔥`;
-
-            const lbToggle = document.getElementById('leaderboardToggle');
-            if (lbToggle) lbToggle.checked = !!streakData.showOnLeaderboard;
-
-            const rmToggle = document.getElementById('reminderToggle');
-            if (rmToggle) rmToggle.checked = !!streakData.reminderEnabled;
-        }
-
-        function openProfileModal() {
-            document.getElementById('profileDropdown').classList.add('hidden');
-            document.getElementById('profileEditName').value = streakData.userName;
-            document.getElementById('profileEditEmail').value = streakData.userEmail;
-            document.getElementById('profileEditLevel').value = streakData.level || 'A1';
-            document.getElementById('profileEditAvatarPreview').src = streakData.userAvatar;
-            document.getElementById('profileModal').classList.remove('hidden');
-        }
-
-        function closeProfileModal() {
-            document.getElementById('profileModal').classList.add('hidden');
-        }
-
-        function selectPresetAvatar(url) {
-            document.getElementById('profileEditAvatarPreview').src = url;
-        }
-
-        function saveProfileChanges() {
-            const newName = document.getElementById('profileEditName').value.trim();
-            const newEmail = document.getElementById('profileEditEmail').value.trim();
-            const newLevel = document.getElementById('profileEditLevel').value;
-            const newAvatar = document.getElementById('profileEditAvatarPreview').src;
-
-            if (newName) streakData.userName = newName;
-            if (newEmail) streakData.userEmail = newEmail;
-            streakData.level = newLevel;
-            streakData.userAvatar = newAvatar;
-
-            saveCurrentAccountData();
-            updateStreakUI();
-            closeProfileModal();
-            showToast("Đã lưu thông tin hồ sơ thành công!");
-        }
-
-        function openChangeNameModal() {
-            document.getElementById('profileDropdown').classList.add('hidden');
-            document.getElementById('quickNameInput').value = streakData.userName;
-            document.getElementById('changeNameModal').classList.remove('hidden');
-        }
-
-        function closeChangeNameModal() {
-            document.getElementById('changeNameModal').classList.add('hidden');
-        }
-
-        function saveQuickName() {
-            const val = document.getElementById('quickNameInput').value.trim();
-            if (val) {
-                streakData.userName = val;
-                saveCurrentAccountData();
-                updateStreakUI();
-                closeChangeNameModal();
-                showToast("Đã đổi tên hiển thị thành công!");
-            }
-        }
-
-        function handleProfileAuthAction() {
-            document.getElementById('profileDropdown').classList.add('hidden');
-            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
-                document.getElementById('logoutModal').classList.remove('hidden');
-            } else {
-                openAuthModal('login');
-            }
-        }
-
-        function closeLogoutModal() {
-            document.getElementById('logoutModal').classList.add('hidden');
-        }
-
-        function confirmLogoutAction() {
-            currentAccountKey = "guest";
-            localStorage.setItem('dailylexis_current_user', 'guest');
-            streakData.isLoggedIn = false;
-            streakData.userName = "Khách (Chưa đăng nhập)";
-            streakData.userEmail = "Nhấn để đăng nhập / đăng ký";
-            streakData.currentStreak = 0;
-            streakData.todayPoints = 0;
-
-            syncAccountData();
-            closeLogoutModal();
-            updateStreakUI();
-            updateAuthStatusUI();
-            showToast("Đã đăng xuất tài khoản!");
-            openAuthModal('register');
-        }
-
-        function toggleDarkMode(isDark) {
-            streakData.isDarkMode = isDark;
-            applyTheme(isDark);
-            saveCurrentAccountData();
-        }
-
-        function applyTheme(isDark) {
-            const body = document.body;
-            if (isDark) {
-                body.classList.remove('light-mode');
-            } else {
-                body.classList.add('light-mode');
-            }
-        }
-
-        function changeLanguage(lang) {
-            streakData.language = lang;
-            applyLanguage(lang);
-            saveCurrentAccountData();
-        }
-
-        function applyLanguage(lang) {
-            const select = document.getElementById('languageSelect');
-            if (select) select.value = lang;
-        }
-
-        function openReminderModal() {
-            document.getElementById('reminderTimeInput').value = streakData.reminderTime || "20:00";
-            document.getElementById('reminderModal').classList.remove('hidden');
-        }
-
-        function closeReminderModal() {
-            document.getElementById('reminderModal').classList.add('hidden');
-        }
-
-        function saveReminderSettings() {
-            streakData.reminderEnabled = true;
-            streakData.reminderTime = document.getElementById('reminderTimeInput').value;
-            const toggle = document.getElementById('reminderToggle');
-            if (toggle) toggle.checked = true;
-            saveCurrentAccountData();
-            closeReminderModal();
-            showToast(`Đã bật nhắc nhở vào lúc ${streakData.reminderTime} mỗi ngày!`);
-        }
-
-        function handleReminderToggle(checked) {
-            streakData.reminderEnabled = checked;
-            saveCurrentAccountData();
-            showToast(checked ? "Đã bật nhắc học mỗi ngày!" : "Đã tắt nhắc học.");
-        }
-
-        function toggleLeaderboardPreference(checked) {
-            streakData.showOnLeaderboard = checked;
-            saveCurrentAccountData();
-            showToast(checked ? "Đã bật hiển thị trên Bảng xếp hạng!" : "Đã ẩn khỏi Bảng xếp hạng.");
-        }
-
-        function showLeaderboardToast() {
-            showToast("🏆 Bảng xếp hạng: Bạn đang đứng Top 3 trong tuần này!");
-        }
-
-        function openShortcutModal() {
-            document.getElementById('shortcutModal').classList.remove('hidden');
-        }
-
-        function closeShortcutModal() {
-            document.getElementById('shortcutModal').classList.add('hidden');
-            focusTyping();
-        }
-
-        function showSummaryScreen() {
-            document.getElementById('summaryTotal').innerText = vocabList.length;
-            const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
-            document.getElementById('summaryAccuracy').innerText = `${acc}%`;
-            document.getElementById('summaryModal').classList.remove('hidden');
-        }
-
-        function restartQuiz() {
-            document.getElementById('summaryModal').classList.add('hidden');
-            currentIndex = 0;
-            renderQuestion();
-        }
-
-        function closeSummaryAndOpenManager() {
-            document.getElementById('summaryModal').classList.add('hidden');
-            openVocabManager();
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toastNotice');
-            const msgEl = document.getElementById('toastMessage');
-            if (!toast || !msgEl) return;
-            msgEl.innerText = msg;
-            toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
-            toast.classList.add('opacity-100', 'translate-y-0');
-
-            setTimeout(() => {
-                toast.classList.remove('opacity-100', 'translate-y-0');
-                toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
-            }, 3000);
-        }
-
-        // ==========================================
-        // HIỆU ỨNG NỀN TRỜI SAO VŨ TRỤ
-        // ==========================================
-        function initStarCanvas() {
-            const canvas = document.getElementById('starsCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            let stars = [];
-
-            function resize() {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                stars = [];
-                const count = Math.floor((canvas.width * canvas.height) / 5000);
-                for (let i = 0; i < count; i++) {
-                    stars.push({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height,
-                        radius: Math.random() * 1.3 + 0.3,
-                        alpha: Math.random() * 0.8 + 0.2,
-                        speed: Math.random() * 0.015 + 0.005
+        lines.forEach(line => {
+            const parts = line.split('|');
+            if (parts.length >= 2) {
+                const vi = parts[0].trim();
+                const en = parts[1].trim();
+                if (vi && en) {
+                    newList.push({
+                        vi: vi,
+                        en: en,
+                        category: `Luyện viết · Bài mới`
                     });
                 }
             }
+        });
 
-            window.addEventListener('resize', resize);
-            resize();
-
-            function draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                stars.forEach(s => {
-                    s.alpha += s.speed;
-                    if (s.alpha > 1 || s.alpha < 0.2) s.speed = -s.speed;
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(200, 230, 255, ${Math.abs(s.alpha)})`;
-                    ctx.fill();
-                });
-                requestAnimationFrame(draw);
-            }
-            draw();
+        if (newList.length > 0) {
+            vocabList = newList;
+            currentIndex = 0;
+            saveCurrentAccountData();
+            document.getElementById('bulkImportInput').value = '';
+            renderVocabList();
+            switchModalTab('list');
+            renderQuestion();
+            showToast(`Đã thay thế toàn bộ bằng ${newList.length} câu mới trên máy chủ!`);
+        } else {
+            showToast("Không tìm thấy câu hợp lệ!");
         }
-    </script>
+    }
+
+    function resetDefaultVocab() {
+        vocabList = [...DEFAULT_VOCABULARY];
+        currentIndex = 0;
+        saveCurrentAccountData();
+        renderVocabList();
+        renderQuestion();
+        showToast("Đã khôi phục bộ câu mẫu A1-A2 ban đầu!");
+    }
+
+    // ==========================================
+    // PROFILE, STREAK & MODALS
+    // ==========================================
+    function toggleProfileDropdown() {
+        const dropdown = document.getElementById('profileDropdown');
+        dropdown.classList.toggle('hidden');
+    }
+
+    function updateStreakUI() {
+        document.getElementById('userDisplayName').innerText = streakData.userName;
+        document.getElementById('userDisplayNameHeader').innerText = streakData.userName;
+        document.getElementById('userEmailDisplay').innerText = streakData.userEmail;
+        document.getElementById('userAvatarHeader').src = streakData.userAvatar;
+        document.getElementById('userAvatarDropdown').src = streakData.userAvatar;
+
+        document.getElementById('currentStreakDisplay').innerText = streakData.currentStreak || 0;
+        document.getElementById('longestStreakDisplay').innerText = streakData.longestStreak || 0;
+
+        const pts = streakData.todayPoints || 0;
+        document.getElementById('streakPointsLabel').innerText = `${pts}/10 điểm streak hôm nay`;
+        document.getElementById('streakProgressBar').style.width = `${Math.min(100, pts * 10)}%`;
+
+        document.getElementById('profileTotalSolved').innerText = `${streakData.totalSolved || 0} câu`;
+        document.getElementById('profileStreakDisplay').innerText = `${streakData.currentStreak || 0} ngày 🔥`;
+
+        const lbToggle = document.getElementById('leaderboardToggle');
+        if (lbToggle) lbToggle.checked = !!streakData.showOnLeaderboard;
+
+        const rmToggle = document.getElementById('reminderToggle');
+        if (rmToggle) rmToggle.checked = !!streakData.reminderEnabled;
+    }
+
+    function openProfileModal() {
+        document.getElementById('profileDropdown').classList.add('hidden');
+        document.getElementById('profileEditName').value = streakData.userName;
+        document.getElementById('profileEditEmail').value = streakData.userEmail;
+        document.getElementById('profileEditLevel').value = streakData.level || 'A1';
+        document.getElementById('profileEditAvatarPreview').src = streakData.userAvatar;
+        document.getElementById('profileModal').classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+        document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    function selectPresetAvatar(url) {
+        document.getElementById('profileEditAvatarPreview').src = url;
+    }
+
+    function saveProfileChanges() {
+        const newName = document.getElementById('profileEditName').value.trim();
+        const newEmail = document.getElementById('profileEditEmail').value.trim();
+        const newLevel = document.getElementById('profileEditLevel').value;
+        const newAvatar = document.getElementById('profileEditAvatarPreview').src;
+
+        if (newName) streakData.userName = newName;
+        if (newEmail) streakData.userEmail = newEmail;
+        streakData.level = newLevel;
+        streakData.userAvatar = newAvatar;
+
+        saveCurrentAccountData();
+        updateStreakUI();
+        closeProfileModal();
+        showToast("Đã lưu thông tin hồ sơ lên máy chủ!");
+    }
+
+    function openChangeNameModal() {
+        document.getElementById('profileDropdown').classList.add('hidden');
+        document.getElementById('quickNameInput').value = streakData.userName;
+        document.getElementById('changeNameModal').classList.remove('hidden');
+    }
+
+    function closeChangeNameModal() {
+        document.getElementById('changeNameModal').classList.add('hidden');
+    }
+
+    function saveQuickName() {
+        const val = document.getElementById('quickNameInput').value.trim();
+        if (val) {
+            streakData.userName = val;
+            saveCurrentAccountData();
+            updateStreakUI();
+            closeChangeNameModal();
+            showToast("Đã đổi tên hiển thị thành công!");
+        }
+    }
+
+    function handleProfileAuthAction() {
+        document.getElementById('profileDropdown').classList.add('hidden');
+        if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+            document.getElementById('logoutModal').classList.remove('hidden');
+        } else {
+            openAuthModal('login');
+        }
+    }
+
+    function closeLogoutModal() {
+        document.getElementById('logoutModal').classList.add('hidden');
+    }
+
+    function confirmLogoutAction() {
+        currentAccountKey = "guest";
+        localStorage.setItem('dailylexis_current_user', 'guest');
+        streakData.isLoggedIn = false;
+        streakData.userName = "Khách (Chưa đăng nhập)";
+        streakData.userEmail = "Nhấn để đăng nhập / đăng ký";
+        streakData.currentStreak = 0;
+        streakData.todayPoints = 0;
+
+        syncAccountData();
+        closeLogoutModal();
+        updateStreakUI();
+        updateAuthStatusUI();
+        showToast("Đã đăng xuất tài khoản!");
+        openAuthModal('register');
+    }
+
+    function toggleDarkMode(isDark) {
+        streakData.isDarkMode = isDark;
+        applyTheme(isDark);
+        saveCurrentAccountData();
+    }
+
+    function applyTheme(isDark) {
+        const body = document.body;
+        if (isDark) {
+            body.classList.remove('light-mode');
+        } else {
+            body.classList.add('light-mode');
+        }
+    }
+
+    function changeLanguage(lang) {
+        streakData.language = lang;
+        applyLanguage(lang);
+        saveCurrentAccountData();
+    }
+
+    function applyLanguage(lang) {
+        const select = document.getElementById('languageSelect');
+        if (select) select.value = lang;
+    }
+
+    function openReminderModal() {
+        document.getElementById('reminderTimeInput').value = streakData.reminderTime || "20:00";
+        document.getElementById('reminderModal').classList.remove('hidden');
+    }
+
+    function closeReminderModal() {
+        document.getElementById('reminderModal').classList.add('hidden');
+    }
+
+    function saveReminderSettings() {
+        streakData.reminderEnabled = true;
+        streakData.reminderTime = document.getElementById('reminderTimeInput').value;
+        const toggle = document.getElementById('reminderToggle');
+        if (toggle) toggle.checked = true;
+        saveCurrentAccountData();
+        closeReminderModal();
+        showToast(`Đã bật nhắc nhở vào lúc ${streakData.reminderTime} mỗi ngày!`);
+    }
+
+    function handleReminderToggle(checked) {
+        streakData.reminderEnabled = checked;
+        saveCurrentAccountData();
+        showToast(checked ? "Đã bật nhắc học mỗi ngày!" : "Đã tắt nhắc học.");
+    }
+
+    function toggleLeaderboardPreference(checked) {
+        streakData.showOnLeaderboard = checked;
+        saveCurrentAccountData();
+        showToast(checked ? "Đã bật hiển thị trên Bảng xếp hạng!" : "Đã ẩn khỏi Bảng xếp hạng.");
+    }
+
+    function showLeaderboardToast() {
+        showToast("🏆 Bảng xếp hạng: Bạn đang đứng Top 3 trong tuần này!");
+    }
+
+    function openShortcutModal() {
+        document.getElementById('shortcutModal').classList.remove('hidden');
+    }
+
+    function closeShortcutModal() {
+        document.getElementById('shortcutModal').classList.add('hidden');
+        focusTyping();
+    }
+
+    function showSummaryScreen() {
+        document.getElementById('summaryTotal').innerText = vocabList.length;
+        const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
+        document.getElementById('summaryAccuracy').innerText = `${acc}%`;
+        document.getElementById('summaryModal').classList.remove('hidden');
+    }
+
+    function restartQuiz() {
+        document.getElementById('summaryModal').classList.add('hidden');
+        currentIndex = 0;
+        renderQuestion();
+    }
+
+    function closeSummaryAndOpenManager() {
+        document.getElementById('summaryModal').classList.add('hidden');
+        openVocabManager();
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toastNotice');
+        const msgEl = document.getElementById('toastMessage');
+        if (!toast || !msgEl) return;
+        msgEl.innerText = msg;
+        toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+        toast.classList.add('opacity-100', 'translate-y-0');
+
+        setTimeout(() => {
+            toast.classList.remove('opacity-100', 'translate-y-0');
+            toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+        }, 3000);
+    }
+
+    // ==========================================
+    // HIỆU ỨNG NỀN TRỜI SAO VŨ TRỤ
+    // ==========================================
+    function initStarCanvas() {
+        const canvas = document.getElementById('starsCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 5000);
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.3 + 0.3,
+                    alpha: Math.random() * 0.8 + 0.2,
+                    speed: Math.random() * 0.015 + 0.005
+                });
+            }
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(s => {
+                s.alpha += s.speed;
+                if (s.alpha > 1 || s.alpha < 0.2) s.speed = -s.speed;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(200, 230, 255, ${Math.abs(s.alpha)})`;
+                ctx.fill();
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+</script>
 </body>
 </html>
