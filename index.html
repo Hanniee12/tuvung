@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DailyLexis - Luyện viết & Khảo từ vựng</title>
+    <title>Trần Hưng Tài - Luyện viết & Khảo từ vựng</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Google Fonts Inter & Space Grotesk -->
+    <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -32,28 +32,6 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(56, 95, 160, 0.28);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 40px rgba(24, 76, 160, 0.15);
-        }
-
-        /* Character Slot Styles */
-        .char-slot {
-            width: 2.25rem;
-            height: 2.75rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.5rem;
-            border: 1.5px solid rgba(148, 163, 184, 0.25);
-            background: rgba(15, 23, 42, 0.75);
-            color: #94a3b8;
-            font-weight: 700;
-            transition: all 0.15s ease-in-out;
-        }
-
-        @media (min-width: 640px) {
-            .char-slot {
-                width: 2.6rem;
-                height: 3.1rem;
-            }
         }
 
         /* Active typing slot styling with cyan glow */
@@ -190,6 +168,18 @@
             opacity: 0.18;
         }
 
+        /* Mobile specific adjustments when keyboard is open */
+        @media (max-width: 640px) {
+            body {
+                min-height: 100dvh;
+            }
+            .mobile-peek-btn {
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: none;
+            }
+        }
+
         /* Toast notification styling */
         #toastNotice {
             transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -218,7 +208,7 @@
             z-index: 1;
         }
 
-        /* KHÓA CỨNG MÀN HÌNH ĐIỆN THOẠI: Chống 100% giật cuộn và kéo tuột màn hình khi gõ */
+        /* KHÓA CỨNG MÀN HÌNH ĐIỆN THOẠI: Chống 100% hiện tượng màn hình bị kéo tuột lên trên */
         @media (max-width: 640px) {
             html, body {
                 position: fixed;
@@ -242,11 +232,6 @@
                 font-size: 1.15rem !important;
                 line-height: 1.4 !important;
             }
-            .mobile-peek-btn {
-                user-select: none;
-                -webkit-user-select: none;
-                touch-action: none;
-            }
         }
 
         /* Custom scrollbar for vocab list */
@@ -268,9 +253,10 @@
     <canvas id="starsCanvas"></canvas>
 
     <!-- Invisible input to capture mobile keyboard seamlessly without jumping page -->
+    <!-- Đặt input cố định ở chính giữa phần hiển thị để bàn phím không bao giờ kéo màn hình lên -->
     <input type="text" id="hiddenKeyboardInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="fixed opacity-0 pointer-events-none w-px h-px top-1/4 left-1/2 -translate-x-1/2" style="font-size: 16px;" />
 
-    <!-- AUTH MODAL (Đăng ký / Đăng nhập) -->
+    <!-- AUTH MODAL (Đăng ký / Đăng nhập đồng bộ đám mây) -->
     <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden">
         <div class="glass-card w-full max-w-md rounded-3xl p-6 sm:p-8 text-slate-100 border border-blue-500/30 relative shadow-2xl">
             <button onclick="closeAuthModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
@@ -282,71 +268,24 @@
                 <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/20 mb-3 text-2xl">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                 </div>
-                <h3 class="text-xl font-bold text-white tracking-tight" id="authModalTitle">Đăng ký tài khoản mới</h3>
+                <h3 class="text-xl font-bold text-white tracking-tight" id="authModalTitle">Đăng nhập tài khoản</h3>
                 <p class="text-xs text-blue-200/70 mt-1">Đồng bộ từ vựng và chuỗi streak xuyên suốt giữa điện thoại và máy tính</p>
             </div>
 
-            <!-- Tab Switcher (Đăng ký / Đăng nhập) -->
-        <div class="flex p-1 bg-slate-900/90 rounded-2xl border border-slate-800 mb-5">
-            <button id="authTabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm">
-                Đăng ký mới
-            </button>
-            <button id="authTabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
-                Đăng nhập
-            </button>
-        </div>
-
-        <!-- Form -->
-        <form onsubmit="handleAuthSubmit(event)" class="space-y-3.5 text-xs">
-            <!-- Field: Tên hiển thị (chỉ hiện khi Đăng ký) -->
-            <div id="authDisplayNameField">
-                <label class="block text-slate-300 font-semibold mb-1">Họ và tên hiển thị</label>
-                <div class="relative">
-                    <i class="fa-regular fa-user absolute left-3.5 top-3 text-slate-400"></i>
-                    <input type="text" id="authDisplayName" placeholder="Ví dụ: Trần Hưng Tài" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-                </div>
+            <!-- Tab Switcher (Đăng nhập / Đăng ký) -->
+            <div class="flex p-1 bg-slate-900/90 rounded-2xl border border-slate-800 mb-5">
+                <button id="authTabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm">
+                    Đăng nhập
+                </button>
+                <button id="authTabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
+                    Đăng ký mới
+                </button>
             </div>
-
-            <!-- Field: Username / Email -->
-            <div>
-                <label class="block text-slate-300 font-semibold mb-1">Tên tài khoản hoặc Email</label>
-                <div class="relative">
-                    <i class="fa-regular fa-envelope absolute left-3.5 top-3 text-slate-400"></i>
-                    <input type="text" id="authUsername" required placeholder="Nhập tên đăng nhập hoặc email..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-                </div>
-            </div>
-
-            <!-- Field: Password -->
-            <div>
-                <label class="block text-slate-300 font-semibold mb-1">Mật khẩu</label>
-                <div class="relative">
-                    <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400"></i>
-                    <input type="password" id="authPassword" required placeholder="Nhập mật khẩu..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
-                    <button type="button" onclick="togglePasswordVisibility('authPassword')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200">
-                        <i class="fa-regular fa-eye text-xs"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Cloud Sync Status notice -->
-            <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex items-center space-x-2 text-[11px] text-blue-200/80">
-                <i class="fa-solid fa-server text-cyan-400 shrink-0 text-sm"></i>
-                <span id="authNoticeText">Tài khoản lưu trực tiếp trên máy chủ. Đăng nhập cùng tài khoản trên điện thoại là tự tải từ vựng về.</span>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2">
-                <span id="authSubmitBtnText">Tạo tài khoản</span>
-                <i id="authLoadingSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
-            </button>
-        </form>
-    </div>
-</div>
 
             <!-- Form -->
             <form onsubmit="handleAuthSubmit(event)" class="space-y-3.5 text-xs">
                 <!-- Field: Tên hiển thị (chỉ hiện khi Đăng ký) -->
-                <div id="authDisplayNameField">
+                <div id="authDisplayNameField" class="hidden">
                     <label class="block text-slate-300 font-semibold mb-1">Họ và tên hiển thị</label>
                     <div class="relative">
                         <i class="fa-regular fa-user absolute left-3.5 top-3 text-slate-400"></i>
@@ -375,15 +314,17 @@
                     </div>
                 </div>
 
-                <!-- Cloud Sync Status notice -->
-                <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex items-center space-x-2 text-[11px] text-blue-200/80">
-                    <i class="fa-solid fa-cloud-arrow-up text-cyan-400 shrink-0 text-sm"></i>
-                    <span id="authNoticeText">Tài khoản được lưu trên máy chủ đám mây, đăng nhập được trên cả điện thoại và máy tính.</span>
+                <!-- Sync note & Quick Transfer Code option -->
+                <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex flex-col space-y-1.5 text-[11px] text-blue-200/80">
+                    <div class="flex items-start space-x-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-cyan-400 mt-0.5 shrink-0"></i>
+                        <span>Dữ liệu đăng ký được đồng bộ lên máy chủ đám mây trực tuyến để bạn đăng nhập trên điện thoại và máy tính khác.</span>
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2">
-                    <span id="authSubmitBtnText">Tạo tài khoản</span>
+                    <span id="authSubmitBtnText">Đăng nhập & Đồng bộ</span>
                     <i id="authLoadingSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
             </form>
@@ -392,16 +333,17 @@
 
     <!-- TOP HEADER BAR -->
     <header class="relative z-30 w-full px-3 sm:px-8 py-3 flex items-center justify-between border-b border-blue-900/30 bg-slate-950/40 backdrop-blur-md">
-        <!-- Back button & Branding -->
+        <!-- Back button & Breadcrumb -->
         <div class="flex items-center space-x-2 sm:space-x-3">
             <button onclick="openVocabManager()" class="flex items-center space-x-2 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-950/40 text-blue-200 hover:bg-blue-900/50 hover:text-white transition-all shadow-sm">
                 <i class="fa-solid fa-arrow-left text-xs"></i>
                 <span class="hidden sm:inline">Quay lại</span>
             </button>
 
+            <!-- Trần Hưng Tài Logo / Branding -->
             <div class="flex items-center space-x-2">
                 <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center">
-                    Daily<span class="text-cyan-400 font-black">Lexis</span>
+                    Trần<span class="text-cyan-400 font-black">Hưng Tài</span>
                 </span>
             </div>
         </div>
@@ -422,7 +364,7 @@
             <!-- Add vocab button -->
             <button onclick="openVocabManager()" title="Quản lý từ vựng / Nhập câu của bạn" class="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/30 text-xs sm:text-sm text-cyan-200 font-medium transition">
                 <i class="fa-solid fa-plus text-xs"></i>
-                <span class="hidden md:inline">Nhập từ</span>
+                <span class="hidden md:inline" data-i18n="importVocab">Nhập từ</span>
             </button>
 
             <!-- Audio button -->
@@ -435,10 +377,10 @@
                 <i class="fa-regular fa-lightbulb text-sm"></i>
             </button>
 
-            <!-- Leaderboard button -->
+            <!-- Leaderboard button (from Image 1) -->
             <button onclick="showLeaderboardToast()" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-950/20 hover:bg-amber-900/30 text-amber-200/90 text-xs font-semibold transition">
                 <i class="fa-solid fa-trophy text-amber-400"></i>
-                <span>Bảng xếp hạng</span>
+                <span data-i18n="leaderboard">Bảng xếp hạng</span>
             </button>
 
             <!-- Notification bell -->
@@ -447,80 +389,86 @@
             </button>
 
             <!-- Cloud Sync Indicator / Login button -->
-            <button id="authTriggerBtn" onclick="openAuthModal('login')" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/40 text-cyan-200 text-xs font-semibold transition">
+            <button id="authTriggerBtn" onclick="openAuthModal()" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/40 text-cyan-200 text-xs font-semibold transition">
                 <i class="fa-solid fa-cloud text-cyan-400"></i>
-                <span id="authStatusText">Đăng nhập</span>
+                <span id="authStatusText">Đồng bộ</span>
             </button>
 
-            <!-- User Profile Badge & Streak Trigger -->
+            <!-- User Profile Badge & Streak Trigger (from Image 1) -->
             <div class="relative">
                 <button onclick="toggleProfileDropdown()" class="flex items-center space-x-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/40 text-slate-100 transition shadow-sm">
                     <img id="userAvatarHeader" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="w-6 h-6 rounded-lg object-cover border border-emerald-400">
-                    <span class="text-xs font-semibold text-slate-200 hidden md:inline" id="userDisplayNameHeader">Khách (Chưa đăng nhập)</span>
+                    <span class="text-xs font-semibold text-slate-200 hidden md:inline" id="userDisplayNameHeader">Trần Hưng Tài</span>
                     <i class="fa-solid fa-arrow-right-from-bracket text-xs text-slate-400 hidden sm:inline ml-1"></i>
                 </button>
 
-                <!-- USER PROFILE & STREAK DROPDOWN MODAL -->
-                <div id="profileDropdown" class="absolute right-0 top-12 w-[340px] sm:w-[380px] bg-white text-slate-800 rounded-3xl shadow-2xl p-5 border border-slate-200 z-50 hidden transition-all duration-200 text-left">
+                <!-- USER PROFILE & STREAK DROPDOWN MODAL (Identical to Image 1) -->
+                <div id="profileDropdown" class="absolute right-0 top-12 w-[340px] sm:w-[380px] bg-white text-slate-800 rounded-3xl shadow-2xl p-5 border border-slate-200 z-50 hidden transition-all duration-200 animate-fade-in text-left">
                     <!-- Profile Header -->
                     <div class="flex items-center space-x-3 pb-4 cursor-pointer hover:opacity-85 transition" onclick="openProfileModal()">
                         <img id="userAvatarDropdown" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" alt="Avatar" class="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200">
                         <div class="min-w-0 flex-1">
-                            <h4 class="font-bold text-base text-slate-900 leading-tight truncate" id="userDisplayName">Khách (Chưa đăng nhập)</h4>
-                            <p class="text-xs text-slate-500 font-normal truncate" id="userEmailDisplay">Nhấn để đăng nhập / đăng ký</p>
+                            <h4 class="font-bold text-base text-slate-900 leading-tight truncate" id="userDisplayName">Trần Hưng Tài</h4>
+                            <p class="text-xs text-slate-500 font-normal truncate" id="userEmailDisplay">tainopro6@gmail.com</p>
                         </div>
                         <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
                     </div>
 
-                    <!-- Streak Card -->
+                    <!-- Streak Card (Orange Container from Image 1) -->
                     <div class="bg-[#fef4e8] border border-orange-200/80 rounded-2xl p-4 mb-4">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center space-x-2">
                                 <span class="text-2xl leading-none">🔥</span>
                                 <div>
-                                    <span class="text-lg font-black text-slate-800" id="currentStreakDisplay">0</span>
-                                    <span class="block text-[11px] text-slate-600 font-medium">Chuỗi hiện tại</span>
+                                    <span class="text-lg font-black text-slate-800" id="currentStreakDisplay">1</span>
+                                    <span class="block text-[11px] text-slate-600 font-medium" data-i18n="currentStreak">Chuỗi hiện tại</span>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <span class="text-lg font-black text-slate-800" id="longestStreakDisplay">0</span>
-                                <span class="block text-[11px] text-slate-600 font-medium">Chuỗi dài nhất</span>
+                                <span class="text-lg font-black text-slate-800" id="longestStreakDisplay">1</span>
+                                <span class="block text-[11px] text-slate-600 font-medium" data-i18n="longestStreak">Chuỗi dài nhất</span>
                             </div>
                         </div>
 
                         <!-- Daily Points Progress -->
                         <div class="text-xs font-bold text-[#b45309] mb-1.5 flex items-center justify-between">
-                            <span id="streakPointsLabel">0/10 điểm streak hôm nay</span>
+                            <span id="streakPointsLabel">10/10 điểm streak hôm nay</span>
                         </div>
                         <div class="w-full bg-orange-200/70 h-2 rounded-full overflow-hidden mb-2.5">
-                            <div id="streakProgressBar" class="bg-[#ea580c] h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+                            <div id="streakProgressBar" class="bg-[#ea580c] h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
                         </div>
-                        <p class="text-[10px] text-slate-600 leading-relaxed font-normal">
+                        <p class="text-[10px] text-slate-600 leading-relaxed font-normal" data-i18n="streakRules">
                             Đạt 10 điểm/ngày: mỗi câu Nghe hoặc Viết (kể cả bỏ qua câu Viết) = 1 điểm; hoàn thành bài Từ vựng = 10 điểm.
                         </p>
                     </div>
 
                     <!-- Profile Options List -->
                     <div class="space-y-1 text-xs text-slate-700 font-medium">
-                        <!-- Hồ sơ cá nhân -->
+                        <!-- 1. Hồ sơ cá nhân -->
                         <button onclick="openProfileModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left">
                             <i class="fa-regular fa-user text-slate-500 w-4"></i>
-                            <span>Hồ sơ cá nhân</span>
+                            <span data-i18n="profile">Hồ sơ cá nhân</span>
                         </button>
 
-                        <!-- Đổi tên hiển thị -->
+                        <!-- Backup / Sync Code Button -->
+                        <button onclick="openBackupCodeModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-blue-600 font-medium">
+                            <i class="fa-solid fa-key w-4"></i>
+                            <span>Mã đồng bộ nhanh tài khoản</span>
+                        </button>
+
+                        <!-- 2. Đổi tên hiển thị -->
                         <button onclick="openChangeNameModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left">
                             <i class="fa-regular fa-circle-user text-slate-500 w-4"></i>
-                            <span>Đổi tên hiển thị</span>
+                            <span data-i18n="changeName">Đổi tên hiển thị</span>
                         </button>
 
-                        <!-- Hiện trên bảng xếp hạng (Toggle Switch) -->
+                        <!-- 3. Hiện trên bảng xếp hạng (Toggle Switch) -->
                         <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 transition">
                             <div class="flex items-start space-x-3">
                                 <i class="fa-solid fa-trophy text-slate-500 w-4 mt-0.5"></i>
                                 <div>
-                                    <div class="font-medium text-slate-800">Hiện trên bảng xếp hạng</div>
-                                    <div class="text-[10px] text-slate-400">Chỉ công khai tên và ảnh đại diện</div>
+                                    <div class="font-medium text-slate-800" data-i18n="showOnLeaderboard">Hiện trên bảng xếp hạng</div>
+                                    <div class="text-[10px] text-slate-400" data-i18n="showOnLeaderboardDesc">Chỉ công khai tên và ảnh đại diện</div>
                                 </div>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
@@ -533,16 +481,16 @@
 
                         <!-- Divider -->
                         <div class="border-t border-slate-200 my-2 pt-2">
-                            <span class="text-[10px] font-bold text-slate-400 tracking-wider block px-3 mb-1">CÀI ĐẶT</span>
+                            <span class="text-[10px] font-bold text-slate-400 tracking-wider block px-3 mb-1" data-i18n="settings">CÀI ĐẶT</span>
                         </div>
 
-                        <!-- Giao diện tối switch -->
+                        <!-- 5. Giao diện tối switch -->
                         <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 transition">
                             <div class="flex items-start space-x-3">
                                 <i class="fa-regular fa-moon text-slate-500 w-4 mt-0.5"></i>
                                 <div>
-                                    <div class="font-medium text-slate-800">Giao diện tối</div>
-                                    <div class="text-[10px] text-slate-400">Tắt để dùng giao diện sáng</div>
+                                    <div class="font-medium text-slate-800" data-i18n="darkMode">Giao diện tối</div>
+                                    <div class="text-[10px] text-slate-400" data-i18n="darkModeDesc">Tắt để dùng giao diện sáng</div>
                                 </div>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
@@ -553,11 +501,11 @@
                             </label>
                         </div>
 
-                        <!-- Language Selector -->
+                        <!-- 6. Language Selector -->
                         <div class="px-3 py-2">
                             <div class="flex items-center space-x-2 text-slate-800 font-medium mb-1.5">
                                 <i class="fa-solid fa-language text-slate-500 w-4"></i>
-                                <span>Ngôn ngữ giao diện</span>
+                                <span data-i18n="language">Ngôn ngữ giao diện</span>
                             </div>
                             <select id="languageSelect" onchange="changeLanguage(this.value)" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-3 py-2 font-medium focus:outline-none">
                                 <option value="vi" selected>Tiếng Việt</option>
@@ -565,13 +513,13 @@
                             </select>
                         </div>
 
-                        <!-- Study reminder -->
+                        <!-- 7. Study reminder -->
                         <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 transition">
                             <div class="flex items-start space-x-3 cursor-pointer" onclick="openReminderModal()">
                                 <i class="fa-regular fa-bell text-slate-500 w-4 mt-0.5"></i>
                                 <div>
-                                    <div class="font-medium text-slate-800">Nhắc học</div>
-                                    <div class="text-[10px] text-slate-400" id="reminderStatusDesc">Nhận thông báo theo lịch của bạn</div>
+                                    <div class="font-medium text-slate-800" data-i18n="reminder">Nhắc học</div>
+                                    <div class="text-[10px] text-slate-400" id="reminderStatusDesc" data-i18n="reminderDesc">Nhận thông báo theo lịch của bạn</div>
                                 </div>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
@@ -582,10 +530,10 @@
                             </label>
                         </div>
 
-                        <!-- Logout / Login Switch -->
+                        <!-- 8. Logout / Login Switch -->
                         <button id="profileAuthActionBtn" onclick="handleProfileAuthAction()" class="w-full flex items-center space-x-3 px-3 py-2.5 text-rose-600 rounded-xl hover:bg-rose-50 transition font-semibold text-left">
                             <i class="fa-solid fa-arrow-right-from-bracket w-4"></i>
-                            <span id="profileAuthActionText">Đăng nhập</span>
+                            <span id="profileAuthActionText" data-i18n="logout">Đăng xuất</span>
                         </button>
                     </div>
                 </div>
@@ -598,7 +546,7 @@
         <span id="toastMessage">Thông báo</span>
     </div>
 
-    <!-- MODAL: HỒ SƠ CÁ NHÂN -->
+    <!-- MODAL 1: HỒ SƠ CÁ NHÂN -->
     <div id="profileModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
         <div class="glass-card w-full max-w-lg rounded-3xl p-6 sm:p-7 text-slate-100 border border-blue-500/30 relative max-h-[92vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-4 border-b border-slate-700/60 mb-5">
@@ -606,7 +554,7 @@
                     <div class="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-500/40 text-cyan-300 flex items-center justify-center">
                         <i class="fa-regular fa-user text-base"></i>
                     </div>
-                    <h3 class="text-lg font-bold text-white">Hồ sơ cá nhân</h3>
+                    <h3 class="text-lg font-bold text-white" data-i18n="profileModalTitle">Hồ sơ cá nhân</h3>
                 </div>
                 <button onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
                     <i class="fa-solid fa-xmark text-sm"></i>
@@ -616,7 +564,7 @@
             <!-- Avatar selector -->
             <div class="flex flex-col items-center mb-6">
                 <img id="profileEditAvatarPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-2 border-cyan-400 shadow-lg mb-3">
-                <span class="text-xs text-slate-400 mb-2">Chọn ảnh đại diện nhanh:</span>
+                <span class="text-xs text-slate-400 mb-2" data-i18n="chooseAvatar">Chọn ảnh đại diện nhanh:</span>
                 <div class="flex items-center space-x-2">
                     <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-cyan-400 transition">
                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
@@ -636,7 +584,7 @@
             <!-- Profile Info Form -->
             <div class="space-y-4 text-xs">
                 <div>
-                    <label class="block text-slate-300 font-semibold mb-1">Họ và tên hiển thị</label>
+                    <label class="block text-slate-300 font-semibold mb-1" data-i18n="fullName">Họ và tên hiển thị</label>
                     <input type="text" id="profileEditName" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-cyan-400">
                 </div>
                 <div>
@@ -644,7 +592,7 @@
                     <input type="email" id="profileEditEmail" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-cyan-400">
                 </div>
                 <div>
-                    <label class="block text-slate-300 font-semibold mb-1">Trình độ hiện tại</label>
+                    <label class="block text-slate-300 font-semibold mb-1" data-i18n="currentLevel">Trình độ hiện tại</label>
                     <select id="profileEditLevel" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-cyan-400">
                         <option value="A1">A1 - Mới bắt đầu (Beginner)</option>
                         <option value="A2">A2 - Sơ cấp (Elementary)</option>
@@ -656,81 +604,82 @@
                 <!-- Stats summary -->
                 <div class="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
                     <div>
-                        <div class="text-[11px] text-slate-400">Tổng câu đã làm</div>
+                        <div class="text-[11px] text-slate-400" data-i18n="totalSolved">Tổng câu đã làm</div>
                         <div class="text-base font-bold text-cyan-400" id="profileTotalSolved">0 câu</div>
                     </div>
                     <div>
-                        <div class="text-[11px] text-slate-400">Chuỗi ngày học</div>
-                        <div class="text-base font-bold text-orange-400" id="profileStreakDisplay">0 ngày 🔥</div>
+                        <div class="text-[11px] text-slate-400" data-i18n="streakDays">Chuỗi ngày học</div>
+                        <div class="text-base font-bold text-orange-400" id="profileStreakDisplay">1 ngày 🔥</div>
                     </div>
                 </div>
             </div>
 
             <!-- Modal buttons -->
             <div class="flex items-center justify-end space-x-2 pt-5 border-t border-slate-700/60 mt-5">
-                <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">Đóng</button>
-                <button type="button" onclick="saveProfileChanges()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition shadow-md">Lưu thay đổi</button>
+                <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition" data-i18n="cancel">Đóng</button>
+                <button type="button" onclick="saveProfileChanges()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition shadow-md" data-i18n="save">Lưu thay đổi</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: ĐỔI TÊN NHANH -->
+    <!-- MODAL 3: ĐỔI TÊN NHANH -->
     <div id="changeNameModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
         <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-slate-100 border border-blue-500/30 relative">
             <div class="flex items-center space-x-2.5 mb-4">
                 <div class="w-8 h-8 rounded-xl bg-blue-600/30 border border-blue-500/40 text-cyan-300 flex items-center justify-center">
                     <i class="fa-regular fa-circle-user text-base"></i>
                 </div>
-                <h3 class="text-base font-bold text-white">Đổi tên hiển thị</h3>
+                <h3 class="text-base font-bold text-white" data-i18n="changeNameModalTitle">Đổi tên hiển thị</h3>
             </div>
-            <p class="text-xs text-blue-200/70 mb-3">Tên hiển thị sẽ xuất hiện trên bài học và bảng xếp hạng.</p>
+            <p class="text-xs text-blue-200/70 mb-3" data-i18n="changeNameModalDesc">Tên hiển thị sẽ xuất hiện trên bài học và bảng xếp hạng.</p>
             <input type="text" id="quickNameInput" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-400 mb-4" placeholder="Nhập tên mới của bạn...">
             <div class="flex justify-end space-x-2 text-xs">
-                <button onclick="closeChangeNameModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition">Hủy</button>
-                <button onclick="saveQuickName()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition">Lưu tên</button>
+                <button onclick="closeChangeNameModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition" data-i18n="cancel">Hủy</button>
+                <button onclick="saveQuickName()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition" data-i18n="save">Lưu tên</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: NHẮC HỌC -->
+    <!-- MODAL 4: NHẮC HỌC & THÔNG BÁO -->
     <div id="reminderModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
         <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-slate-100 border border-blue-500/30 relative">
             <div class="flex items-center space-x-2.5 mb-4">
                 <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
                     <i class="fa-regular fa-bell text-base"></i>
                 </div>
-                <h3 class="text-base font-bold text-white">Cài đặt giờ nhắc học</h3>
+                <h3 class="text-base font-bold text-white" data-i18n="reminderSettings">Cài đặt giờ nhắc học</h3>
             </div>
-            <p class="text-xs text-blue-200/70 mb-4">Hệ thống sẽ gửi thông báo mỗi ngày để bạn duy trì chuỗi Streak học tiếng Anh.</p>
+            <p class="text-xs text-blue-200/70 mb-4" data-i18n="reminderSettingsDesc">Hệ thống sẽ gửi thông báo mỗi ngày để bạn duy trì chuỗi Streak học tiếng Anh.</p>
             <div class="mb-4">
-                <label class="block text-xs font-semibold text-slate-300 mb-1.5">Giờ nhắc nhở mỗi ngày:</label>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5" data-i18n="reminderTime">Giờ nhắc nhở mỗi ngày:</label>
                 <input type="time" id="reminderTimeInput" value="20:00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
             </div>
             <div class="flex justify-end space-x-2 text-xs">
-                <button onclick="closeReminderModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition">Đóng</button>
-                <button onclick="saveReminderSettings()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition">Bật nhắc nhở</button>
+                <button onclick="closeReminderModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition" data-i18n="cancel">Đóng</button>
+                <button onclick="saveReminderSettings()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition" data-i18n="saveReminder">Bật nhắc nhở</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: ĐĂNG XUẤT -->
+    <!-- MODAL 5: ĐĂNG XUẤT / ĐĂNG NHẬP -->
     <div id="logoutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
         <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-slate-100 border border-rose-500/30 relative text-center">
             <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl mx-auto mb-3">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </div>
-            <h3 class="text-base font-bold text-white mb-1.5">Xác nhận đăng xuất?</h3>
-            <p class="text-xs text-slate-300 mb-5">Bạn có muốn đăng xuất khỏi tài khoản? Dữ liệu streak và từ vựng vẫn được lưu trong file tài khoản của bạn.</p>
+            <h3 class="text-base font-bold text-white mb-1.5" data-i18n="confirmLogout">Xác nhận đăng xuất?</h3>
+            <p class="text-xs text-slate-300 mb-5" data-i18n="confirmLogoutDesc">Bạn có muốn đăng xuất khỏi tài khoản? Dữ liệu streak và từ vựng vẫn được lưu an toàn trên đám mây của tài khoản này.</p>
             <div class="flex items-center justify-center space-x-3 text-xs">
-                <button onclick="closeLogoutModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition">Hủy</button>
-                <button onclick="confirmLogoutAction()" class="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-white transition shadow-md">Đăng xuất</button>
+                <button onclick="closeLogoutModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition" data-i18n="cancel">Hủy</button>
+                <button onclick="confirmLogoutAction()" class="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-white transition shadow-md" data-i18n="logout">Đăng xuất</button>
             </div>
         </div>
     </div>
 
-    <!-- KEYBOARD SHORTCUTS MODAL -->
+    <!-- KEYBOARD SHORTCUTS MODAL (Identical to Image 2) -->
     <div id="shortcutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden" onclick="closeShortcutModal()">
-        <div class="w-full max-w-sm rounded-2xl p-5 border border-blue-500/30 bg-[#0f1d38] text-slate-100 shadow-2xl relative" onclick="event.stopPropagation()">
+        <div class="w-full max-w-sm rounded-2xl p-5 border border-blue-500/30 bg-[#0f1d38] text-slate-100 shadow-2xl relative animate-fade-in" onclick="event.stopPropagation()">
+            <!-- Header with yellow bulb & close button -->
             <div class="flex items-center justify-between pb-3 border-b border-blue-900/40">
                 <div class="flex items-center space-x-2 text-white font-bold text-base">
                     <i class="fa-solid fa-lightbulb text-amber-300 text-lg"></i>
@@ -741,10 +690,12 @@
                 </button>
             </div>
 
+            <!-- Description -->
             <p class="text-xs text-blue-200/80 my-4 leading-relaxed font-normal">
                 Dùng các phím tắt này để luyện viết nhanh và liền mạch hơn.
             </p>
 
+            <!-- Shortcut Badges List -->
             <div class="space-y-3 text-xs">
                 <!-- Ctrl -->
                 <div class="flex items-center space-x-3 cursor-pointer group" onmousedown="peekCurrentWord()" onmouseup="hideCurrentWordPeek()" onmouseleave="hideCurrentWordPeek()" ontouchstart="peekCurrentWord()" ontouchend="hideCurrentWordPeek()">
@@ -776,7 +727,7 @@
     <!-- MAIN EXERCISE WRAPPER -->
     <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-10 max-w-4xl mx-auto w-full" onclick="focusTyping()">
         
-        <!-- QUIZ CONTAINER CARD -->
+        <!-- QUIZ CONTAINER CARD (Exact Trần Hưng Tài replica) -->
         <div id="quizCard" class="glass-card w-full rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden">
             
             <!-- Category Subtitle -->
@@ -786,20 +737,20 @@
 
             <!-- Question Progress & Percentage -->
             <div class="flex items-center justify-between text-sm sm:text-base font-semibold text-slate-200 mb-2">
-                <span id="questionCounter">Câu 1 / 8</span>
-                <span id="progressPercent" class="text-cyan-300">12%</span>
+                <span id="questionCounter">Câu 6 / 12</span>
+                <span id="progressPercent" class="text-cyan-300">42%</span>
             </div>
 
             <!-- Progress Bar -->
             <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden mb-8 border border-slate-700/40">
-                <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-500 ease-out" style="width: 12%;"></div>
+                <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-500 ease-out" style="width: 42%;"></div>
             </div>
 
             <!-- Vietnamese Question Section -->
             <div class="mb-8">
                 <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300 mb-3 shadow-inner">
                     <i class="fa-regular fa-comment-dots text-cyan-400"></i>
-                    <span>Câu tiếng Việt</span>
+                    <span data-i18n="vietnameseSentence">Câu tiếng Việt</span>
                 </div>
                 <h2 id="vietnamesePrompt" class="text-xl sm:text-3xl font-bold text-white tracking-tight leading-snug sm:leading-tight">
                     Hai lát bánh mì được cho vào máy nướng bánh.
@@ -814,10 +765,10 @@
                 <div class="flex items-center justify-between mb-4">
                     <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300 shadow-inner">
                         <i class="fa-solid fa-pen text-cyan-400 text-[11px]"></i>
-                        <span>Câu trả lời</span>
+                        <span data-i18n="answerBadge">Câu trả lời</span>
                     </div>
 
-                    <button onclick="revealAnswer()" class="text-xs text-blue-300/70 hover:text-cyan-300 transition underline underline-offset-4">
+                    <button onclick="revealAnswer()" class="text-xs text-blue-300/70 hover:text-cyan-300 transition underline underline-offset-4" data-i18n="revealAnswer">
                         Xem đáp án
                     </button>
                 </div>
@@ -827,9 +778,10 @@
                     <!-- Dynamic slots will be generated here -->
                 </div>
 
+                <!-- Subtle user hint notification -->
                 <p class="text-xs text-blue-300/50 mt-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-keyboard text-[10px]"></i>
-                    <span>Gõ trực tiếp bàn phím để điền ký tự tiếp theo. Nhấn <b>Xem đáp án</b> hoặc <b>Bỏ qua</b> nếu cần.</span>
+                    <span data-i18n="typingHint">Gõ trực tiếp bàn phím để điền ký tự tiếp theo. Nhấn <b>Xem đáp án</b> hoặc <b>Bỏ qua</b> nếu cần.</span>
                 </p>
             </div>
 
@@ -837,43 +789,45 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
                 <!-- Skip button -->
                 <button id="skipBtn" onclick="skipQuestion()" class="w-full py-3.5 px-6 rounded-2xl border border-blue-400/30 bg-slate-900/60 hover:bg-slate-800/80 active:scale-[0.98] text-slate-200 font-bold text-base transition-all duration-200 flex items-center justify-center">
-                    <span>Bỏ qua</span>
+                    <span data-i18n="skipBtn">Bỏ qua</span>
                 </button>
 
                 <!-- Next button -->
                 <button id="nextBtn" onclick="nextQuestion()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] shadow-lg shadow-blue-500/25 text-white font-bold text-base transition-all duration-200 flex items-center justify-center space-x-2">
-                    <span id="nextBtnText">Câu tiếp</span>
+                    <span id="nextBtnText" data-i18n="nextBtn">Câu tiếp</span>
                     <i class="fa-solid fa-arrow-right text-sm"></i>
                 </button>
             </div>
 
-            <!-- Sentence Completed Banner -->
-            <div id="completionBanner" class="hidden mt-6 p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 flex items-center justify-between">
+            <!-- Sentence Completed Banner (Shown on correct finish) -->
+            <div id="completionBanner" class="hidden mt-6 p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 flex items-center justify-between animate-fade-in">
                 <div class="flex items-center space-x-3">
                     <div class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
                         <i class="fa-solid fa-check"></i>
                     </div>
                     <div>
-                        <div class="font-bold text-white text-sm">Chính xác tuyệt vời!</div>
+                        <div class="font-bold text-white text-sm" data-i18n="correctNice">Chính xác tuyệt vời!</div>
                         <div class="text-xs text-emerald-300" id="fullEnglishSentence"></div>
                     </div>
                 </div>
                 <button onclick="speakSentence()" class="p-2 rounded-lg bg-emerald-800/40 hover:bg-emerald-700/50 text-white text-xs flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-volume-high"></i> <span>Nghe lại</span>
+                    <i class="fa-solid fa-volume-high"></i> <span data-i18n="listenAgain">Nghe lại</span>
                 </button>
             </div>
 
         </div>
 
-        <!-- NÚT BẤM DÀNH CHO KÍCH THƯỚC ĐIỆN THOẠI (Chạm & Giữ giống phím Ctrl trên máy tính) -->
+        <!-- NÚT BẤM DÀNH RIÊNG CHO KÍCH THƯỚC ĐIỆN THOẠI (Chạm & Giữ giống phím Ctrl trên máy tính) -->
         <div class="block sm:hidden w-full max-w-sm mt-3 px-1">
             <div class="flex items-center gap-2">
+                <!-- Nút Xem từ (Ctrl) dành cho điện thoại: Giữ là hiện, nhả ra là tự ẩn -->
                 <button id="mobileCtrlPeekBtn" 
                     class="mobile-peek-btn flex-1 py-3 px-4 rounded-2xl bg-cyan-950/80 hover:bg-cyan-900/90 active:bg-cyan-800 border-2 border-cyan-400/60 text-cyan-200 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 transition">
                     <i class="fa-regular fa-eye text-base"></i>
                     <span>Giữ xem từ (Ctrl)</span>
                 </button>
 
+                <!-- Nút kích hoạt lại bàn phím điện thoại nếu bị ẩn -->
                 <button onclick="focusTyping(true)" class="py-3 px-4 rounded-2xl bg-slate-900/90 border border-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 shadow-md">
                     <i class="fa-solid fa-keyboard text-cyan-400"></i>
                     <span>Bật phím</span>
@@ -888,7 +842,7 @@
 
     <!-- FOOTER INFO -->
     <footer class="relative z-10 w-full text-center py-4 text-xs text-blue-300/40">
-        Luyện phản xạ gõ từ vựng tiếng Anh theo phương pháp DailyLexis • Tự do thêm câu học của riêng bạn
+        Luyện phản xạ gõ từ vựng tiếng Anh theo phương pháp Trần Hưng Tài • Tự do thêm câu học của riêng bạn
     </footer>
 
     <!-- VOCABULARY MANAGEMENT MODAL -->
@@ -952,7 +906,7 @@
         </div>
     </div>
 
-    <!-- MODAL SUMMARY SCREEN -->
+    <!-- MODAL SUMMARY SCREEN (Hiện khi học xong toàn bộ câu) -->
     <div id="summaryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
         <div class="glass-card w-full max-w-sm rounded-3xl p-6 sm:p-8 text-center text-slate-100 border border-blue-500/40 relative">
             <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl mx-auto mb-4 border border-emerald-500/30">
@@ -981,441 +935,871 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT LOGIC HOÀN CHỈNH -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- MODAL 6: MÃ ĐỒNG BỘ NHANH LIÊN THIẾT BỊ -->
+    <div id="backupCodeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 text-slate-100 border border-cyan-500/30 relative">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700/60 mb-4">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Đồng bộ đa thiết bị tức thì</h3>
+                </div>
+                <button onclick="closeBackupCodeModal()" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-blue-200/80 mb-3">
+                Bạn có thể sao chép chuỗi mã này từ máy tính và dán vào điện thoại (hoặc ngược lại) để chuyển ngay tài khoản và toàn bộ từ vựng mà không cần đăng ký lại:
+            </p>
 
-    // Khởi tạo Firebase trực tiếp để kết nối máy chủ dữ liệu đám mây
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'dailylexis-default-app';
-    let db = null;
-    let auth = null;
-    let isCloudReady = false;
+            <div class="mb-4">
+                <label class="block text-[11px] text-slate-400 font-semibold mb-1">Mã đồng bộ tài khoản hiện tại:</label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="currentAccountSyncCode" readonly class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 select-all focus:outline-none">
+                    <button onclick="copySyncCode()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shrink-0">
+                        <i class="fa-regular fa-copy mr-1"></i> Chép
+                    </button>
+                </div>
+            </div>
 
-    async function initCloudDatabase() {
-        try {
-            if (typeof __firebase_config !== 'undefined') {
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+            <div class="border-t border-slate-700/60 pt-3">
+                <label class="block text-[11px] text-slate-400 font-semibold mb-1">Hoặc nhập mã từ thiết bị khác để nạp:</label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="inputImportSyncCode" placeholder="Dán mã tài khoản vào đây..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-400">
+                    <button onclick="importAccountBySyncCode()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shrink-0">
+                        Nạp ngay
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                isCloudReady = true;
-            }
-        } catch (err) {
-            console.warn("Firebase init note:", err);
-        }
-    }
+    <!-- JAVASCRIPT LOGIC -->
+    <!-- Firebase SDK Imports for cross-device cloud sync -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Cơ chế lưu và lấy dữ liệu trực tiếp trên máy chủ đám mây
-    const BACKUP_SERVER_URL = "https://api.restful-api.dev/objects";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'Trần Hưng Tài-vocab-sync';
+        let db = null;
+        let auth = null;
+        let cloudUser = null;
 
-    async function saveAccountToServer(accKey, dataObj) {
-        // 1. Lưu lên Firestore (Máy chủ chính)
-        if (db && isCloudReady) {
+        async function initCloud() {
             try {
-                const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', accKey);
-                await setDoc(accountDocRef, {
-                    ...dataObj,
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
-            } catch (e) {
-                console.warn("Firestore save error:", e);
-            }
-        }
+                if (typeof __firebase_config !== 'undefined') {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
 
-        // 2. Đồng bộ lên máy chủ REST API dự phòng để điện thoại luôn lấy được dù ở bất kỳ mạng nào
-        try {
-            await fetch(BACKUP_SERVER_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name: "lexis_user_" + accKey,
-                    data: dataObj
-                })
-            });
-        } catch (e) {
-            console.warn("Backup server save error:", e);
-        }
-    }
-
-    async function getAccountFromServer(accKey) {
-        // 1. Tìm trên Firestore trước
-        if (db && isCloudReady) {
-            try {
-                const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', accKey);
-                const snapshot = await getDoc(accountDocRef);
-                if (snapshot.exists()) {
-                    return snapshot.data();
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    cloudUser = auth.currentUser;
                 }
             } catch (e) {
-                console.warn("Firestore fetch error:", e);
+                console.warn("Cloud connection fallback mode active:", e);
             }
         }
 
-        // 2. Tìm trên máy chủ REST API nếu Firestore chưa phản hồi
-        try {
-            const res = await fetch(BACKUP_SERVER_URL);
-            if (res.ok) {
-                const list = await res.json();
-                const targetName = "lexis_user_" + accKey;
-                const matches = list.filter(item => item && item.name === targetName);
-                if (matches.length > 0) {
-                    return matches[matches.length - 1].data;
+        await initCloud();
+
+        // Universal Public Cloud Storage with API Fallback so accounts always exist between devices
+        window.cloudSync = {
+            async saveUserData(accountKey, payload) {
+                // 1. Firebase Firestore public path
+                if (db && cloudUser) {
+                    try {
+                        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_accounts', accountKey);
+                        await setDoc(userDocRef, {
+                            ...payload,
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                    } catch (err) {
+                        console.warn("Firebase save error:", err);
+                    }
                 }
+                // 2. Global Public KV Sync Fallback (Ensures phone and PC always see each other)
+                try {
+                    await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/${appId}_${accountKey}`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                } catch (e) {}
+            },
+            async fetchUserData(accountKey) {
+                // 1. Try Firebase first
+                if (db && cloudUser) {
+                    try {
+                        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_accounts', accountKey);
+                        const snap = await getDoc(userDocRef);
+                        if (snap.exists()) {
+                            return snap.data();
+                        }
+                    } catch (err) {
+                        console.warn("Firebase fetch error:", err);
+                    }
+                }
+                // 2. Try Global KV Sync Fallback
+                try {
+                    const res = await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/${appId}_${accountKey}`);
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch (e) {}
+                return null;
             }
-        } catch (e) {
-            console.warn("Backup server fetch error:", e);
-        }
-        return null;
-    }
+        };
+    </script>
 
-    // Đưa hàm ra window để form HTML gọi trực tiếp
-    window.saveAccountToServer = saveAccountToServer;
-    window.getAccountFromServer = getAccountFromServer;
-    window.initCloudDatabase = initCloudDatabase;
+    <script>
+        // Default sample sentences representing Trần Hưng Tài A1-A2 topics
+        const DEFAULT_VOCABULARY = [
+          
+        ];
 
-    // Kích hoạt máy chủ ngay khi tải trang
-    initCloudDatabase();
-</script>
+        // App State
+        let vocabList = [];
+        let currentIndex = 0;
+        let currentTarget = "";
+        let currentVi = "";
+        let currentCharIndex = 0;
+        let isCompleted = false;
+        let correctKeystrokes = 0;
+        let totalKeystrokes = 0;
+        let isCtrlPeeking = false;
 
-<script>
-    // Sample sentences
-    const DEFAULT_VOCABULARY = [
-        {
-            vi: "Hai lát bánh mì được cho vào máy nướng bánh.",
-            en: "Two slices of bread are put into the toaster.",
-            category: "Luyện viết · A1 · Cooking Breakfast"
-        },
-        {
-            vi: "Tôi thích uống một tách trà nóng vào mỗi buổi sáng sớm.",
-            en: "I like to drink a cup of hot tea early every morning.",
-            category: "Luyện viết · A1 · Daily Habits"
-        },
-        {
-            vi: "Anh ấy đánh răng trước khi đi ngủ mỗi tối.",
-            en: "He brushes his teeth before going to bed every night.",
-            category: "Luyện viết · A1 · Daily Routine"
-        },
-        {
-            vi: "Mẹ tôi đang chuẩn bị một bữa sáng ngon miệng trong bếp.",
-            en: "My mother is preparing a delicious breakfast in the kitchen.",
-            category: "Luyện viết · A1 · Cooking Breakfast"
-        },
-        {
-            vi: "Trứng ốp la và xúc xích là món ăn sáng yêu thích của tôi.",
-            en: "Fried eggs and sausages are my favorite breakfast.",
-            category: "Luyện viết · A1 · Cooking Breakfast"
-        },
-        {
-            vi: "Cô ấy thường đọc vài trang sách trước khi đi làm.",
-            en: "She usually reads a few book pages before going to work.",
-            category: "Luyện viết · A2 · Daily Routine"
-        },
-        {
-            vi: "Thời tiết hôm nay thật đẹp để đi dạo trong công viên.",
-            en: "The weather today is wonderful for walking in the park.",
-            category: "Luyện viết · A2 · Weather & Nature"
-        },
-        {
-            vi: "Đừng quên tắt máy nướng bánh mì khi bạn dùng xong.",
-            en: "Do not forget to turn off the toaster when you finish.",
-            category: "Luyện viết · A2 · Kitchen Safety"
-        }
-    ];
+        // Current Active Account Key (hash/identifier for cross-device sync)
+        let currentAccountKey = "guest";
+        let authCurrentTab = "login"; // 'login' or 'register'
 
-    // App State
-    let vocabList = [];
-    let currentIndex = 0;
-    let currentTarget = "";
-    let currentVi = "";
-    let currentCharIndex = 0;
-    let isCompleted = false;
-    let correctKeystrokes = 0;
-    let totalKeystrokes = 0;
-    let isCtrlPeeking = false;
-
-    // Active Account Key
-    let currentAccountKey = "guest";
-    let authCurrentTab = "register";
-
-    // Streak & Profile State
-    let streakData = {
-        currentStreak: 0,
-        longestStreak: 0,
-        todayPoints: 0,
-        lastDate: new Date().toDateString(),
-        userName: "Khách (Chưa đăng nhập)",
-        userEmail: "Nhấn để đăng nhập / đăng ký",
-        userAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
-        level: "A1",
-        totalSolved: 0,
-        showOnLeaderboard: false,
-        isDarkMode: true,
-        language: "vi",
-        reminderEnabled: false,
-        reminderTime: "20:00",
-        isLoggedIn: false
-    };
-
-    // Web Audio Synthesizer (Tiếng phím cơ & chime)
-    let audioCtx = null;
-    function getAudioContext() {
-        if (!audioCtx) {
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (AudioContextClass) audioCtx = new AudioContextClass();
-        }
-        if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        return audioCtx;
-    }
-
-    function playKeySound(type = 'click') {
-        try {
-            const ctx = getAudioContext();
-            if (!ctx) return;
-            const now = ctx.currentTime;
-
-            if (type === 'click') {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(1200 + Math.random() * 200, now);
-                osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.04);
-            } else if (type === 'error') {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(140, now);
-                osc.frequency.linearRampToValueAtTime(70, now + 0.12);
-                gain.gain.setValueAtTime(0.18, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.12);
-            } else if (type === 'success') {
-                [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, now + idx * 0.06);
-                    gain.gain.setValueAtTime(0.12, now + idx * 0.06);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now + idx * 0.06);
-                    osc.stop(now + idx * 0.06 + 0.35);
-                });
-            }
-        } catch (e) {}
-    }
-
-    function getAccountStoreKey(rawIdentifier) {
-        if (!rawIdentifier) return 'user_guest';
-        const clean = rawIdentifier.trim().toLowerCase().replace(/[@.]/g, '_').replace(/[^a-z0-9_]/g, '');
-        return 'user_' + clean;
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        loadCurrentSession();
-        syncAccountData();
-        applyTheme(streakData.isDarkMode);
-        applyLanguage(streakData.language);
-        initStarCanvas();
-        renderQuestion();
-        setupEventListeners();
-        setupTouchGestures();
-        setupMobileCtrlButton();
-
-        if (!streakData.isLoggedIn || currentAccountKey === "guest") {
-            openAuthModal('register');
-        }
-    });
-
-    function loadCurrentSession() {
-        try {
-            const sessionKey = localStorage.getItem('dailylexis_current_user');
-            currentAccountKey = sessionKey ? sessionKey : "guest";
-        } catch (e) {
-            currentAccountKey = "guest";
-        }
-    }
-
-    function syncAccountData() {
-        try {
-            const localData = localStorage.getItem('dailylexis_data_' + currentAccountKey);
-            if (localData) {
-                const parsed = JSON.parse(localData);
-                streakData = Object.assign(streakData, parsed.streakData || {});
-                vocabList = parsed.vocabList || [];
-            }
-        } catch (e) {}
-
-        if (!vocabList || vocabList.length === 0) {
-            vocabList = [...DEFAULT_VOCABULARY];
-        }
-
-        streakData.isLoggedIn = currentAccountKey !== "guest";
-        saveCurrentAccountData();
-        updateStreakUI();
-        updateAuthStatusUI();
-    }
-
-    function saveCurrentAccountData() {
-        let authInfo = null;
-        try {
-            const regStr = localStorage.getItem('dailylexis_auth_registry');
-            if (regStr) {
-                const reg = JSON.parse(regStr);
-                if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
-            }
-        } catch (e) {}
-
-        const payload = {
-            accountKey: currentAccountKey,
-            streakData: streakData,
-            vocabList: vocabList,
-            authInfo: authInfo
+        // Streak & Profile State
+        let streakData = {
+            currentStreak: 0,
+            longestStreak: 0,
+            todayPoints: 0,
+            lastDate: new Date().toDateString(),
+            userName: "Khách (Chưa đăng nhập)",
+            userEmail: "Nhấn để đăng nhập / đăng ký",
+            userAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
+            level: "A1",
+            totalSolved: 0,
+            showOnLeaderboard: false,
+            isDarkMode: true,
+            language: "vi",
+            reminderEnabled: false,
+            reminderTime: "20:00",
+            isLoggedIn: false
         };
 
-        try {
-            localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
-        } catch (e) {}
-
-        // Tự động đẩy lên máy chủ đám mây
-        if (streakData.isLoggedIn && currentAccountKey !== "guest" && window.saveAccountToServer) {
-            window.saveAccountToServer(currentAccountKey, payload);
+        // Hàm tạo key tài khoản an toàn cho LocalStorage và Cloud (Khắc phục lỗi getAccountStoreKey is not defined)
+        function getAccountStoreKey(rawIdentifier) {
+            if (!rawIdentifier) return 'user_guest';
+            return 'user_' + encodeURIComponent(rawIdentifier.trim().toLowerCase()).replace(/%/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
         }
 
-        const countEl = document.getElementById('vocabCount');
-        if (countEl) countEl.innerText = vocabList.length;
-    }
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', async () => {
+            loadCurrentSession();
+            await syncAccountData();
+            applyTheme(streakData.isDarkMode);
+            applyLanguage(streakData.language);
+            initStarCanvas();
+            renderQuestion();
+            setupEventListeners();
+            setupTouchGestures();
+            setupMobileCtrlButton();
 
-    function updateAuthStatusUI() {
-        const authStatusText = document.getElementById('authStatusText');
-        const profileAuthActionText = document.getElementById('profileAuthActionText');
-        const authTriggerBtn = document.getElementById('authTriggerBtn');
+            // Nếu chưa có tài khoản nào đăng nhập trên máy này, tự động hiện popup đăng ký ngay
+            checkInitialAuthPrompt();
+        });
 
-        if (streakData.isLoggedIn && currentAccountKey !== "guest") {
-            if (authStatusText) authStatusText.innerText = "Tài khoản";
-            if (profileAuthActionText) profileAuthActionText.innerText = "Đăng xuất";
-            if (authTriggerBtn) {
-                authTriggerBtn.classList.remove('border-amber-500/30', 'text-amber-200');
-                authTriggerBtn.classList.add('border-cyan-500/30', 'text-cyan-200');
+        // ==========================================
+        // MOBILE SPECIFIC: GIỮ XEM TỪ (GIỐNG PHÍM CTRL) & CHỐNG CHE MÀN HÌNH
+        // ==========================================
+        function setupMobileCtrlButton() {
+            const btn = document.getElementById('mobileCtrlPeekBtn');
+            if (!btn) return;
+
+            // Touch events for mobile phones
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                peekCurrentWord();
+                triggerHaptic('light');
+                btn.classList.add('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            }, { passive: false });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+                focusTyping(true); // Tiếp tục giữ focus bàn phím sau khi nhả nút
+            }, { passive: false });
+
+            btn.addEventListener('touchcancel', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            });
+
+            // Mouse fallbacks if tested on responsive devtools
+            btn.addEventListener('mousedown', () => {
+                peekCurrentWord();
+                btn.classList.add('bg-cyan-500', 'text-white');
+            });
+            btn.addEventListener('mouseup', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white');
+                focusTyping(true);
+            });
+            btn.addEventListener('mouseleave', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white');
+            });
+        }
+
+        // Haptic feedback for mobile touches
+        function triggerHaptic(type = 'light') {
+            if ('vibrate' in navigator) {
+                if (type === 'light') navigator.vibrate(12);
+                else if (type === 'error') navigator.vibrate([25, 40, 25]);
+                else if (type === 'success') navigator.vibrate([15, 30, 20]);
             }
-        } else {
-            if (authStatusText) authStatusText.innerText = "Đăng nhập";
-            if (profileAuthActionText) profileAuthActionText.innerText = "Đăng nhập";
-            if (authTriggerBtn) {
-                authTriggerBtn.classList.add('border-amber-500/30', 'text-amber-200');
-                authTriggerBtn.classList.remove('border-cyan-500/30', 'text-cyan-200');
+        }
+
+        // Swipe Gestures for Mobile (Vuốt màn hình để đổi câu / nghe lại)
+        function setupTouchGestures() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            const quizCard = document.getElementById('quizCard');
+
+            quizCard.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            quizCard.addEventListener('touchend', (e) => {
+                const diffX = e.changedTouches[0].screenX - touchStartX;
+                const diffY = e.changedTouches[0].screenY - touchStartY;
+
+                // Only consider horizontal swipes with minimal vertical scrolling
+                if (Math.abs(diffX) > 60 && Math.abs(diffY) < 50) {
+                    if (diffX < 0) {
+                        // Swipe Left: Next question if completed or Skip
+                        if (isCompleted) nextQuestion();
+                    } else {
+                        // Swipe Right: Replay pronunciation audio
+                        speakSentence();
+                    }
+                }
+            }, { passive: true });
+        }
+
+        function checkInitialAuthPrompt() {
+            if (!streakData.isLoggedIn || currentAccountKey === "guest") {
+                openAuthModal('register');
             }
         }
-    }
 
-    function openAuthModal(defaultTab = 'register') {
-        const dropdown = document.getElementById('profileDropdown');
-        if (dropdown) dropdown.classList.add('hidden');
-        switchAuthTab(defaultTab);
-        document.getElementById('authModal').classList.remove('hidden');
-    }
-
-    function closeAuthModal() {
-        document.getElementById('authModal').classList.add('hidden');
-    }
-
-    function switchAuthTab(tab) {
-        authCurrentTab = tab;
-        const loginBtn = document.getElementById('authTabLoginBtn');
-        const registerBtn = document.getElementById('authTabRegisterBtn');
-        const nameField = document.getElementById('authDisplayNameField');
-        const title = document.getElementById('authModalTitle');
-        const submitBtnText = document.getElementById('authSubmitBtnText');
-
-        if (tab === 'login') {
-            loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
-            registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
-            nameField.classList.add('hidden');
-            title.innerText = "Đăng nhập tài khoản";
-            submitBtnText.innerText = "Đăng nhập";
-        } else {
-            registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
-            loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
-            nameField.classList.remove('hidden');
-            title.innerText = "Đăng ký tài khoản mới";
-            submitBtnText.innerText = "Tạo tài khoản";
-        }
-    }
-
-    function togglePasswordVisibility(inputId) {
-        const input = document.getElementById(inputId);
-        if (input) input.type = input.type === 'password' ? 'text' : 'password';
-    }
-
-    async function handleAuthSubmit(e) {
-        e.preventDefault();
-        const rawIdentifier = document.getElementById('authUsername').value.trim();
-        const passwordInput = document.getElementById('authPassword').value.trim();
-        const displayNameInput = document.getElementById('authDisplayName').value.trim();
-        const submitBtn = document.getElementById('authSubmitBtn');
-        const spinner = document.getElementById('authLoadingSpinner');
-
-        if (!rawIdentifier || !passwordInput) {
-            showToast("Vui lòng điền đầy đủ thông tin!");
-            return;
+        function loadCurrentSession() {
+            try {
+                const sessionKey = localStorage.getItem('Trần Hưng Tài_current_user');
+                if (sessionKey) {
+                    currentAccountKey = sessionKey;
+                } else {
+                    currentAccountKey = "guest";
+                }
+            } catch (e) {
+                currentAccountKey = "guest";
+            }
         }
 
-        if (submitBtn) submitBtn.disabled = true;
-        if (spinner) spinner.classList.remove('hidden');
+        async function syncAccountData() {
+            let loaded = false;
 
-        try {
+            // 1. Kiểm tra trên Cloud Server trước để lấy từ vựng và tiến độ mới nhất từ máy kia
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                try {
+                    const cloudData = await window.cloudSync.fetchUserData(currentAccountKey);
+                    if (cloudData) {
+                        streakData = Object.assign(streakData, cloudData.streakData || {});
+                        if (cloudData.vocabList && cloudData.vocabList.length > 0) {
+                            vocabList = cloudData.vocabList;
+                        }
+                        // Cập nhật lại thông tin đăng nhập vào local nếu máy này chưa có
+                        if (cloudData.authInfo) {
+                            let reg = {};
+                            try {
+                                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
+                                if (regStr) reg = JSON.parse(regStr);
+                            } catch (e) {}
+                            reg[currentAccountKey] = cloudData.authInfo;
+                            localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(reg));
+                        }
+                        loaded = true;
+                    }
+                } catch (e) {}
+            }
+
+            // 2. Nếu Cloud chưa kịp phản hồi, đọc từ local cache
+            if (!loaded) {
+                try {
+                    const localData = localStorage.getItem('Trần Hưng Tài_data_' + currentAccountKey);
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        streakData = Object.assign(streakData, parsed.streakData || {});
+                        vocabList = parsed.vocabList || [];
+                        loaded = true;
+                    }
+                } catch (e) {}
+            }
+
+            if (!vocabList || vocabList.length === 0) {
+                vocabList = [...DEFAULT_VOCABULARY];
+            }
+
+            if (currentAccountKey !== "guest") {
+                streakData.isLoggedIn = true;
+            } else {
+                streakData.isLoggedIn = false;
+            }
+
+            saveCurrentAccountData();
+            updateStreakUI();
+            updateAuthStatusUI();
+        }
+
+        async function saveCurrentAccountData() {
+            let authInfo = null;
+            try {
+                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
+                if (regStr) {
+                    const reg = JSON.parse(regStr);
+                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
+                }
+            } catch (e) {}
+
+            const payload = {
+                accountKey: currentAccountKey,
+                streakData: streakData,
+                vocabList: vocabList,
+                authInfo: authInfo
+            };
+
+            try {
+                localStorage.setItem('Trần Hưng Tài_data_' + currentAccountKey, JSON.stringify(payload));
+            } catch (e) {}
+
+            // Đồng bộ trực tiếp lên Cloud để máy tính và điện thoại luôn đọc được của nhau
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                await window.cloudSync.saveUserData(currentAccountKey, payload);
+            }
+
+            const countEl = document.getElementById('vocabCount');
+            if (countEl) countEl.innerText = vocabList.length;
+        }
+
+        function updateAuthStatusUI() {
+            const authStatusText = document.getElementById('authStatusText');
+            const profileAuthActionText = document.getElementById('profileAuthActionText');
+            const authTriggerBtn = document.getElementById('authTriggerBtn');
+
+            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+                if (authStatusText) authStatusText.innerText = "Đã đồng bộ";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng xuất";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.remove('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.add('border-cyan-500/30', 'text-cyan-200');
+                }
+            } else {
+                if (authStatusText) authStatusText.innerText = "Đăng nhập";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng nhập";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.add('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.remove('border-cyan-500/30', 'text-cyan-200');
+                }
+            }
+        }
+
+        // Auth Modal Controls
+        function openAuthModal(defaultTab = 'login') {
+            profileDropdown.classList.add('hidden');
+            switchAuthTab(defaultTab);
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            authCurrentTab = tab;
+            const loginBtn = document.getElementById('authTabLoginBtn');
+            const registerBtn = document.getElementById('authTabRegisterBtn');
+            const nameField = document.getElementById('authDisplayNameField');
+            const title = document.getElementById('authModalTitle');
+            const submitBtnText = document.getElementById('authSubmitBtnText');
+
+            if (tab === 'login') {
+                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                nameField.classList.add('hidden');
+                title.innerText = "Đăng nhập tài khoản";
+                submitBtnText.innerText = "Đăng nhập & Đồng bộ";
+            } else {
+                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                nameField.classList.remove('hidden');
+                title.innerText = "Đăng ký tài khoản mới";
+                submitBtnText.innerText = "Tạo tài khoản & Lưu đám mây";
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const rawIdentifier = document.getElementById('authUsername').value.trim();
+            const passwordInput = document.getElementById('authPassword').value.trim();
+            const displayNameInput = document.getElementById('authDisplayName').value.trim();
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const spinner = document.getElementById('authLoadingSpinner');
+
+            if (!rawIdentifier || !passwordInput) {
+                showToast("Vui lòng điền đầy đủ thông tin!");
+                return;
+            }
+
+            if (submitBtn) submitBtn.disabled = true;
+            if (spinner) spinner.classList.remove('hidden');
+
+            try {
+                const cleanEmailOrUser = rawIdentifier.toLowerCase();
+                const targetKey = getAccountStoreKey(cleanEmailOrUser);
+
+                // 1. Tải danh sách đăng ký local
+                let registry = {};
+                try {
+                    const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
+                    if (regStr) registry = JSON.parse(regStr);
+                } catch (err) {}
+
+                // Kiểm tra tồn tại trên Cloud
+                let cloudAccountData = null;
+                if (window.cloudSync) {
+                    try {
+                        cloudAccountData = await window.cloudSync.fetchUserData(targetKey);
+                    } catch (e) {}
+                }
+
+                if (authCurrentTab === 'register') {
+                    // ĐĂNG KÝ MỚI
+                    const isTakenLocally = Object.keys(registry).some(k => {
+                        const item = registry[k];
+                        return k === targetKey || 
+                               (item.email && item.email.toLowerCase() === cleanEmailOrUser) || 
+                               (item.username && item.username.toLowerCase() === cleanEmailOrUser);
+                    });
+
+                    const isTakenInCloud = cloudAccountData && (cloudAccountData.authInfo || cloudAccountData.streakData);
+
+                    if (isTakenLocally || isTakenInCloud) {
+                        showToast("❌ Email hoặc tài khoản này đã được đăng ký! Hãy bấm Đăng nhập.");
+                        return;
+                    }
+
+                    // Lưu thông tin tài khoản mới
+                    const accountInfo = {
+                        username: cleanEmailOrUser,
+                        password: passwordInput,
+                        displayName: displayNameInput || rawIdentifier.split('@')[0],
+                        email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@Trần Hưng Tài.com`
+                    };
+
+                    registry[targetKey] = accountInfo;
+                    localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
+
+                    currentAccountKey = targetKey;
+                    localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
+
+                    streakData.userName = accountInfo.displayName;
+                    streakData.userEmail = accountInfo.email;
+                    streakData.isLoggedIn = true;
+                    streakData.currentStreak = 1;
+                    streakData.longestStreak = 1;
+                    streakData.todayPoints = 0;
+                    streakData.totalSolved = 0;
+                    vocabList = [...DEFAULT_VOCABULARY];
+
+                    // Lưu lên Cloud để máy khác nhận được ngay lập tức
+                    await saveCurrentAccountData();
+
+                    closeAuthModal();
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng ký thành công! Chào mừng ${streakData.userName} 🎉`);
+                } else {
+                    // ĐĂNG NHẬP: Tìm kiếm trên Local hoặc Cloud
+                    let account = registry[targetKey];
+                    let foundKey = targetKey;
+
+                    // Nếu local chưa có, tra cứu trên Cloud từ máy kia
+                    if (!account && cloudAccountData && cloudAccountData.authInfo) {
+                        account = cloudAccountData.authInfo;
+                        foundKey = targetKey;
+                        registry[targetKey] = account;
+                        localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
+                    }
+
+                    // Nếu vẫn chưa thấy, quét qua tất cả bản ghi local theo email
+                    if (!account) {
+                        for (const k in registry) {
+                            if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
+                                account = registry[k];
+                                foundKey = k;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!account) {
+                        showToast("Tài khoản chưa tồn tại! Hãy kiểm tra lại tên/email hoặc chọn tab Đăng ký mới.");
+                        return;
+                    }
+
+                    if (account.password !== passwordInput) {
+                        showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
+                        return;
+                    }
+
+                    // Đăng nhập hợp lệ: Tải toàn bộ dữ liệu từ đám mây về máy này
+                    currentAccountKey = foundKey;
+                    localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
+                    streakData.isLoggedIn = true;
+                    streakData.userName = account.displayName || rawIdentifier;
+                    streakData.userEmail = account.email || cleanEmailOrUser;
+
+                    await syncAccountData();
+                    closeAuthModal();
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng nhập thành công! Chào mừng trở lại ${streakData.userName} ✨`);
+                }
+            } catch (err) {
+                console.error("Auth error:", err);
+                showToast("Có lỗi xảy ra trong quá trình xử lý, vui lòng thử lại!");
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // MÃ ĐỒNG BỘ NHANH LIÊN THIẾT BỊ (BACKUP CODE)
+        // ==========================================
+        function openBackupCodeModal() {
+            profileDropdown.classList.add('hidden');
+            // Tạo chuỗi base64 mã hóa an toàn gồm accountKey + tên + từ vựng hiện tại
+            let authPass = "";
+            try {
+                const reg = JSON.parse(localStorage.getItem('Trần Hưng Tài_auth_registry') || "{}");
+                if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
+            } catch (e) {}
+
+            const syncPacket = {
+                k: currentAccountKey,
+                u: streakData.userName,
+                e: streakData.userEmail,
+                p: authPass,
+                s: streakData,
+                v: vocabList
+            };
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(syncPacket))));
+            document.getElementById('currentAccountSyncCode').value = code;
+            document.getElementById('backupCodeModal').classList.remove('hidden');
+        }
+
+        function closeBackupCodeModal() {
+            document.getElementById('backupCodeModal').classList.add('hidden');
+        }
+
+        function copySyncCode() {
+            const input = document.getElementById('currentAccountSyncCode');
+            input.select();
+            document.execCommand('copy');
+            showToast("Đã chép mã đồng bộ vào Clipboard! Bạn có thể dán sang máy khác.");
+        }
+
+        async function importAccountBySyncCode() {
+            const code = document.getElementById('inputImportSyncCode').value.trim();
+            if (!code) {
+                showToast("Vui lòng dán mã đồng bộ vào ô!");
+                return;
+            }
+            try {
+                const decodedStr = decodeURIComponent(escape(atob(code)));
+                const data = JSON.parse(decodedStr);
+
+                if (!data.k || !data.s) {
+                    throw new Error("Mã không hợp lệ");
+                }
+
+                currentAccountKey = data.k;
+                localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
+
+                // Lưu vào registry
+                if (data.p) {
+                    let reg = {};
+                    try {
+                        reg = JSON.parse(localStorage.getItem('Trần Hưng Tài_auth_registry') || "{}");
+                    } catch (e) {}
+                    reg[currentAccountKey] = {
+                        username: data.e || currentAccountKey,
+                        password: data.p,
+                        displayName: data.u || "Người dùng",
+                        email: data.e || `${currentAccountKey}@Trần Hưng Tài.com`
+                    };
+                    localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(reg));
+                }
+
+                streakData = Object.assign(streakData, data.s);
+                streakData.isLoggedIn = true;
+                if (data.v && data.v.length > 0) {
+                    vocabList = data.v;
+                }
+
+                await saveCurrentAccountData();
+                closeBackupCodeModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Nạp tài khoản thành công! Đã khôi phục ${vocabList.length} câu từ vựng 🎉`);
+            } catch (err) {
+                showToast("Mã đồng bộ không hợp lệ! Vui lòng sao chép đúng chuỗi mã.");
+            }
+        }
+
+        function loadCurrentSession() {
+            try {
+                const sessionKey = localStorage.getItem('Trần Hưng Tài_current_user');
+                if (sessionKey) {
+                    currentAccountKey = sessionKey;
+                } else {
+                    currentAccountKey = "guest";
+                }
+            } catch (e) {
+                currentAccountKey = "guest";
+            }
+        }
+
+        async function syncAccountData() {
+            // First try reading from local cache
+            let loaded = false;
+            try {
+                const localData = localStorage.getItem('Trần Hưng Tài_data_' + currentAccountKey);
+                if (localData) {
+                    const parsed = JSON.parse(localData);
+                    streakData = Object.assign(streakData, parsed.streakData || {});
+                    vocabList = parsed.vocabList || [];
+                    loaded = true;
+                }
+            } catch (e) {}
+
+            // Next check Cloud Sync for latest updates on phones / other PCs
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                try {
+                    const cloudData = await window.cloudSync.fetchUserData(currentAccountKey);
+                    if (cloudData) {
+                        streakData = Object.assign(streakData, cloudData.streakData || {});
+                        if (cloudData.vocabList && cloudData.vocabList.length > 0) {
+                            vocabList = cloudData.vocabList;
+                        }
+                        loaded = true;
+                    }
+                } catch (e) {}
+            }
+
+            if (!vocabList || vocabList.length === 0) {
+                vocabList = [...DEFAULT_VOCABULARY];
+            }
+
+            if (currentAccountKey !== "guest") {
+                streakData.isLoggedIn = true;
+            } else {
+                streakData.isLoggedIn = false;
+            }
+
+            saveCurrentAccountData();
+            updateStreakUI();
+            updateAuthStatusUI();
+        }
+
+        async function saveCurrentAccountData() {
+            // Lấy thông tin đăng nhập của tài khoản để đồng bộ sang thiết bị khác
+            let authInfo = null;
+            try {
+                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
+                if (regStr) {
+                    const reg = JSON.parse(regStr);
+                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
+                }
+            } catch (e) {}
+
+            const payload = {
+                accountKey: currentAccountKey,
+                streakData: streakData,
+                vocabList: vocabList,
+                authInfo: authInfo
+            };
+
+            // Save to localStorage for quick offline loading
+            try {
+                localStorage.setItem('Trần Hưng Tài_data_' + currentAccountKey, JSON.stringify(payload));
+            } catch (e) {}
+
+            // Sync to Cloud Firestore so other devices (phones, tablets, other PCs) receive it
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                await window.cloudSync.saveUserData(currentAccountKey, payload);
+            }
+
+            const countEl = document.getElementById('vocabCount');
+            if (countEl) countEl.innerText = vocabList.length;
+        }
+
+        function updateAuthStatusUI() {
+            const authStatusText = document.getElementById('authStatusText');
+            const profileAuthActionText = document.getElementById('profileAuthActionText');
+            const authTriggerBtn = document.getElementById('authTriggerBtn');
+
+            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+                if (authStatusText) authStatusText.innerText = "Đã đồng bộ";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng xuất";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.remove('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.add('border-cyan-500/30', 'text-cyan-200');
+                }
+            } else {
+                if (authStatusText) authStatusText.innerText = "Đăng nhập";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng nhập";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.add('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.remove('border-cyan-500/30', 'text-cyan-200');
+                }
+            }
+        }
+
+        // Auth Modal Controls
+        function openAuthModal(defaultTab = 'login') {
+            profileDropdown.classList.add('hidden');
+            switchAuthTab(defaultTab);
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            authCurrentTab = tab;
+            const loginBtn = document.getElementById('authTabLoginBtn');
+            const registerBtn = document.getElementById('authTabRegisterBtn');
+            const nameField = document.getElementById('authDisplayNameField');
+            const title = document.getElementById('authModalTitle');
+            const submitBtn = document.getElementById('authSubmitBtn');
+
+            if (tab === 'login') {
+                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                nameField.classList.add('hidden');
+                title.innerText = "Đăng nhập tài khoản";
+                submitBtn.innerText = "Đăng nhập & Đồng bộ";
+            } else {
+                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                nameField.classList.remove('hidden');
+                title.innerText = "Đăng ký tài khoản mới";
+                submitBtn.innerText = "Tạo tài khoản & Lưu dữ liệu";
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const rawIdentifier = document.getElementById('authUsername').value.trim();
+            const passwordInput = document.getElementById('authPassword').value.trim();
+            const displayNameInput = document.getElementById('authDisplayName').value.trim();
+
+            if (!rawIdentifier || !passwordInput) {
+                showToast("Vui lòng điền đầy đủ thông tin!");
+                return;
+            }
+
             const cleanEmailOrUser = rawIdentifier.toLowerCase();
             const targetKey = getAccountStoreKey(cleanEmailOrUser);
 
+            // 1. Tải danh sách đăng ký hiện có từ localStorage
             let registry = {};
             try {
-                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
                 if (regStr) registry = JSON.parse(regStr);
             } catch (err) {}
 
+            // Kiểm tra xem email / username đã tồn tại trong local registry chưa
+            const isEmailOrUserTakenLocally = Object.keys(registry).some(k => {
+                const item = registry[k];
+                return k === targetKey || 
+                       (item.email && item.email.toLowerCase() === cleanEmailOrUser) || 
+                       (item.username && item.username.toLowerCase() === cleanEmailOrUser);
+            });
+
             if (authCurrentTab === 'register') {
-                // Kiểm tra xem tài khoản đã có trên máy chủ hoặc local chưa
-                let serverAccount = null;
-                if (window.getAccountFromServer) {
-                    serverAccount = await window.getAccountFromServer(targetKey);
+                // ĐĂNG KÝ MỚI: Kiểm tra trùng Email / Username cả Local lẫn Cloud
+                let existsInCloud = false;
+                if (window.cloudSync) {
+                    try {
+                        const cloudAcc = await window.cloudSync.fetchUserData(targetKey);
+                        if (cloudAcc && (cloudAcc.authInfo || cloudAcc.streakData)) {
+                            existsInCloud = true;
+                        }
+                    } catch (e) {}
                 }
 
-                if (registry[targetKey] || serverAccount) {
-                    showToast("❌ Tài khoản này đã tồn tại trên máy chủ! Hãy chuyển sang Đăng nhập.");
+                if (isEmailOrUserTakenLocally || existsInCloud) {
+                    showToast("❌ Email hoặc tài khoản này đã được đăng ký! Vui lòng Đăng nhập.");
                     return;
                 }
 
+                // Lưu thông tin tài khoản đăng ký mới
                 const accountInfo = {
                     username: cleanEmailOrUser,
                     password: passwordInput,
                     displayName: displayNameInput || rawIdentifier.split('@')[0],
-                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
+                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@Trần Hưng Tài.com`
                 };
 
                 registry[targetKey] = accountInfo;
-                localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
 
+                // Chuyển phiên làm việc sang tài khoản mới vừa tạo
                 currentAccountKey = targetKey;
-                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
 
                 streakData.userName = accountInfo.displayName;
                 streakData.userEmail = accountInfo.email;
@@ -1426,853 +1810,1180 @@
                 streakData.totalSolved = 0;
                 vocabList = [...DEFAULT_VOCABULARY];
 
-                // Ghi thẳng lên máy chủ cơ sở dữ liệu
-                const payload = {
-                    accountKey: targetKey,
-                    authInfo: accountInfo,
-                    streakData: streakData,
-                    vocabList: vocabList
-                };
-                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
-
-                if (window.saveAccountToServer) {
-                    await window.saveAccountToServer(targetKey, payload);
-                }
-
+                await saveCurrentAccountData();
                 closeAuthModal();
                 updateStreakUI();
                 updateAuthStatusUI();
                 currentIndex = 0;
                 renderQuestion();
-                showToast(`Đã tạo tài khoản và lưu lên máy chủ thành công 🎉`);
+                showToast(`Đăng ký thành công! Chào mừng ${streakData.userName} 🎉`);
             } else {
-                // ĐĂNG NHẬP (Lấy dữ liệu từ máy chủ về nếu thiết bị chưa có)
+                // ĐĂNG NHẬP: Tìm kiếm tài khoản qua Key hoặc qua trường Email
                 let account = registry[targetKey];
-                let serverData = null;
+                let foundKey = targetKey;
 
-                if (!account && window.getAccountFromServer) {
-                    serverData = await window.getAccountFromServer(targetKey);
-                    if (serverData && serverData.authInfo) {
-                        account = serverData.authInfo;
-                        registry[targetKey] = account;
-                        localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                if (!account) {
+                    // Quét trong registry theo email
+                    for (const k in registry) {
+                        if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
+                            account = registry[k];
+                            foundKey = k;
+                            break;
+                        }
                     }
                 }
 
+                // Nếu local chưa có, tra cứu trên cloud (khi đăng nhập trên máy khác)
+                if (!account && window.cloudSync) {
+                    try {
+                        const cloudData = await window.cloudSync.fetchUserData(targetKey);
+                        if (cloudData && cloudData.authInfo) {
+                            account = cloudData.authInfo;
+                            foundKey = targetKey;
+                            registry[targetKey] = account;
+                            localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
+                        }
+                    } catch (e) {}
+                }
+
+                // Nếu hoàn toàn không tìm thấy tài khoản
                 if (!account) {
-                    showToast("Tài khoản chưa tồn tại trên hệ thống! Vui lòng chọn Đăng ký.");
+                    showToast("Tài khoản chưa tồn tại! Vui lòng chọn tab Đăng ký mới.");
                     return;
                 }
 
+                // Kiểm tra khớp mật khẩu
                 if (account.password !== passwordInput) {
                     showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
                     return;
                 }
 
-                currentAccountKey = targetKey;
-                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                // Đăng nhập hợp lệ
+                currentAccountKey = foundKey;
+                localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
                 streakData.isLoggedIn = true;
                 streakData.userName = account.displayName || rawIdentifier;
                 streakData.userEmail = account.email || cleanEmailOrUser;
 
-                // Nạp từ vựng và tiến độ từ máy chủ về thiết bị này
-                if (serverData) {
-                    if (serverData.streakData) streakData = Object.assign(streakData, serverData.streakData);
-                    if (serverData.vocabList && serverData.vocabList.length > 0) vocabList = serverData.vocabList;
-                } else {
-                    syncAccountData();
-                }
-
-                saveCurrentAccountData();
+                await syncAccountData();
                 closeAuthModal();
                 updateStreakUI();
                 updateAuthStatusUI();
                 currentIndex = 0;
                 renderQuestion();
-                showToast(`Đăng nhập thành công! Đã đồng bộ từ vựng từ máy chủ ✨`);
+                showToast(`Đăng nhập thành công! Chào mừng trở lại ${streakData.userName} ✨`);
             }
-        } catch (err) {
-            console.error("Auth error:", err);
-            showToast("Có lỗi xảy ra, vui lòng thử lại!");
-        } finally {
-            if (submitBtn) submitBtn.disabled = false;
-            if (spinner) spinner.classList.add('hidden');
-        }
-    }
-
-    // ==========================================
-    // KHẢO TỪ VỰNG & GÕ PHÍM
-    // ==========================================
-    function renderQuestion() {
-        if (!vocabList || vocabList.length === 0) return;
-        if (currentIndex >= vocabList.length) {
-            showSummaryScreen();
-            return;
         }
 
-        const item = vocabList[currentIndex];
-        currentVi = item.vi;
-        currentTarget = item.en.trim();
-        currentCharIndex = 0;
-        isCompleted = false;
-
-        document.getElementById('categoryHeader').innerText = item.category || `Luyện viết · A1 · Bài ${currentIndex + 1}`;
-        document.getElementById('questionCounter').innerText = `Câu ${currentIndex + 1} / ${vocabList.length}`;
-        
-        const pct = Math.round(((currentIndex) / vocabList.length) * 100);
-        document.getElementById('progressPercent').innerText = `${pct}%`;
-        document.getElementById('progressBar').style.width = `${pct}%`;
-
-        document.getElementById('vietnamesePrompt').innerText = currentVi;
-        document.getElementById('completionBanner').classList.add('hidden');
-
-        const nextBtn = document.getElementById('nextBtn');
-        nextBtn.classList.remove('opacity-50', 'pointer-events-none');
-        document.getElementById('nextBtnText').innerText = "Câu tiếp";
-
-        renderSlots();
-        focusTyping();
-    }
-
-    function renderSlots() {
-        const container = document.getElementById('maskedSentenceContainer');
-        container.innerHTML = '';
-
-        const words = currentTarget.split(' ');
-        let charGlobalIndex = 0;
-
-        words.forEach((word, wordIdx) => {
-            const wordWrapper = document.createElement('div');
-            wordWrapper.className = 'flex items-center gap-1 mr-2 sm:mr-3.5 my-1';
-
-            for (let i = 0; i < word.length; i++) {
-                const char = word[i];
-                const slot = document.createElement('div');
-                slot.className = 'char-slot';
-                slot.dataset.expected = char;
-                slot.dataset.index = charGlobalIndex;
-
-                const isPunctuation = !/^[a-zA-Z0-9]$/.test(char);
-                if (isPunctuation) {
-                    slot.innerText = char;
-                    slot.classList.add('filled', 'border-transparent', 'bg-transparent', '!w-auto', '!px-1');
-                } else {
-                    slot.innerText = '*';
-                }
-
-                wordWrapper.appendChild(slot);
-                charGlobalIndex++;
-            }
-
-            container.appendChild(wordWrapper);
-
-            if (wordIdx < words.length - 1) {
-                charGlobalIndex++;
-            }
-        });
-
-        skipPunctuationForward();
-        updateActiveSlot();
-    }
-
-    function skipPunctuationForward() {
-        while (currentCharIndex < currentTarget.length) {
-            const ch = currentTarget[currentCharIndex];
-            if (ch === ' ' || !/^[a-zA-Z0-9]$/.test(ch)) {
-                currentCharIndex++;
+        function handleProfileAuthAction() {
+            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+                openLogoutModal();
             } else {
-                break;
+                openAuthModal('login');
             }
         }
-    }
 
-    function updateActiveSlot() {
-        const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
-        allSlots.forEach(s => s.classList.remove('active'));
+        function confirmLogoutAction() {
+            closeLogoutModal();
+            currentAccountKey = "guest";
+            localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
 
-        if (isCompleted || currentCharIndex >= currentTarget.length) return;
+            streakData.isLoggedIn = false;
+            streakData.userName = "Khách (Chưa đăng nhập)";
+            streakData.userEmail = "guest@Trần Hưng Tài.com";
+            streakData.userAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80";
+            streakData.todayPoints = 0;
 
-        const targetSlot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${currentCharIndex}"]`);
-        if (targetSlot) {
-            targetSlot.classList.add('active');
-        }
-    }
-
-    function handleCharacterInput(charTyped) {
-        if (isCompleted || currentCharIndex >= currentTarget.length) return;
-
-        totalKeystrokes++;
-        const expectedChar = currentTarget[currentCharIndex];
-        const targetSlot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${currentCharIndex}"]`);
-
-        if (charTyped.toLowerCase() === expectedChar.toLowerCase()) {
-            correctKeystrokes++;
-            playKeySound('click');
-            triggerHaptic('light');
-
-            if (targetSlot) {
-                targetSlot.innerText = expectedChar;
-                targetSlot.classList.remove('active', 'error');
-                targetSlot.classList.add('filled', 'correct-pop');
-                spawnSparkles(targetSlot);
-            }
-
-            currentCharIndex++;
-            skipPunctuationForward();
-
-            if (currentCharIndex >= currentTarget.length) {
-                finishQuestionSuccess();
-            } else {
-                updateActiveSlot();
-            }
-        } else {
-            playKeySound('error');
-            triggerHaptic('error');
-            if (targetSlot) {
-                targetSlot.classList.add('error');
-                setTimeout(() => targetSlot.classList.remove('error'), 350);
-            }
-        }
-    }
-
-    function spawnSparkles(element) {
-        if (!element) return;
-        const rect = element.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const colors = ['#38ef7d', '#38bdf8', '#34d399', '#67e8f9', '#ffffff'];
-
-        for (let i = 0; i < 7; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'sparkle-particle';
-            const size = Math.random() * 6 + 4;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            particle.style.left = `${cx}px`;
-            particle.style.top = `${cy}px`;
-
-            const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * 35 + 20;
-            particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-            particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-
-            document.body.appendChild(particle);
-            setTimeout(() => particle.remove(), 550);
-        }
-    }
-
-    function finishQuestionSuccess() {
-        isCompleted = true;
-        playKeySound('success');
-        triggerHaptic('success');
-
-        const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
-        allSlots.forEach(s => s.classList.remove('active'));
-
-        document.getElementById('fullEnglishSentence').innerText = currentTarget;
-        document.getElementById('completionBanner').classList.remove('hidden');
-
-        streakData.todayPoints = Math.min(10, (streakData.todayPoints || 0) + 1);
-        streakData.totalSolved = (streakData.totalSolved || 0) + 1;
-        saveCurrentAccountData();
-        updateStreakUI();
-
-        speakSentence();
-    }
-
-    function nextQuestion() {
-        currentIndex++;
-        renderQuestion();
-    }
-
-    function skipQuestion() {
-        streakData.todayPoints = Math.min(10, (streakData.todayPoints || 0) + 1);
-        saveCurrentAccountData();
-        updateStreakUI();
-        currentIndex++;
-        renderQuestion();
-    }
-
-    function revealAnswer() {
-        const allSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot');
-        allSlots.forEach(s => {
-            const exp = s.dataset.expected;
-            if (exp) {
-                s.innerText = exp;
-                s.classList.add('filled');
-                s.classList.remove('active');
-            }
-        });
-        finishQuestionSuccess();
-    }
-
-    function speakSentence() {
-        if (!('speechSynthesis' in window) || !currentTarget) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(currentTarget);
-        utterance.lang = 'en-US';
-        utterance.rate = 0.95;
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function peekCurrentWord() {
-        if (isCompleted || isCtrlPeeking || currentCharIndex >= currentTarget.length) return;
-        isCtrlPeeking = true;
-
-        let start = currentCharIndex;
-        while (start > 0 && currentTarget[start - 1] !== ' ') {
-            start--;
-        }
-        let end = currentCharIndex;
-        while (end < currentTarget.length && currentTarget[end] !== ' ') {
-            end++;
+            syncAccountData();
+            showToast("Đã đăng xuất. Bạn có thể Đăng nhập để đồng bộ lại dữ liệu bất cứ lúc nào.");
         }
 
-        for (let i = start; i < end; i++) {
-            const slot = document.querySelector(`#maskedSentenceContainer .char-slot[data-index="${i}"]`);
-            if (slot && !slot.classList.contains('filled')) {
-                slot.innerText = slot.dataset.expected;
-                slot.classList.add('preview-hint');
-            }
-        }
-    }
+        // ==========================================
+        // MECHANICAL KEYBOARD SOUND GENERATOR (Web Audio API)
+        // ==========================================
+        let audioCtx = null;
 
-    function hideCurrentWordPeek() {
-        if (!isCtrlPeeking) return;
-        isCtrlPeeking = false;
-
-        const peekSlots = document.querySelectorAll('#maskedSentenceContainer .char-slot.preview-hint');
-        peekSlots.forEach(slot => {
-            slot.innerText = '*';
-            slot.classList.remove('preview-hint');
-        });
-        updateActiveSlot();
-    }
-
-    function setupEventListeners() {
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Control') {
-                peekCurrentWord();
-                return;
-            }
-
-            if (e.key === 'Enter') {
-                if (isCompleted) {
-                    nextQuestion();
-                }
-                return;
-            }
-
-            if (e.key === 'Escape') {
-                skipQuestion();
-                return;
-            }
-
-            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-                handleCharacterInput(e.key);
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (e.key === 'Control') {
-                hideCurrentWordPeek();
-            }
-        });
-
-        window.addEventListener('blur', () => {
-            hideCurrentWordPeek();
-        });
-
-        const hiddenInput = document.getElementById('hiddenKeyboardInput');
-        if (hiddenInput) {
-            hiddenInput.addEventListener('input', (e) => {
-                const val = hiddenInput.value;
-                if (val && val.length > 0) {
-                    const charTyped = val[val.length - 1];
-                    handleCharacterInput(charTyped);
-                    hiddenInput.value = '';
-                }
-            });
-        }
-    }
-
-    function focusTyping(force = false) {
-        const hiddenInput = document.getElementById('hiddenKeyboardInput');
-        if (hiddenInput) {
-            hiddenInput.focus({ preventScroll: true });
-        }
-    }
-
-    function setupMobileCtrlButton() {
-        const btn = document.getElementById('mobileCtrlPeekBtn');
-        if (!btn) return;
-
-        btn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            peekCurrentWord();
-            triggerHaptic('light');
-            btn.classList.add('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
-        }, { passive: false });
-
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            hideCurrentWordPeek();
-            btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
-            focusTyping(true);
-        }, { passive: false });
-
-        btn.addEventListener('touchcancel', () => {
-            hideCurrentWordPeek();
-            btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
-        });
-    }
-
-    function triggerHaptic(type = 'light') {
-        if ('vibrate' in navigator) {
-            if (type === 'light') navigator.vibrate(12);
-            else if (type === 'error') navigator.vibrate([25, 40, 25]);
-            else if (type === 'success') navigator.vibrate([15, 30, 20]);
-        }
-    }
-
-    function setupTouchGestures() {
-        let touchStartX = 0;
-        let touchStartY = 0;
-        const quizCard = document.getElementById('quizCard');
-
-        quizCard.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        }, { passive: true });
-
-        quizCard.addEventListener('touchend', (e) => {
-            const diffX = e.changedTouches[0].screenX - touchStartX;
-            const diffY = e.changedTouches[0].screenY - touchStartY;
-
-            if (Math.abs(diffX) > 60 && Math.abs(diffY) < 50) {
-                if (diffX < 0) {
-                    if (isCompleted) nextQuestion();
-                } else {
-                    speakSentence();
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
                 }
             }
-        }, { passive: true });
-    }
-
-    // ==========================================
-    // QUẢN LÝ TỪ VỰNG (NHẬP TỪ / RESET / XÓA)
-    // ==========================================
-    function openVocabManager() {
-        renderVocabList();
-        switchModalTab('list');
-        document.getElementById('vocabModal').classList.remove('hidden');
-    }
-
-    function closeVocabManager() {
-        document.getElementById('vocabModal').classList.add('hidden');
-        focusTyping();
-    }
-
-    function switchModalTab(tab) {
-        const listTab = document.getElementById('tabList');
-        const importTab = document.getElementById('tabImport');
-        const listBtn = document.getElementById('tabListBtn');
-        const importBtn = document.getElementById('tabImportBtn');
-
-        if (tab === 'list') {
-            listTab.classList.remove('hidden');
-            importTab.classList.add('hidden');
-            listBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
-            importBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
-        } else {
-            listTab.classList.add('hidden');
-            importTab.classList.remove('hidden');
-            importBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
-            listBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
-        }
-    }
-
-    function renderVocabList() {
-        const container = document.getElementById('vocabListContainer');
-        container.innerHTML = '';
-        document.getElementById('vocabCount').innerText = vocabList.length;
-
-        vocabList.forEach((item, idx) => {
-            const row = document.createElement('div');
-            row.className = 'flex items-center justify-between p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-200';
-            row.innerHTML = `
-                <div class="min-w-0 flex-1 pr-3">
-                    <div class="font-bold text-white truncate">${idx + 1}. ${item.en}</div>
-                    <div class="text-[11px] text-blue-300/70 truncate">${item.vi}</div>
-                </div>
-                <button onclick="deleteVocabItem(${idx})" class="p-2 text-rose-400 hover:text-rose-300 transition" title="Xóa câu này">
-                    <i class="fa-regular fa-trash-can"></i>
-                </button>
-            `;
-            container.appendChild(row);
-        });
-    }
-
-    function deleteVocabItem(idx) {
-        if (vocabList.length <= 1) {
-            showToast("Cần giữ lại ít nhất 1 câu để luyện tập!");
-            return;
-        }
-        vocabList.splice(idx, 1);
-        saveCurrentAccountData();
-        renderVocabList();
-        if (currentIndex >= vocabList.length) {
-            currentIndex = 0;
-        }
-        renderQuestion();
-        showToast("Đã xóa câu thành công!");
-    }
-
-    function appendImportedVocab() {
-        const raw = document.getElementById('bulkImportInput').value.trim();
-        if (!raw) {
-            showToast("Vui lòng nhập nội dung câu theo định dạng Tiếng Việt | Tiếng Anh");
-            return;
-        }
-        const lines = raw.split('\n');
-        let addedCount = 0;
-
-        lines.forEach(line => {
-            const parts = line.split('|');
-            if (parts.length >= 2) {
-                const vi = parts[0].trim();
-                const en = parts[1].trim();
-                if (vi && en) {
-                    vocabList.push({
-                        vi: vi,
-                        en: en,
-                        category: `Luyện viết · Tự chọn`
-                    });
-                    addedCount++;
-                }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
-        });
-
-        if (addedCount > 0) {
-            saveCurrentAccountData();
-            document.getElementById('bulkImportInput').value = '';
-            renderVocabList();
-            switchModalTab('list');
-            showToast(`Đã thêm ${addedCount} câu vào máy chủ!`);
-        } else {
-            showToast("Không tìm thấy câu hợp lệ! Định dạng: Tiếng Việt | Tiếng Anh");
+            return audioCtx;
         }
-    }
 
-    function replaceImportedVocab() {
-        const raw = document.getElementById('bulkImportInput').value.trim();
-        if (!raw) {
-            showToast("Vui lòng nhập nội dung câu!");
-            return;
-        }
-        const lines = raw.split('\n');
-        const newList = [];
+        // Realistic Clicky Mechanical Key Sound
+        function playKeyClack() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
 
-        lines.forEach(line => {
-            const parts = line.split('|');
-            if (parts.length >= 2) {
-                const vi = parts[0].trim();
-                const en = parts[1].trim();
-                if (vi && en) {
-                    newList.push({
-                        vi: vi,
-                        en: en,
-                        category: `Luyện viết · Bài mới`
-                    });
+                // High click snap (blue switch click)
+                const osc = ctx.createOscillator();
+                const clickGain = ctx.createGain();
+                const freq = 1800 + (Math.random() * 600 - 300); // Natural pitch variance
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+
+                clickGain.gain.setValueAtTime(0.28, now);
+                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+                osc.connect(clickGain);
+                clickGain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.05);
+
+                // Deep body clack (key bottom-out thump)
+                const bufferSize = ctx.sampleRate * 0.04;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.008));
                 }
-            }
-        });
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
 
-        if (newList.length > 0) {
-            vocabList = newList;
-            currentIndex = 0;
-            saveCurrentAccountData();
-            document.getElementById('bulkImportInput').value = '';
-            renderVocabList();
-            switchModalTab('list');
-            renderQuestion();
-            showToast(`Đã thay thế toàn bộ bằng ${newList.length} câu mới trên máy chủ!`);
-        } else {
-            showToast("Không tìm thấy câu hợp lệ!");
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(950 + (Math.random() * 200 - 100), now);
+
+                const noiseGain = ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.35, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+                noise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(ctx.destination);
+
+                noise.start(now);
+            } catch (err) {}
         }
-    }
 
-    function resetDefaultVocab() {
-        vocabList = [...DEFAULT_VOCABULARY];
-        currentIndex = 0;
-        saveCurrentAccountData();
-        renderVocabList();
-        renderQuestion();
-        showToast("Đã khôi phục bộ câu mẫu A1-A2 ban đầu!");
-    }
+        // Error Sound (Deep muted thud)
+        function playErrorSound() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
 
-    // ==========================================
-    // PROFILE, STREAK & MODALS
-    // ==========================================
-    function toggleProfileDropdown() {
-        const dropdown = document.getElementById('profileDropdown');
-        dropdown.classList.toggle('hidden');
-    }
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
-    function updateStreakUI() {
-        document.getElementById('userDisplayName').innerText = streakData.userName;
-        document.getElementById('userDisplayNameHeader').innerText = streakData.userName;
-        document.getElementById('userEmailDisplay').innerText = streakData.userEmail;
-        document.getElementById('userAvatarHeader').src = streakData.userAvatar;
-        document.getElementById('userAvatarDropdown').src = streakData.userAvatar;
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.13);
+            } catch (e) {}
+        }
 
-        document.getElementById('currentStreakDisplay').innerText = streakData.currentStreak || 0;
-        document.getElementById('longestStreakDisplay').innerText = streakData.longestStreak || 0;
+        // Success Chime (Crystal Bell)
+        function playSuccessChime() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const noteTime = now + idx * 0.08;
 
-        const pts = streakData.todayPoints || 0;
-        document.getElementById('streakPointsLabel').innerText = `${pts}/10 điểm streak hôm nay`;
-        document.getElementById('streakProgressBar').style.width = `${Math.min(100, pts * 10)}%`;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, noteTime);
 
-        document.getElementById('profileTotalSolved').innerText = `${streakData.totalSolved || 0} câu`;
-        document.getElementById('profileStreakDisplay').innerText = `${streakData.currentStreak || 0} ngày 🔥`;
+                    gain.gain.setValueAtTime(0.18, noteTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
 
-        const lbToggle = document.getElementById('leaderboardToggle');
-        if (lbToggle) lbToggle.checked = !!streakData.showOnLeaderboard;
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
 
-        const rmToggle = document.getElementById('reminderToggle');
-        if (rmToggle) rmToggle.checked = !!streakData.reminderEnabled;
-    }
+                    osc.start(noteTime);
+                    osc.stop(noteTime + 0.36);
+                });
+            } catch (e) {}
+        }
 
-    function openProfileModal() {
-        document.getElementById('profileDropdown').classList.add('hidden');
-        document.getElementById('profileEditName').value = streakData.userName;
-        document.getElementById('profileEditEmail').value = streakData.userEmail;
-        document.getElementById('profileEditLevel').value = streakData.level || 'A1';
-        document.getElementById('profileEditAvatarPreview').src = streakData.userAvatar;
-        document.getElementById('profileModal').classList.remove('hidden');
-    }
+        // Sparkle Particles Effect for Correct Typing
+        function spawnSparkles(el) {
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const colors = ['#38ef7d', '#38bdf8', '#fbbf24', '#ffffff', '#a7f3d0'];
 
-    function closeProfileModal() {
-        document.getElementById('profileModal').classList.add('hidden');
-    }
+            for (let i = 0; i < 7; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'sparkle-particle';
+                const size = Math.random() * 4 + 3;
+                const angle = (Math.PI * 2 * i) / 7 + (Math.random() * 0.4 - 0.2);
+                const distance = Math.random() * 32 + 20;
 
-    function selectPresetAvatar(url) {
-        document.getElementById('profileEditAvatarPreview').src = url;
-    }
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
 
-    function saveProfileChanges() {
-        const newName = document.getElementById('profileEditName').value.trim();
-        const newEmail = document.getElementById('profileEditEmail').value.trim();
-        const newLevel = document.getElementById('profileEditLevel').value;
-        const newAvatar = document.getElementById('profileEditAvatarPreview').src;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${centerX}px`;
+                particle.style.top = `${centerY}px`;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                particle.style.boxShadow = `0 0 6px ${particle.style.backgroundColor}`;
 
-        if (newName) streakData.userName = newName;
-        if (newEmail) streakData.userEmail = newEmail;
-        streakData.level = newLevel;
-        streakData.userAvatar = newAvatar;
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 600);
+            }
+        }
 
-        saveCurrentAccountData();
-        updateStreakUI();
-        closeProfileModal();
-        showToast("Đã lưu thông tin hồ sơ lên máy chủ!");
-    }
+        // Language Dictionary
+        const I18N = {
+            vi: {
+                importVocab: "Nhập từ",
+                leaderboard: "Bảng xếp hạng",
+                profile: "Hồ sơ cá nhân",
+                changeName: "Đổi tên hiển thị",
+                showOnLeaderboard: "Hiện trên bảng xếp hạng",
+                showOnLeaderboardDesc: "Chỉ công khai tên và ảnh đại diện",
+                settings: "CÀI ĐẶT",
+                darkMode: "Giao diện tối",
+                darkModeDesc: "Tắt để dùng giao diện sáng",
+                language: "Ngôn ngữ giao diện",
+                reminder: "Nhắc học",
+                reminderDesc: "Nhận thông báo theo lịch của bạn",
+                logout: "Đăng xuất",
+                currentStreak: "Chuỗi hiện tại",
+                longestStreak: "Chuỗi dài nhất",
+                streakRules: "Đạt 10 điểm/ngày: mỗi câu Nghe hoặc Viết (kể cả bỏ qua câu Viết) = 1 điểm; hoàn thành bài Từ vựng = 10 điểm.",
+                vietnameseSentence: "Câu tiếng Việt",
+                answerBadge: "Câu trả lời",
+                revealAnswer: "Xem đáp án",
+                typingHint: "Gõ trực tiếp bàn phím để điền ký tự tiếp theo. Nhấn Xem đáp án hoặc Bỏ qua nếu cần.",
+                skipBtn: "Bỏ qua",
+                nextBtn: "Câu tiếp",
+                correctNice: "Chính xác tuyệt vời!",
+                listenAgain: "Nghe lại",
+                profileModalTitle: "Hồ sơ cá nhân",
+                chooseAvatar: "Chọn ảnh đại diện nhanh:",
+                fullName: "Họ và tên hiển thị",
+                currentLevel: "Trình độ hiện tại",
+                totalSolved: "Tổng câu đã làm",
+                streakDays: "Chuỗi ngày học",
+                cancel: "Đóng / Hủy",
+                save: "Lưu thay đổi",
+                changeNameModalTitle: "Đổi tên hiển thị",
+                changeNameModalDesc: "Tên hiển thị sẽ xuất hiện trên bài học và bảng xếp hạng.",
+                reminderSettings: "Cài đặt giờ nhắc học",
+                reminderSettingsDesc: "Hệ thống sẽ gửi thông báo mỗi ngày để bạn duy trì chuỗi Streak học tiếng Anh.",
+                reminderTime: "Giờ nhắc nhở mỗi ngày:",
+                saveReminder: "Bật nhắc nhở",
+                confirmLogout: "Xác nhận đăng xuất?",
+                confirmLogoutDesc: "Bạn có muốn đăng xuất khỏi tài khoản? Dữ liệu streak và từ vựng vẫn được lưu an toàn trên đám mây của tài khoản này."
+            },
+            en: {
+                importVocab: "Import Vocab",
+                leaderboard: "Leaderboard",
+                profile: "Personal Profile",
+                changeName: "Change Display Name",
+                showOnLeaderboard: "Show on Leaderboard",
+                showOnLeaderboardDesc: "Only publicly display name and avatar",
+                settings: "SETTINGS",
+                darkMode: "Dark Mode",
+                darkModeDesc: "Turn off to use light theme",
+                language: "Interface Language",
+                reminder: "Daily Reminder",
+                reminderDesc: "Receive reminders on your schedule",
+                logout: "Log out",
+                currentStreak: "Current streak",
+                longestStreak: "Longest streak",
+                streakRules: "Earn 10 pts/day: each sentence = 1 pt; completing vocabulary set = 10 pts.",
+                vietnameseSentence: "Vietnamese Sentence",
+                answerBadge: "Your Answer",
+                revealAnswer: "Show answer",
+                typingHint: "Type letters directly to fill characters. Press Show answer or Skip if needed.",
+                skipBtn: "Skip",
+                nextBtn: "Next",
+                correctNice: "Excellent! Correct!",
+                listenAgain: "Replay",
+                profileModalTitle: "Personal Profile",
+                chooseAvatar: "Quick avatar select:",
+                fullName: "Display Name",
+                currentLevel: "Current Level",
+                totalSolved: "Total completed",
+                streakDays: "Streak days",
+                cancel: "Close",
+                save: "Save Changes",
+                changeNameModalTitle: "Change Display Name",
+                changeNameModalDesc: "Display name will appear on lessons and leaderboards.",
+                reminderSettings: "Study Reminder Time",
+                reminderSettingsDesc: "System will send daily notification to help maintain your streak.",
+                reminderTime: "Daily reminder time:",
+                saveReminder: "Enable Reminder",
+                confirmLogout: "Confirm Logout?",
+                confirmLogoutDesc: "Are you sure you want to log out? Your streak and vocab remain securely saved."
+            }
+        };
 
-    function openChangeNameModal() {
-        document.getElementById('profileDropdown').classList.add('hidden');
-        document.getElementById('quickNameInput').value = streakData.userName;
-        document.getElementById('changeNameModal').classList.remove('hidden');
-    }
+        // Elements
+        const vietnamesePrompt = document.getElementById('vietnamesePrompt');
+        const maskedSentenceContainer = document.getElementById('maskedSentenceContainer');
+        const questionCounter = document.getElementById('questionCounter');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressBar = document.getElementById('progressBar');
+        const categoryHeader = document.getElementById('categoryHeader');
+        const topicBreadcrumb = document.getElementById('topicBreadcrumb');
+        const completionBanner = document.getElementById('completionBanner');
+        const fullEnglishSentence = document.getElementById('fullEnglishSentence');
+        const hiddenKeyboardInput = document.getElementById('hiddenKeyboardInput');
+        const vocabModal = document.getElementById('vocabModal');
+        const summaryModal = document.getElementById('summaryModal');
+        const shortcutModal = document.getElementById('shortcutModal');
+        const profileDropdown = document.getElementById('profileDropdown');
 
-    function closeChangeNameModal() {
-        document.getElementById('changeNameModal').classList.add('hidden');
-    }
+        // Modals elements
+        const profileModal = document.getElementById('profileModal');
+        const changeNameModal = document.getElementById('changeNameModal');
+        const reminderModal = document.getElementById('reminderModal');
+        const logoutModal = document.getElementById('logoutModal');
+        const toastNotice = document.getElementById('toastNotice');
+        const toastMessage = document.getElementById('toastMessage');
 
-    function saveQuickName() {
-        const val = document.getElementById('quickNameInput').value.trim();
-        if (val) {
-            streakData.userName = val;
+        // Toast Helper
+        function showToast(msg) {
+            toastMessage.innerText = msg;
+            toastNotice.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+            toastNotice.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toastNotice.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+                toastNotice.classList.remove('opacity-100', 'translate-y-0');
+            }, 2600);
+        }
+
+        function addStreakPoints(pts = 1) {
+            streakData.todayPoints = Math.min(10, streakData.todayPoints + pts);
+            streakData.totalSolved = (streakData.totalSolved || 0) + 1;
             saveCurrentAccountData();
             updateStreakUI();
-            closeChangeNameModal();
-            showToast("Đã đổi tên hiển thị thành công!");
         }
-    }
 
-    function handleProfileAuthAction() {
-        document.getElementById('profileDropdown').classList.add('hidden');
-        if (streakData.isLoggedIn && currentAccountKey !== "guest") {
-            document.getElementById('logoutModal').classList.remove('hidden');
-        } else {
-            openAuthModal('login');
-        }
-    }
+        function updateStreakUI() {
+            document.getElementById('currentStreakDisplay').innerText = streakData.currentStreak;
+            document.getElementById('longestStreakDisplay').innerText = streakData.longestStreak;
+            document.getElementById('streakPointsLabel').innerText = `${streakData.todayPoints}/10 điểm streak hôm nay`;
+            const pct = Math.min(100, Math.round((streakData.todayPoints / 10) * 100));
+            document.getElementById('streakProgressBar').style.width = `${pct}%`;
+            
+            // Name & Email & Avatar
+            document.getElementById('userDisplayName').innerText = streakData.userName;
+            document.getElementById('userDisplayNameHeader').innerText = streakData.userName;
+            document.getElementById('userEmailDisplay').innerText = streakData.userEmail;
+            document.getElementById('userAvatarHeader').src = streakData.userAvatar;
+            document.getElementById('userAvatarDropdown').src = streakData.userAvatar;
 
-    function closeLogoutModal() {
-        document.getElementById('logoutModal').classList.add('hidden');
-    }
-
-    function confirmLogoutAction() {
-        currentAccountKey = "guest";
-        localStorage.setItem('dailylexis_current_user', 'guest');
-        streakData.isLoggedIn = false;
-        streakData.userName = "Khách (Chưa đăng nhập)";
-        streakData.userEmail = "Nhấn để đăng nhập / đăng ký";
-        streakData.currentStreak = 0;
-        streakData.todayPoints = 0;
-
-        syncAccountData();
-        closeLogoutModal();
-        updateStreakUI();
-        updateAuthStatusUI();
-        showToast("Đã đăng xuất tài khoản!");
-        openAuthModal('register');
-    }
-
-    function toggleDarkMode(isDark) {
-        streakData.isDarkMode = isDark;
-        applyTheme(isDark);
-        saveCurrentAccountData();
-    }
-
-    function applyTheme(isDark) {
-        const body = document.body;
-        if (isDark) {
-            body.classList.remove('light-mode');
-        } else {
-            body.classList.add('light-mode');
-        }
-    }
-
-    function changeLanguage(lang) {
-        streakData.language = lang;
-        applyLanguage(lang);
-        saveCurrentAccountData();
-    }
-
-    function applyLanguage(lang) {
-        const select = document.getElementById('languageSelect');
-        if (select) select.value = lang;
-    }
-
-    function openReminderModal() {
-        document.getElementById('reminderTimeInput').value = streakData.reminderTime || "20:00";
-        document.getElementById('reminderModal').classList.remove('hidden');
-    }
-
-    function closeReminderModal() {
-        document.getElementById('reminderModal').classList.add('hidden');
-    }
-
-    function saveReminderSettings() {
-        streakData.reminderEnabled = true;
-        streakData.reminderTime = document.getElementById('reminderTimeInput').value;
-        const toggle = document.getElementById('reminderToggle');
-        if (toggle) toggle.checked = true;
-        saveCurrentAccountData();
-        closeReminderModal();
-        showToast(`Đã bật nhắc nhở vào lúc ${streakData.reminderTime} mỗi ngày!`);
-    }
-
-    function handleReminderToggle(checked) {
-        streakData.reminderEnabled = checked;
-        saveCurrentAccountData();
-        showToast(checked ? "Đã bật nhắc học mỗi ngày!" : "Đã tắt nhắc học.");
-    }
-
-    function toggleLeaderboardPreference(checked) {
-        streakData.showOnLeaderboard = checked;
-        saveCurrentAccountData();
-        showToast(checked ? "Đã bật hiển thị trên Bảng xếp hạng!" : "Đã ẩn khỏi Bảng xếp hạng.");
-    }
-
-    function showLeaderboardToast() {
-        showToast("🏆 Bảng xếp hạng: Bạn đang đứng Top 3 trong tuần này!");
-    }
-
-    function openShortcutModal() {
-        document.getElementById('shortcutModal').classList.remove('hidden');
-    }
-
-    function closeShortcutModal() {
-        document.getElementById('shortcutModal').classList.add('hidden');
-        focusTyping();
-    }
-
-    function showSummaryScreen() {
-        document.getElementById('summaryTotal').innerText = vocabList.length;
-        const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
-        document.getElementById('summaryAccuracy').innerText = `${acc}%`;
-        document.getElementById('summaryModal').classList.remove('hidden');
-    }
-
-    function restartQuiz() {
-        document.getElementById('summaryModal').classList.add('hidden');
-        currentIndex = 0;
-        renderQuestion();
-    }
-
-    function closeSummaryAndOpenManager() {
-        document.getElementById('summaryModal').classList.add('hidden');
-        openVocabManager();
-    }
-
-    function showToast(msg) {
-        const toast = document.getElementById('toastNotice');
-        const msgEl = document.getElementById('toastMessage');
-        if (!toast || !msgEl) return;
-        msgEl.innerText = msg;
-        toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
-        toast.classList.add('opacity-100', 'translate-y-0');
-
-        setTimeout(() => {
-            toast.classList.remove('opacity-100', 'translate-y-0');
-            toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
-        }, 3000);
-    }
-
-    // ==========================================
-    // HIỆU ỨNG NỀN TRỜI SAO VŨ TRỤ
-    // ==========================================
-    function initStarCanvas() {
-        const canvas = document.getElementById('starsCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        let stars = [];
-
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            stars = [];
-            const count = Math.floor((canvas.width * canvas.height) / 5000);
-            for (let i = 0; i < count; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    radius: Math.random() * 1.3 + 0.3,
-                    alpha: Math.random() * 0.8 + 0.2,
-                    speed: Math.random() * 0.015 + 0.005
-                });
+            // Toggles
+            document.getElementById('leaderboardToggle').checked = streakData.showOnLeaderboard;
+            document.getElementById('darkModeToggle').checked = streakData.isDarkMode;
+            document.getElementById('languageSelect').value = streakData.language || "vi";
+            document.getElementById('reminderToggle').checked = streakData.reminderEnabled;
+            if (streakData.reminderEnabled) {
+                document.getElementById('reminderStatusDesc').innerText = `Nhắc nhở lúc ${streakData.reminderTime}`;
             }
         }
 
-        window.addEventListener('resize', resize);
-        resize();
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            stars.forEach(s => {
-                s.alpha += s.speed;
-                if (s.alpha > 1 || s.alpha < 0.2) s.speed = -s.speed;
-                ctx.beginPath();
-                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(200, 230, 255, ${Math.abs(s.alpha)})`;
-                ctx.fill();
-            });
-            requestAnimationFrame(draw);
+        // ==========================================
+        // 1. HỒ SƠ CÁ NHÂN (Profile Modal)
+        // ==========================================
+        function openProfileModal() {
+            profileDropdown.classList.add('hidden');
+            document.getElementById('profileEditName').value = streakData.userName;
+            document.getElementById('profileEditEmail').value = streakData.userEmail;
+            document.getElementById('profileEditLevel').value = streakData.level || "A1";
+            document.getElementById('profileEditAvatarPreview').src = streakData.userAvatar;
+            document.getElementById('profileTotalSolved').innerText = `${streakData.totalSolved || 0} câu`;
+            document.getElementById('profileStreakDisplay').innerText = `${streakData.currentStreak} ngày 🔥`;
+            profileModal.classList.remove('hidden');
         }
-        draw();
-    }
-</script>
+
+        function closeProfileModal() {
+            profileModal.classList.add('hidden');
+        }
+
+        function selectPresetAvatar(url) {
+            document.getElementById('profileEditAvatarPreview').src = url;
+        }
+
+        function saveProfileChanges() {
+            const name = document.getElementById('profileEditName').value.trim();
+            const email = document.getElementById('profileEditEmail').value.trim();
+            const level = document.getElementById('profileEditLevel').value;
+            const avatar = document.getElementById('profileEditAvatarPreview').src;
+
+            if (name) streakData.userName = name;
+            if (email) streakData.userEmail = email;
+            streakData.level = level;
+            streakData.userAvatar = avatar;
+
+            saveCurrentAccountData();
+            updateStreakUI();
+            closeProfileModal();
+            showToast("Đã cập nhật và đồng bộ hồ sơ cá nhân thành công! ✨");
+        }
+
+        // ==========================================
+        // 3. ĐỔI TÊN HIỂN THỊ (Quick Name Change)
+        // ==========================================
+        function openChangeNameModal() {
+            profileDropdown.classList.add('hidden');
+            document.getElementById('quickNameInput').value = streakData.userName;
+            changeNameModal.classList.remove('hidden');
+        }
+
+        function closeChangeNameModal() {
+            changeNameModal.classList.add('hidden');
+        }
+
+        function saveQuickName() {
+            const val = document.getElementById('quickNameInput').value.trim();
+            if (val) {
+                streakData.userName = val;
+                saveCurrentAccountData();
+                updateStreakUI();
+                closeChangeNameModal();
+                showToast(`Đã đổi tên thành công: ${val}`);
+            }
+        }
+
+        // ==========================================
+        // 4. HIỆN TRÊN BẢNG XẾP HẠNG (Toggle)
+        // ==========================================
+        function toggleLeaderboardPreference(val) {
+            streakData.showOnLeaderboard = val;
+            saveCurrentAccountData();
+            if (val) {
+                showToast("Đã bật: Hiện tên & ảnh trên bảng xếp hạng 🏆");
+            } else {
+                showToast("Đã tắt: Ẩn thông tin khỏi bảng xếp hạng");
+            }
+        }
+
+        function showLeaderboardToast() {
+            showToast("Bảng xếp hạng tuần: Bạn đang đứng hạng 3! 🏆");
+        }
+
+        // ==========================================
+        // 5. GIAO DIỆN TỐI / SÁNG (Dark Mode Toggle)
+        // ==========================================
+        function toggleDarkMode(isDark) {
+            streakData.isDarkMode = isDark;
+            saveCurrentAccountData();
+            applyTheme(isDark);
+            showToast(isDark ? "Đã chuyển sang Giao diện tối 🌙" : "Đã chuyển sang Giao diện sáng ☀️");
+        }
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.body.classList.remove('light-mode');
+            } else {
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        // ==========================================
+        // 6. NGÔN NGỮ GIAO DIỆN (Language Selector)
+        // ==========================================
+        function changeLanguage(lang) {
+            streakData.language = lang;
+            saveCurrentAccountData();
+            applyLanguage(lang);
+            showToast(lang === 'vi' ? "Đã đổi sang Tiếng Việt" : "Language set to English");
+        }
+
+        function applyLanguage(lang) {
+            const dict = I18N[lang] || I18N.vi;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (dict[key]) {
+                    el.innerText = dict[key];
+                }
+            });
+        }
+
+        // ==========================================
+        // 7. NHẮC HỌC (Reminder Toggle & Modal)
+        // ==========================================
+        function handleReminderToggle(checked) {
+            if (checked) {
+                openReminderModal();
+            } else {
+                streakData.reminderEnabled = false;
+                saveCurrentAccountData();
+                document.getElementById('reminderStatusDesc').innerText = "Nhận thông báo theo lịch của bạn";
+                showToast("Đã tắt nhắc học hàng ngày");
+            }
+        }
+
+        function openReminderModal() {
+            profileDropdown.classList.add('hidden');
+            document.getElementById('reminderTimeInput').value = streakData.reminderTime || "20:00";
+            reminderModal.classList.remove('hidden');
+        }
+
+        function closeReminderModal() {
+            reminderModal.classList.add('hidden');
+            document.getElementById('reminderToggle').checked = streakData.reminderEnabled;
+        }
+
+        function saveReminderSettings() {
+            const time = document.getElementById('reminderTimeInput').value;
+            streakData.reminderEnabled = true;
+            streakData.reminderTime = time;
+            saveCurrentAccountData();
+            closeReminderModal();
+            showToast(`Đã bật nhắc học vào lúc ${time} hàng ngày! ⏰`);
+        }
+
+        // ==========================================
+        // 8. ĐĂNG XUẤT (Logout Modal)
+        // ==========================================
+        function openLogoutModal() {
+            profileDropdown.classList.add('hidden');
+            logoutModal.classList.remove('hidden');
+        }
+
+        function closeLogoutModal() {
+            logoutModal.classList.add('hidden');
+        }
+
+        function toggleProfileDropdown() {
+            profileDropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            if (!profileDropdown.contains(e.target) && !e.target.closest('#userDisplayNameHeader') && !e.target.closest('button[onclick="toggleProfileDropdown()"]')) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+
+        // Shortcut Modal
+        function openShortcutModal() {
+            shortcutModal.classList.remove('hidden');
+        }
+
+        function closeShortcutModal() {
+            shortcutModal.classList.add('hidden');
+        }
+
+        // Feature: Peek/Preview current active word while holding Ctrl
+        function peekCurrentWord() {
+            if (isCompleted || currentCharIndex >= currentTarget.length || isCtrlPeeking) return;
+            isCtrlPeeking = true;
+
+            // Find boundary of current word
+            let start = currentCharIndex;
+            while (start > 0 && currentTarget[start - 1] !== ' ') {
+                start--;
+            }
+            let end = currentCharIndex;
+            while (end < currentTarget.length && currentTarget[end] !== ' ') {
+                end++;
+            }
+
+            for (let i = start; i < end; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                if (slot && !isPunctuationChar(currentTarget[i])) {
+                    if (!slot.classList.contains('filled')) {
+                        slot.innerText = currentTarget[i];
+                        slot.classList.add('preview-hint');
+                    }
+                }
+            }
+        }
+
+        // Hide preview immediately when Ctrl is released
+        function hideCurrentWordPeek() {
+            if (!isCtrlPeeking) return;
+            isCtrlPeeking = false;
+
+            let start = currentCharIndex;
+            while (start > 0 && currentTarget[start - 1] !== ' ') {
+                start--;
+            }
+            let end = currentCharIndex;
+            while (end < currentTarget.length && currentTarget[end] !== ' ') {
+                end++;
+            }
+
+            for (let i = start; i < end; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                if (slot && !isPunctuationChar(currentTarget[i])) {
+                    if (!slot.classList.contains('filled')) {
+                        slot.innerText = "*";
+                        slot.classList.remove('preview-hint');
+                    }
+                }
+            }
+
+            updateActiveSlot();
+        }
+
+        // Render current question
+        function renderQuestion() {
+            if (vocabList.length === 0) {
+                vietnamesePrompt.innerText = "Chưa có từ vựng trong tài khoản này. Hãy bấm 'Nhập từ' phía trên để thêm!";
+                maskedSentenceContainer.innerHTML = "";
+                return;
+            }
+
+            if (currentIndex >= vocabList.length) {
+                showSummaryScreen();
+                return;
+            }
+
+            const item = vocabList[currentIndex];
+            currentVi = item.vi;
+            currentTarget = item.en.trim();
+            currentCharIndex = 0;
+            isCompleted = false;
+
+            // Update UI Counters & Headers
+            const currentNumber = currentIndex + 1;
+            const total = vocabList.length;
+            const percent = Math.round((currentNumber / total) * 100);
+
+            questionCounter.innerText = `Câu ${currentNumber} / ${total}`;
+            progressPercent.innerText = `${percent}%`;
+            progressBar.style.width = `${percent}%`;
+
+            vietnamesePrompt.innerText = currentVi;
+            categoryHeader.innerText = item.category || "Luyện viết · A1 · Daily Conversation";
+            topicBreadcrumb.innerText = item.category ? item.category.split('·')[1]?.trim() || "Tiếng Anh" : "Tự do";
+
+            completionBanner.classList.add('hidden');
+            fullEnglishSentence.innerText = "";
+
+            renderCharacterSlots();
+            skipToNextValidChar();
+            focusTyping();
+        }
+
+        // Generate character slots with word grouping (similar to Trần Hưng Tài)
+        function renderCharacterSlots() {
+            maskedSentenceContainer.innerHTML = "";
+            const words = currentTarget.split(' ');
+            let globalIndex = 0;
+
+            words.forEach((word, wIdx) => {
+                const wordWrap = document.createElement('div');
+                wordWrap.className = "flex items-center space-x-1 sm:space-x-1.5 my-1 mr-3 sm:mr-4";
+
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    const charSlot = document.createElement('div');
+                    charSlot.id = `slot-${globalIndex}`;
+                    charSlot.dataset.index = globalIndex;
+                    charSlot.dataset.char = char;
+
+                    // Check if punctuation
+                    const isPunctuation = isPunctuationChar(char);
+
+                    if (isPunctuation) {
+                        charSlot.className = "w-4 sm:w-6 h-8 sm:h-11 flex items-center justify-center font-bold text-slate-300 text-lg sm:text-2xl";
+                        charSlot.innerText = char;
+                    } else {
+                        // Regular letter slot
+                        charSlot.className = "char-slot w-7 h-9 sm:w-9 sm:h-11 rounded-lg sm:rounded-xl border border-blue-400/30 bg-slate-900/60 flex items-center justify-center font-bold text-base sm:text-xl transition-all duration-150 cursor-pointer shadow-sm";
+                        charSlot.innerText = "*";
+                        charSlot.onclick = (e) => {
+                            e.stopPropagation();
+                            focusTyping(true);
+                        };
+                    }
+
+                    wordWrap.appendChild(charSlot);
+                    globalIndex++;
+                }
+
+                maskedSentenceContainer.appendChild(wordWrap);
+
+                if (wIdx < words.length - 1) {
+                    globalIndex++; // representing space
+                }
+            });
+
+            updateActiveSlot();
+        }
+
+        // Helper to identify punctuation
+        function isPunctuationChar(c) {
+            return /[.,!?;:'"()–—-]/.test(c);
+        }
+
+        // Advance index past spaces or punctuation if needed
+        function skipToNextValidChar() {
+            while (currentCharIndex < currentTarget.length) {
+                const ch = currentTarget[currentCharIndex];
+                if (ch === ' ') {
+                    currentCharIndex++;
+                } else if (isPunctuationChar(ch)) {
+                    currentCharIndex++;
+                } else {
+                    break;
+                }
+            }
+            updateActiveSlot();
+
+            if (currentCharIndex >= currentTarget.length) {
+                completeCurrentSentence();
+            }
+        }
+
+        // Update active slot glowing border
+        function updateActiveSlot() {
+            document.querySelectorAll('.char-slot').forEach(slot => slot.classList.remove('active'));
+
+            const targetSlot = document.getElementById(`slot-${currentCharIndex}`);
+            if (targetSlot) {
+                targetSlot.classList.add('active');
+                // Đã loại bỏ hoàn toàn lệnh scrollIntoView tự động tại đây để màn hình không bị nhảy giật mỗi khi gõ chữ
+            }
+        }
+
+        // Handle user typing key with mechanical sound & visual effects
+        function handleKeyInput(char) {
+            if (isCompleted || currentCharIndex >= currentTarget.length) return;
+
+            totalKeystrokes++;
+            const expectedChar = currentTarget[currentCharIndex];
+
+            // Case-insensitive comparison
+            if (char.toLowerCase() === expectedChar.toLowerCase()) {
+                correctKeystrokes++;
+                playKeyClack();
+                triggerHaptic('light');
+
+                const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
+                if (activeSlot) {
+                    activeSlot.innerText = expectedChar;
+                    activeSlot.classList.remove('active');
+                    activeSlot.classList.add('filled', 'correct-pop');
+                    spawnSparkles(activeSlot);
+                }
+
+                currentCharIndex++;
+                skipToNextValidChar();
+            } else {
+                playErrorSound();
+                triggerHaptic('error');
+                const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
+                if (activeSlot) {
+                    activeSlot.classList.add('error');
+                    setTimeout(() => {
+                        activeSlot.classList.remove('error');
+                    }, 350);
+                }
+            }
+        }
+
+        // Reveal full answer
+        function revealAnswer() {
+            for (let i = 0; i < currentTarget.length; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                if (slot && !isPunctuationChar(currentTarget[i])) {
+                    slot.innerText = currentTarget[i];
+                    slot.classList.add('filled');
+                    slot.classList.remove('active');
+                }
+            }
+            completeCurrentSentence(false);
+        }
+
+        // Completion logic
+        function completeCurrentSentence(triggerAudio = true) {
+            if (isCompleted) return;
+            isCompleted = true;
+
+            completionBanner.classList.remove('hidden');
+            fullEnglishSentence.innerText = currentTarget;
+
+            playSuccessChime();
+            triggerHaptic('success');
+            addStreakPoints(1);
+
+            if (triggerAudio) {
+                setTimeout(() => {
+                    speakSentence();
+                }, 400);
+            }
+        }
+
+        // Next question
+        function nextQuestion() {
+            currentIndex++;
+            renderQuestion();
+        }
+
+        // Skip question
+        function skipQuestion() {
+            revealAnswer();
+            addStreakPoints(1);
+            setTimeout(() => {
+                nextQuestion();
+            }, 600);
+        }
+
+        // Speak English sentence with Web Speech API
+        function speakSentence() {
+            if (!('speechSynthesis' in window)) {
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(currentTarget || "Hello");
+            utterance.lang = 'en-US';
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Event Listeners for Keyboard
+        function setupEventListeners() {
+            window.addEventListener('keydown', (e) => {
+                if (vocabModal.classList.contains('hidden') === false) return;
+                if (summaryModal.classList.contains('hidden') === false) return;
+                if (document.getElementById('authModal').classList.contains('hidden') === false) return;
+                if (profileModal.classList.contains('hidden') === false) return;
+                if (changeNameModal.classList.contains('hidden') === false) return;
+
+                if (e.key === 'Control') {
+                    peekCurrentWord();
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === 'Escape') {
+                    if (!shortcutModal.classList.contains('hidden')) {
+                        closeShortcutModal();
+                    } else {
+                        skipQuestion();
+                    }
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === 'Enter') {
+                    if (isCompleted) {
+                        nextQuestion();
+                    }
+                    return;
+                }
+
+                if (e.key === 'Backspace') {
+                    handleBackspace();
+                    return;
+                }
+
+                if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    handleKeyInput(e.key);
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'Control') {
+                    hideCurrentWordPeek();
+                    e.preventDefault();
+                }
+            });
+
+            window.addEventListener('blur', () => {
+                hideCurrentWordPeek();
+            });
+
+            hiddenKeyboardInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (val && val.length > 0) {
+                    const lastChar = val[val.length - 1];
+                    handleKeyInput(lastChar);
+                    hiddenKeyboardInput.value = "";
+                }
+            });
+        }
+
+        function handleBackspace() {
+            if (currentCharIndex <= 0) return;
+
+            let prevIdx = currentCharIndex - 1;
+            while (prevIdx >= 0) {
+                if (currentTarget[prevIdx] === ' ' || isPunctuationChar(currentTarget[prevIdx])) {
+                    prevIdx--;
+                } else {
+                    break;
+                }
+            }
+
+            if (prevIdx >= 0) {
+                currentCharIndex = prevIdx;
+                const slot = document.getElementById(`slot-${currentCharIndex}`);
+                if (slot) {
+                    slot.innerText = "*";
+                    slot.classList.remove('filled');
+                }
+                isCompleted = false;
+                completionBanner.classList.add('hidden');
+                updateActiveSlot();
+            }
+        }
+
+        function focusTyping(forceMobile = false) {
+            if (forceMobile || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 640) {
+                // Focus vào input với preventScroll để trình duyệt không tự ý cuộn màn hình
+                hiddenKeyboardInput.focus({ preventScroll: true });
+                // Giữ vị trí cuộn luôn ở đỉnh màn hình (0,0) tuyệt đối không cho kéo lên
+                window.scrollTo(0, 0);
+            }
+        }
+
+        // ==========================================
+        // VOCABULARY MANAGER MODAL FUNCTIONS
+        // ==========================================
+        function openVocabManager() {
+            vocabModal.classList.remove('hidden');
+            renderVocabManagerList();
+            switchModalTab('list');
+        }
+
+        function closeVocabManager() {
+            vocabModal.classList.add('hidden');
+            renderQuestion();
+        }
+
+        function switchModalTab(tab) {
+            const tabList = document.getElementById('tabList');
+            const tabImport = document.getElementById('tabImport');
+            const tabListBtn = document.getElementById('tabListBtn');
+            const tabImportBtn = document.getElementById('tabImportBtn');
+
+            if (tab === 'list') {
+                tabList.classList.remove('hidden');
+                tabImport.classList.add('hidden');
+                tabListBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
+                tabImportBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            } else {
+                tabList.classList.add('hidden');
+                tabImport.classList.remove('hidden');
+                tabImportBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
+                tabListBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            }
+        }
+
+        function renderVocabManagerList() {
+            const container = document.getElementById('vocabListContainer');
+            container.innerHTML = "";
+            document.getElementById('vocabCount').innerText = vocabList.length;
+
+            if (vocabList.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">Chưa có câu nào trong tài khoản này. Hãy nhấn "Nhập danh sách câu mới".</div>`;
+                return;
+            }
+
+            vocabList.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3 text-xs";
+                itemDiv.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-white truncate">${index + 1}. ${escapeHtml(item.vi)}</div>
+                        <div class="text-cyan-300/80 font-mono truncate text-[11px]">${escapeHtml(item.en)}</div>
+                    </div>
+                    <div class="flex items-center space-x-1 shrink-0">
+                        <button onclick="jumpToQuestion(${index})" title="Học câu này ngay" class="p-1.5 text-blue-400 hover:text-white rounded hover:bg-slate-800">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="deleteVocabItem(${index})" title="Xoá câu này" class="p-1.5 text-red-400 hover:text-red-300 rounded hover:bg-slate-800">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        async function deleteVocabItem(idx) {
+            vocabList.splice(idx, 1);
+            if (currentIndex >= vocabList.length) {
+                currentIndex = Math.max(0, vocabList.length - 1);
+            }
+            await saveCurrentAccountData();
+            renderVocabManagerList();
+            showToast("Đã xoá và cập nhật lên tài khoản");
+        }
+
+        function jumpToQuestion(idx) {
+            currentIndex = idx;
+            closeVocabManager();
+        }
+
+        function parseBulkInput(text) {
+            const lines = text.split('\n');
+            const parsed = [];
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                let vi = "";
+                let en = "";
+
+                if (trimmed.includes('|')) {
+                    const parts = trimmed.split('|');
+                    vi = parts[0].trim();
+                    en = parts[1].trim();
+                } else if (trimmed.includes('-')) {
+                    const parts = trimmed.split('-');
+                    vi = parts[0].trim();
+                    en = parts[1].trim();
+                } else {
+                    vi = trimmed;
+                    en = trimmed;
+                }
+
+                if (vi && en) {
+                    parsed.push({
+                        vi: vi,
+                        en: en,
+                        category: "Bộ từ vựng của " + (streakData.userName || "bạn")
+                    });
+                }
+            });
+
+            return parsed;
+        }
+
+        async function appendImportedVocab() {
+            const text = document.getElementById('bulkImportInput').value;
+            const newItems = parseBulkInput(text);
+            if (newItems.length === 0) {
+                return;
+            }
+            vocabList = vocabList.concat(newItems);
+            await saveCurrentAccountData();
+            document.getElementById('bulkImportInput').value = "";
+            switchModalTab('list');
+            renderVocabManagerList();
+            showToast(`Đã lưu thêm ${newItems.length} câu vào tài khoản! ☁️`);
+        }
+
+        async function replaceImportedVocab() {
+            const text = document.getElementById('bulkImportInput').value;
+            const newItems = parseBulkInput(text);
+            if (newItems.length === 0) {
+                return;
+            }
+            vocabList = newItems;
+            currentIndex = 0;
+            await saveCurrentAccountData();
+            document.getElementById('bulkImportInput').value = "";
+            switchModalTab('list');
+            renderVocabManagerList();
+            showToast(`Đã thay thế bộ từ vựng cho tài khoản! ☁️`);
+        }
+
+        async function resetDefaultVocab() {
+            vocabList = [...DEFAULT_VOCABULARY];
+            currentIndex = 0;
+            await saveCurrentAccountData();
+            renderVocabManagerList();
+            showToast("Đã khôi phục các câu mẫu mặc định!");
+        }
+
+        // Summary Screen
+        function showSummaryScreen() {
+            summaryModal.classList.remove('hidden');
+            document.getElementById('summaryTotal').innerText = vocabList.length;
+            const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
+            document.getElementById('summaryAccuracy').innerText = `${acc}%`;
+        }
+
+        function restartQuiz() {
+            currentIndex = 0;
+            correctKeystrokes = 0;
+            totalKeystrokes = 0;
+            summaryModal.classList.add('hidden');
+            renderQuestion();
+        }
+
+        function closeSummaryAndOpenManager() {
+            summaryModal.classList.add('hidden');
+            openVocabManager();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // ==========================================
+        // TWINKLING STAR CANVAS BACKGROUND
+        // ==========================================
+        function initStarCanvas() {
+            const canvas = document.getElementById('starsCanvas');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                createStars();
+            }
+
+            function createStars() {
+                stars = [];
+                const count = Math.floor((width * height) / 3800);
+                for (let i = 0; i < count; i++) {
+                    stars.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        radius: Math.random() * 1.3 + 0.3,
+                        alpha: Math.random() * 0.8 + 0.2,
+                        speed: Math.random() * 0.015 + 0.005,
+                        color: Math.random() > 0.4 ? '#ffffff' : (Math.random() > 0.5 ? '#93c5fd' : '#67e8f9')
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                stars.forEach(star => {
+                    star.alpha += star.speed;
+                    if (star.alpha > 0.95 || star.alpha < 0.15) {
+                        star.speed = -star.speed;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = star.color;
+                    ctx.globalAlpha = Math.max(0, Math.min(1, star.alpha));
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            animate();
+        }
+    </script>
 </body>
 </html>
