@@ -1,496 +1,2745 @@
-Claude
-
-<!DOCTYPE html> <html lang="vi"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Trần Hưng Tài - Luyện viết & Khảo từ vựng</title> <!-- Tailwind CSS --> <script src="https://cdn.tailwindcss.com"></script> <!-
-
-pasted
-
-fix code lại phần đăng nhập và đăng ký tôi đăng ký ở máy tính và đăng nhập tk đó ở điện thoại nó báo chưa đăng ký và sửa lại cho đẹp nhé hoàn chỉnh
-
-Đang viết mã kết nối Firebase cho tài khoản và đồng bộ
-Tôi đã tìm ra nguyên nhân: file HTML tĩnh không tự lưu tài khoản giữa hai thiết bị được. Code cũ dựa vào kvdb.io (mã bucket tự bịa, không tồn tại) và Firebase (chỉ chạy khi có __firebase_config, mà trên web của bạn không có). Vì vậy việc đồng bộ luôn thất bại im lặng, tài khoản chỉ nằm trong localStorage của máy tính, và điện thoại báo “chưa đăng ký”. Mật khẩu còn bị lưu dạng chữ thường và có nhiều hàm bị khai báo trùng.
-
-Tôi viết lại phần này bằng Firebase Authentication + Firestore (miễn phí) để đăng nhập thật sự dùng được trên mọi thiết bị.
-
-Claude is thinking
-Tôi đã viết lại toàn bộ phần đăng nhập/đăng ký trong index.html, nhưng file chỉ chạy được sau khi bạn dán cấu hình Firebase (5 phút, miễn phí). Tôi chưa chạy thử trên Firebase thật.
-
-Cách cấu hình
-
-Vào console.firebase.google.com, tạo project, rồi thêm một Web app (biểu tượng </>) và copy đoạn firebaseConfig.
-Mở Authentication → Sign-in method và bật Email/Password.
-Mở Firestore Database → Create database, rồi vào tab Rules và dán đoạn sau:
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{d}/documents {
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-    }
-  }
-}
-Trong index.html, tìm FIREBASE_CONFIG và dán apiKey, authDomain, projectId, appId vào.
-Vào Authentication → Settings → Authorized domains và thêm tên miền website của bạn.
-Những gì đã sửa
-
-Đăng ký trên máy tính rồi đăng nhập trên điện thoại giờ dùng được, vì tài khoản nằm trên Firebase chứ không còn nằm trong localStorage.
-Mật khẩu do Firebase mã hóa, không còn lưu chữ thường trong trình duyệt.
-Có thể đăng ký bằng email hoặc tên đăng nhập thường; tên đăng nhập được đổi nội bộ thành ten@thtai.app.
-Câu từ vựng, streak và điểm tự đồng bộ lên đám mây của tài khoản, và dữ liệu cũng được lưu cục bộ để dùng khi mất mạng.
-Lỗi hiển thị bằng tiếng Việt, ví dụ “sai mật khẩu”, “đã đăng ký” hoặc “tài khoản chưa đăng ký”.
-Đã xóa các hàm bị khai báo trùng và bỏ nút “mã đồng bộ” cũ.
-Giao diện đăng nhập/đăng ký được làm gọn hơn, và logic streak ngày được sửa lại cho đúng.
-Phần đã lược bớt để file gọn: giao diện sáng, đa ngôn ngữ, nhắc học, bảng xếp hạng, đổi ảnh đại diện và nền sao. Bạn muốn thêm lại phần nào thì cho tôi biết.
-
-Khi mở file bằng file:// thì Firebase thường không chạy. Hãy đưa lên hosting (Firebase Hosting, Netlify, GitHub Pages...) hoặc chạy npx serve.
-
-
-Index
-Code · HTML 
-
-Want to be notified when Claude responds?
-
-
-
-Claude is AI and can make mistakes. Please double-check responses.
-
-
-Index · HTML
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Trần Hưng Tài - Luyện viết tiếng Anh</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-body{font-family:'Plus Jakarta Sans',sans-serif;background:radial-gradient(ellipse at 50% 15%,#152243,#080d1a 60%,#03060c);color:#e2e8f0;min-height:100dvh;user-select:none}
-.glass{background:rgba(13,27,56,.78);backdrop-filter:blur(16px);border:1px solid rgba(56,95,160,.3);box-shadow:0 25px 50px -12px rgba(0,0,0,.6)}
-.inp{width:100%;background:rgba(2,6,23,.8);border:1px solid #334155;border-radius:.75rem;padding:.7rem .9rem .7rem 2.4rem;color:#fff;font-size:.875rem;outline:none}
-.inp:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.15)}
-.slot{width:1.9rem;height:2.4rem;border-radius:.6rem;border:1px solid rgba(96,165,250,.3);background:rgba(15,23,42,.7);display:flex;align-items:center;justify-content:center;font:700 1.1rem monospace;transition:.15s}
-@media(min-width:640px){.slot{width:2.4rem;height:2.9rem;font-size:1.4rem}}
-.slot.active{border-color:#38ef7d;background:rgba(56,239,125,.12);color:#38ef7d;animation:pl 1.5s infinite}
-.slot.filled{border-color:rgba(96,165,250,.7);background:rgba(30,58,102,.8);color:#fff;animation:pop .35s}
-.slot.peek{border-color:#38bdf8;background:rgba(56,189,248,.2);color:#7dd3fc}
-.slot.err{animation:shake .35s;border-color:#f43f5e;background:rgba(244,63,94,.25)}
-.punc{display:flex;align-items:center;font:700 1.3rem monospace;color:#94a3b8}
-@keyframes pl{50%{box-shadow:0 0 18px rgba(16,185,129,.6)}}
-@keyframes pop{50%{transform:scale(1.18)}}
-@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-.hidden{display:none!important}
-@media(max-width:640px){#vi{font-size:1.15rem!important}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trần Hưng Tài - Luyện viết & Khảo từ vựng</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* Starry space animated background */
+        .stars-bg {
+            background: radial-gradient(ellipse at 50% 20%, #152243 0%, #080d1a 60%, #03060c 100%);
+        }
+
+        /* Glassmorphism panel styling */
+        .glass-card {
+            background: rgba(13, 27, 56, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 95, 160, 0.28);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 40px rgba(24, 76, 160, 0.15);
+        }
+
+        /* Active typing slot styling with cyan glow */
+        .char-slot.active {
+            border-color: #38ef7d;
+            box-shadow: 0 0 16px rgba(56, 239, 125, 0.45);
+            background: rgba(56, 239, 125, 0.12);
+            animation: pulseActive 1.6s infinite ease-in-out;
+            color: #38ef7d;
+        }
+
+        .char-slot.filled {
+            border-color: rgba(96, 165, 250, 0.6);
+            background: linear-gradient(145deg, rgba(30, 58, 102, 0.8), rgba(15, 23, 42, 0.9));
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+        }
+
+        /* Stunning POP & GLOW animation on correct keystroke */
+        .char-slot.correct-pop {
+            animation: popSuccess 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popSuccess {
+            0% {
+                transform: scale(0.7) translateY(4px);
+                border-color: #34d399;
+                background: rgba(52, 211, 153, 0.35);
+                box-shadow: 0 0 25px rgba(52, 211, 153, 0.8), 0 0 10px #38bdf8;
+                color: #a7f3d0;
+            }
+            50% {
+                transform: scale(1.18) translateY(-3px);
+                border-color: #38bdf8;
+                box-shadow: 0 0 30px rgba(56, 189, 248, 0.9), 0 0 15px rgba(52, 211, 153, 0.8);
+                color: #ffffff;
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                border-color: rgba(96, 165, 250, 0.6);
+                box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+            }
+        }
+
+        /* Floating sparkle burst particles */
+        .sparkle-particle {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+            z-index: 9999;
+            animation: flyParticle 0.55s ease-out forwards;
+        }
+
+        @keyframes flyParticle {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Temporary preview styling when holding Ctrl */
+        .char-slot.preview-hint {
+            border-color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.22) !important;
+            color: #7dd3fc !important;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+            transform: scale(1.05);
+            transition: all 0.1s ease-in-out;
+        }
+
+        .char-slot.error {
+            animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #f43f5e !important;
+            background: rgba(244, 63, 94, 0.25) !important;
+            color: #fda4af !important;
+        }
+
+        /* Toggle switch style */
+        .switch-input:checked + .switch-track {
+            background-color: #2e7d5e;
+        }
+        .switch-input:checked + .switch-track .switch-thumb {
+            transform: translateX(1.25rem);
+        }
+
+        /* Light Mode Classes */
+        body.light-mode {
+            background: radial-gradient(ellipse at 50% 20%, #e0e9f8 0%, #f1f5f9 60%, #e2e8f0 100%);
+            color: #0f172a;
+        }
+        body.light-mode .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            border-color: rgba(203, 213, 225, 0.9);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 0 25px rgba(59, 130, 246, 0.08);
+            color: #0f172a;
+        }
+        body.light-mode #vietnamesePrompt {
+            color: #0f172a !important;
+        }
+        body.light-mode .char-slot {
+            background: rgba(241, 245, 249, 0.95);
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+        body.light-mode .char-slot.active {
+            border-color: #059669;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.45);
+            background: rgba(16, 185, 129, 0.15);
+            color: #059669;
+        }
+        body.light-mode .char-slot.filled {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+        body.light-mode #categoryHeader,
+        body.light-mode #questionCounter,
+        body.light-mode footer {
+            color: #475569 !important;
+        }
+        body.light-mode #skipBtn {
+            background: rgba(241, 245, 249, 0.9);
+            border-color: #cbd5e1;
+            color: #334155;
+        }
+        body.light-mode #skipBtn:hover {
+            background: #e2e8f0;
+        }
+        body.light-mode #starsCanvas {
+            opacity: 0.18;
+        }
+
+        /* Mobile specific adjustments when keyboard is open */
+        @media (max-width: 640px) {
+            body {
+                min-height: 100dvh;
+            }
+            .mobile-peek-btn {
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: none;
+            }
+        }
+
+        /* Toast notification styling */
+        #toastNotice {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes pulseActive {
+            0%, 100% { border-color: #34d399; transform: scale(1); }
+            50% { border-color: #10b981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); transform: scale(1.04); }
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+            40%, 60% { transform: translate3d(3px, 0, 0); }
+        }
+
+        /* Subtle starry canvas */
+        #starsCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* KHÓA CỨNG MÀN HÌNH ĐIỆN THOẠI: Chống 100% hiện tượng màn hình bị kéo tuột lên trên */
+        @media (max-width: 640px) {
+            html, body {
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                touch-action: pan-x;
+            }
+            main {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
+                justify-content: flex-start !important;
+            }
+            #quizCard {
+                margin-top: 0.25rem;
+                padding: 1rem 1.25rem !important;
+            }
+            #vietnamesePrompt {
+                font-size: 1.15rem !important;
+                line-height: 1.4 !important;
+            }
+        }
+
+        /* Custom scrollbar for vocab list */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2563eb;
+            border-radius: 9999px;
+        }
+    </style>
 </head>
-<body class="flex flex-col">
-<input id="kb" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="fixed opacity-0 w-px h-px top-1/4 left-1/2" style="font-size:16px">
- 
-<!-- HEADER -->
-<header class="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-8 py-3 border-b border-blue-900/40 bg-slate-950/60 backdrop-blur-md">
-  <span class="font-extrabold text-lg sm:text-xl text-white">Trần<span class="text-cyan-400 font-black"> Hưng Tài</span></span>
-  <div class="flex items-center gap-2">
-    <button onclick="openVocab()" class="px-3 h-9 rounded-full bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/30 text-xs text-cyan-200 font-semibold"><i class="fa-solid fa-plus mr-1"></i><span class="hidden sm:inline">Nhập câu</span></button>
-    <button onclick="speak()" class="w-9 h-9 rounded-full bg-slate-900/80 border border-slate-700 hover:text-cyan-300"><i class="fa-solid fa-volume-high text-sm"></i></button>
-    <button id="userBtn" onclick="userClick()" class="flex items-center gap-2 pl-1.5 pr-3 h-9 rounded-full bg-slate-900/90 border border-emerald-500/40 hover:bg-slate-800 text-xs font-semibold">
-      <span id="avatar" class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-[11px] font-bold text-white">?</span>
-      <span id="userLabel" class="max-w-[110px] truncate">Đăng nhập</span>
-    </button>
-  </div>
-  <!-- dropdown -->
-  <div id="menu" class="hidden absolute right-3 top-14 w-[320px] bg-white text-slate-800 rounded-3xl shadow-2xl p-5 z-40">
-    <div class="mb-3"><div id="mName" class="font-bold truncate"></div><div id="mEmail" class="text-xs text-slate-500 truncate"></div></div>
-    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-3">
-      <div class="flex justify-between mb-2">
-        <div><span class="text-2xl">🔥</span> <b id="mStreak" class="text-lg">0</b><div class="text-[11px] text-slate-600">Chuỗi hiện tại</div></div>
-        <div class="text-right"><b id="mLong" class="text-lg">0</b><div class="text-[11px] text-slate-600">Dài nhất</div></div>
-      </div>
-      <div id="mPts" class="text-xs font-bold text-orange-700 mb-1"></div>
-      <div class="h-2 bg-orange-200 rounded-full overflow-hidden"><div id="mBar" class="h-full bg-orange-600 transition-all" style="width:0"></div></div>
-      <p class="text-[10px] text-slate-500 mt-2">Đạt 10 điểm mỗi ngày để giữ chuỗi. Mỗi câu hoàn thành hoặc bỏ qua = 1 điểm.</p>
+<body class="stars-bg min-h-screen text-slate-100 flex flex-col justify-between relative selection:bg-cyan-500 selection:text-white">
+
+    <!-- Canvas for deep starry night sky effect -->
+    <canvas id="starsCanvas"></canvas>
+
+    <!-- Invisible input to capture mobile keyboard seamlessly without jumping page -->
+    <input type="text" id="hiddenKeyboardInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="fixed opacity-0 pointer-events-none w-px h-px top-1/4 left-1/2 -translate-x-1/2" style="font-size: 16px;" />
+
+    <!-- AUTH MODAL (Đăng ký / Đăng nhập đồng bộ đám mây) -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 sm:p-8 text-slate-100 border border-blue-500/30 relative shadow-2xl">
+            <button onclick="closeAuthModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+
+            <!-- Auth Header -->
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-lg shadow-cyan-500/20 mb-3 text-2xl">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white tracking-tight" id="authModalTitle">Đăng nhập tài khoản</h3>
+                <p class="text-xs text-blue-200/70 mt-1">Đồng bộ từ vựng và chuỗi streak xuyên suốt giữa điện thoại và máy tính</p>
+            </div>
+
+            <!-- Tab Switcher (Đăng nhập / Đăng ký) -->
+            <div class="flex p-1 bg-slate-900/90 rounded-2xl border border-slate-800 mb-5">
+                <button id="authTabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm">
+                    Đăng nhập
+                </button>
+                <button id="authTabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
+                    Đăng ký mới
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-3.5 text-xs">
+                <!-- Field: Tên hiển thị (chỉ hiện khi Đăng ký) -->
+                <div id="authDisplayNameField" class="hidden">
+                    <label class="block text-slate-300 font-semibold mb-1">Họ và tên hiển thị</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-user absolute left-3.5 top-3 text-slate-400"></i>
+                        <input type="text" id="authDisplayName" placeholder="Ví dụ: Trần Hưng Tài" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <!-- Field: Username / Email -->
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Tên tài khoản hoặc Email</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-envelope absolute left-3.5 top-3 text-slate-400"></i>
+                        <input type="text" id="authUsername" required placeholder="Nhập tên đăng nhập hoặc email..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    </div>
+                </div>
+
+                <!-- Field: Password -->
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Mật khẩu</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400"></i>
+                        <input type="password" id="authPassword" required placeholder="Nhập mật khẩu..." class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                        <button type="button" onclick="togglePasswordVisibility('authPassword')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200">
+                            <i class="fa-regular fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sync note -->
+                <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex flex-col space-y-1.5 text-[11px] text-blue-200/80">
+                    <div class="flex items-start space-x-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-cyan-400 mt-0.5 shrink-0"></i>
+                        <span>Dữ liệu đăng ký được đồng bộ lên máy chủ đám mây trực tuyến để bạn đăng nhập trên điện thoại và máy tính khác.</span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2">
+                    <span id="authSubmitBtnText">Đăng nhập & Đồng bộ</span>
+                    <i id="authLoadingSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+            </form>
+        </div>
     </div>
-    <div class="text-[11px] text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2 mb-3"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Dữ liệu tự đồng bộ lên đám mây của tài khoản.</div>
-    <button onclick="doLogout()" class="w-full py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 font-semibold text-sm"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>Đăng xuất</button>
-  </div>
-</header>
- 
-<div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-2xl bg-slate-900/95 text-white text-sm font-semibold border border-cyan-400/40 shadow-2xl opacity-0 pointer-events-none transition-all duration-300 max-w-[92vw] text-center"></div>
- 
-<!-- MAIN -->
-<main class="flex-1 flex flex-col items-center justify-center px-4 py-6 max-w-4xl mx-auto w-full" onclick="focusKb()">
-  <div class="glass w-full rounded-3xl p-6 sm:p-10">
-    <div class="flex justify-between text-sm font-semibold mb-2"><span id="counter">Câu 1 / 1</span><span id="pct" class="text-cyan-300">0%</span></div>
-    <div class="h-2.5 bg-slate-800 rounded-full overflow-hidden mb-7"><div id="bar" class="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500" style="width:0"></div></div>
-    <div class="text-xs text-slate-400 mb-2"><i class="fa-regular fa-comment-dots text-cyan-400 mr-1"></i>Câu tiếng Việt</div>
-    <h2 id="vi" class="text-2xl sm:text-3xl font-bold text-white leading-snug mb-7"></h2>
-    <div class="border-t border-slate-700/50 pt-5 mb-6">
-      <div class="flex justify-between items-center mb-3">
-        <span class="text-xs text-slate-400"><i class="fa-solid fa-pen text-cyan-400 mr-1"></i>Câu trả lời</span>
-        <button onclick="event.stopPropagation();reveal()" class="text-xs text-blue-300/70 hover:text-cyan-300 underline underline-offset-4">Xem đáp án</button>
-      </div>
-      <div id="slots" class="flex flex-wrap gap-y-3 min-h-[90px]"></div>
-      <p class="text-xs text-blue-300/50 mt-3"><i class="fa-solid fa-keyboard mr-1"></i>Gõ trực tiếp bằng bàn phím. Giữ Ctrl để xem từ hiện tại.</p>
+
+    <!-- TOP HEADER BAR -->
+    <header class="relative z-30 w-full px-3 sm:px-8 py-3 flex items-center justify-between border-b border-blue-900/30 bg-slate-950/40 backdrop-blur-md">
+        <!-- Back button & Breadcrumb -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <button onclick="openVocabManager()" class="flex items-center space-x-2 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-950/40 text-blue-200 hover:bg-blue-900/50 hover:text-white transition-all shadow-sm">
+                <i class="fa-solid fa-arrow-left text-xs"></i>
+                <span class="hidden sm:inline">Quay lại</span>
+            </button>
+
+            <!-- Trần Hưng Tài Logo / Branding -->
+            <div class="flex items-center space-x-2">
+                <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center">
+                    Trần<span class="text-cyan-400 font-black">Hưng Tài</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Breadcrumb / Topic -->
+        <div class="hidden lg:flex items-center space-x-2 text-xs text-blue-300/80 font-medium tracking-wide">
+            <span>Daily Lexis</span>
+            <span class="text-slate-600">/</span>
+            <span>Học tiếng Anh</span>
+            <span class="text-slate-600">/</span>
+            <span>Học viết</span>
+            <span class="text-slate-600">/</span>
+            <span class="text-cyan-400 font-semibold" id="topicBreadcrumb">A1 • Daily Life</span>
+        </div>
+
+        <!-- Right Side Controls & Profile -->
+        <div class="flex items-center space-x-2 sm:space-x-2.5">
+            <!-- Add vocab button -->
+            <button onclick="openVocabManager()" title="Quản lý từ vựng / Nhập câu của bạn" class="flex items-center space-x-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/30 text-xs sm:text-sm text-cyan-200 font-medium transition">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span class="hidden md:inline" data-i18n="importVocab">Nhập từ</span>
+            </button>
+
+            <!-- Audio button -->
+            <button onclick="speakSentence()" title="Nghe phát âm chuẩn" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-slate-900/80 hover:bg-cyan-500/20 hover:text-cyan-300 border border-slate-700/60 text-slate-300 transition">
+                <i class="fa-solid fa-volume-high text-xs sm:text-sm"></i>
+            </button>
+
+            <!-- Keyboard shortcut hint button (Lightbulb) -->
+            <button onclick="openShortcutModal()" title="Hướng dẫn phím tắt" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-slate-900/80 hover:bg-amber-500/20 hover:text-amber-300 border border-slate-700/60 text-amber-300 transition">
+                <i class="fa-regular fa-lightbulb text-sm"></i>
+            </button>
+
+            <!-- Leaderboard button -->
+            <button onclick="showLeaderboardToast()" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-amber-500/30 bg-amber-950/20 hover:bg-amber-900/30 text-amber-200/90 text-xs font-semibold transition">
+                <i class="fa-solid fa-trophy text-amber-400"></i>
+                <span data-i18n="leaderboard">Bảng xếp hạng</span>
+            </button>
+
+            <!-- Notification bell -->
+            <button onclick="openReminderModal()" title="Nhắc học" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 text-slate-300 transition">
+                <i class="fa-regular fa-bell text-xs sm:text-sm"></i>
+            </button>
+
+            <!-- Cloud Sync Indicator / Login button -->
+            <button id="authTriggerBtn" onclick="openAuthModal()" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-cyan-500/30 bg-cyan-950/30 hover:bg-cyan-900/40 text-cyan-200 text-xs font-semibold transition">
+                <i class="fa-solid fa-cloud text-cyan-400"></i>
+                <span id="authStatusText">Đồng bộ</span>
+            </button>
+
+            <!-- User Profile Badge & Streak Trigger -->
+            <div class="relative">
+                <button onclick="toggleProfileDropdown()" class="flex items-center space-x-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-emerald-500/40 text-slate-100 transition shadow-sm">
+                    <img id="userAvatarHeader" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Avatar" class="w-6 h-6 rounded-lg object-cover border border-emerald-400">
+                    <span class="text-xs font-semibold text-slate-200 hidden md:inline" id="userDisplayNameHeader">Trần Hưng Tài</span>
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs text-slate-400 hidden sm:inline ml-1"></i>
+                </button>
+
+                <!-- USER PROFILE & STREAK DROPDOWN MODAL -->
+                <div id="profileDropdown" class="absolute right-0 top-12 w-[340px] sm:w-[380px] bg-white text-slate-800 rounded-3xl shadow-2xl p-5 border border-slate-200 z-50 hidden transition-all duration-200 animate-fade-in text-left">
+                    <!-- Profile Header -->
+                    <div class="flex items-center space-x-3 pb-4 cursor-pointer hover:opacity-85 transition" onclick="openProfileModal()">
+                        <img id="userAvatarDropdown" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" alt="Avatar" class="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200">
+                        <div class="min-w-0 flex-1">
+                            <h4 class="font-bold text-base text-slate-900 leading-tight truncate" id="userDisplayName">Trần Hưng Tài</h4>
+                            <p class="text-xs text-slate-500 font-normal truncate" id="userEmailDisplay">tainopro6@gmail.com</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    </div>
+
+                    <!-- Streak Card -->
+                    <div class="bg-[#fef4e8] border border-orange-200/80 rounded-2xl p-4 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-2xl leading-none">🔥</span>
+                                <div>
+                                    <span class="text-lg font-black text-slate-800" id="currentStreakDisplay">1</span>
+                                    <span class="block text-[11px] text-slate-600 font-medium" data-i18n="currentStreak">Chuỗi hiện tại</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-black text-slate-800" id="longestStreakDisplay">1</span>
+                                <span class="block text-[11px] text-slate-600 font-medium" data-i18n="longestStreak">Chuỗi dài nhất</span>
+                            </div>
+                        </div>
+
+                        <!-- Daily Points Progress -->
+                        <div class="text-xs font-bold text-[#b45309] mb-1.5 flex items-center justify-between">
+                            <span id="streakPointsLabel">10/10 điểm streak hôm nay</span>
+                        </div>
+                        <div class="w-full bg-orange-200/70 h-2 rounded-full overflow-hidden mb-2.5">
+                            <div id="streakProgressBar" class="bg-[#ea580c] h-full rounded-full transition-all duration-300" style="width: 100%;"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-600 leading-relaxed font-normal" data-i18n="streakRules">
+                            Đạt 10 điểm/ngày: mỗi câu Nghe hoặc Viết (kể cả bỏ qua câu Viết) = 1 điểm; hoàn thành bài Từ vựng = 10 điểm.
+                        </p>
+                    </div>
+
+                    <!-- Profile Options List -->
+                    <div class="space-y-1 text-xs text-slate-700 font-medium">
+                        <!-- 1. Hồ sơ cá nhân -->
+                        <button onclick="openProfileModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left">
+                            <i class="fa-regular fa-user text-slate-500 w-4"></i>
+                            <span data-i18n="profile">Hồ sơ cá nhân</span>
+                        </button>
+
+                        <!-- Backup / Sync Code Button -->
+                        <button onclick="openBackupCodeModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-blue-600 font-medium">
+                            <i class="fa-solid fa-key w-4"></i>
+                            <span>Mã đồng bộ nhanh tài khoản</span>
+                        </button>
+
+                        <!-- 2. Đổi tên hiển thị -->
+                        <button onclick="openChangeNameModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left">
+                            <i class="fa-regular fa-circle-user text-slate-500 w-4"></i>
+                            <span data-i18n="changeName">Đổi tên hiển thị</span>
+                        </button>
+
+                        <!-- 3. Hiện trên bảng xếp hạng (Toggle Switch) -->
+                        <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 transition">
+                            <div class="flex items-start space-x-3">
+                                <i class="fa-solid fa-trophy text-slate-500 w-4 mt-0.5"></i>
+                                <div>
+                                    <div class="font-medium text-slate-800" data-i18n="showOnLeaderboard">Hiện trên bảng xếp hạng</div>
+                                    <div class="text-[10px] text-slate-400" data-i18n="showOnLeaderboardDesc">Chỉ công khai tên và ảnh đại diện</div>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="leaderboardToggle" onchange="toggleLeaderboardPreference(this.checked)" class="sr-only switch-input">
+                                <div class="switch-track w-10 h-5 bg-slate-300 rounded-full transition-colors relative">
+                                    <div class="switch-thumb absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform shadow"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="border-t border-slate-200 my-2 pt-2">
+                            <span class="text-[10px] font-bold text-slate-400 tracking-wider block px-3 mb-1" data-i18n="settings">CÀI ĐẶT</span>
+                        </div>
+
+                        <!-- 5. Giao diện tối switch -->
+                        <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 transition">
+                            <div class="flex items-start space-x-3">
+                                <i class="fa-regular fa-moon text-slate-500 w-4 mt-0.5"></i>
+                                <div>
+                                    <div class="font-medium text-slate-800" data-i18n="darkMode">Giao diện tối</div>
+                                    <div class="text-[10px] text-slate-400" data-i18n="darkModeDesc">Tắt để dùng giao diện sáng</div>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)" checked class="sr-only switch-input">
+                                <div class="switch-track w-10 h-5 bg-slate-300 rounded-full transition-colors relative">
+                                    <div class="switch-thumb absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform shadow"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- 6. Language Selector -->
+                        <div class="px-3 py-2">
+                            <div class="flex items-center space-x-2 text-slate-800 font-medium mb-1.5">
+                                <i class="fa-solid fa-language text-slate-500 w-4"></i>
+                                <span data-i18n="language">Ngôn ngữ giao diện</span>
+                            </div>
+                            <select id="languageSelect" onchange="changeLanguage(this.value)" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-xl px-3 py-2 font-medium focus:outline-none">
+                                <option value="vi" selected>Tiếng Việt</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+
+                        <!-- 7. Study reminder -->
+                        <div class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-slate-50 transition">
+                            <div class="flex items-start space-x-3 cursor-pointer" onclick="openReminderModal()">
+                                <i class="fa-regular fa-bell text-slate-500 w-4 mt-0.5"></i>
+                                <div>
+                                    <div class="font-medium text-slate-800" data-i18n="reminder">Nhắc học</div>
+                                    <div class="text-[10px] text-slate-400" id="reminderStatusDesc" data-i18n="reminderDesc">Nhận thông báo theo lịch của bạn</div>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="reminderToggle" onchange="handleReminderToggle(this.checked)" class="sr-only switch-input">
+                                <div class="switch-track w-10 h-5 bg-slate-300 rounded-full transition-colors relative">
+                                    <div class="switch-thumb absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform shadow"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- 8. Logout / Login Switch -->
+                        <button id="profileAuthActionBtn" onclick="handleProfileAuthAction()" class="w-full flex items-center space-x-3 px-3 py-2.5 text-rose-600 rounded-xl hover:bg-rose-50 transition font-semibold text-left">
+                            <i class="fa-solid fa-arrow-right-from-bracket w-4"></i>
+                            <span id="profileAuthActionText" data-i18n="logout">Đăng xuất</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- FLOATING TOAST NOTIFICATION -->
+    <div id="toastNotice" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 text-white text-xs sm:text-sm font-semibold border border-cyan-400/40 shadow-2xl backdrop-blur-md opacity-0 pointer-events-none transform -translate-y-4">
+        <span id="toastMessage">Thông báo</span>
     </div>
-    <div class="grid sm:grid-cols-2 gap-3">
-      <button onclick="event.stopPropagation();skip()" class="py-3.5 rounded-2xl border border-blue-400/30 bg-slate-900/60 hover:bg-slate-800 font-bold">Bỏ qua</button>
-      <button onclick="event.stopPropagation();next()" class="py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:opacity-90 font-bold shadow-lg shadow-blue-500/25">Câu tiếp <i class="fa-solid fa-arrow-right ml-1 text-sm"></i></button>
+
+    <!-- MODAL 1: HỒ SƠ CÁ NHÂN -->
+    <div id="profileModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-6 sm:p-7 text-slate-100 border border-blue-500/30 relative max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-700/60 mb-5">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-600/30 border border-blue-500/40 text-cyan-300 flex items-center justify-center">
+                        <i class="fa-regular fa-user text-base"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white" data-i18n="profileModalTitle">Hồ sơ cá nhân</h3>
+                </div>
+                <button onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Avatar selector -->
+            <div class="flex flex-col items-center mb-6">
+                <img id="profileEditAvatarPreview" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80" alt="Avatar" class="w-20 h-20 rounded-full object-cover border-2 border-cyan-400 shadow-lg mb-3">
+                <span class="text-xs text-slate-400 mb-2" data-i18n="chooseAvatar">Chọn ảnh đại diện nhanh:</span>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-cyan-400 transition">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                    </button>
+                    <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-cyan-400 transition">
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                    </button>
+                    <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-cyan-400 transition">
+                        <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=60&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                    </button>
+                    <button type="button" onclick="selectPresetAvatar('https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&auto=format&fit=crop&q=80')" class="w-8 h-8 rounded-full overflow-hidden border border-slate-600 hover:border-cyan-400 transition">
+                        <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=60&auto=format&fit=crop&q=80" class="w-full h-full object-cover">
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Info Form -->
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1" data-i18n="fullName">Họ và tên hiển thị</label>
+                    <input type="text" id="profileEditName" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-cyan-400">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Email</label>
+                    <input type="email" id="profileEditEmail" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-cyan-400">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1" data-i18n="currentLevel">Trình độ hiện tại</label>
+                    <select id="profileEditLevel" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-cyan-400">
+                        <option value="A1">A1 - Mới bắt đầu (Beginner)</option>
+                        <option value="A2">A2 - Sơ cấp (Elementary)</option>
+                        <option value="B1">B1 - Trung cấp (Intermediate)</option>
+                        <option value="B2">B2 - Trung cấp cao (Upper-Intermediate)</option>
+                    </select>
+                </div>
+
+                <!-- Stats summary -->
+                <div class="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-800 text-center">
+                    <div>
+                        <div class="text-[11px] text-slate-400" data-i18n="totalSolved">Tổng câu đã làm</div>
+                        <div class="text-base font-bold text-cyan-400" id="profileTotalSolved">0 câu</div>
+                    </div>
+                    <div>
+                        <div class="text-[11px] text-slate-400" data-i18n="streakDays">Chuỗi ngày học</div>
+                        <div class="text-base font-bold text-orange-400" id="profileStreakDisplay">1 ngày 🔥</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal buttons -->
+            <div class="flex items-center justify-end space-x-2 pt-5 border-t border-slate-700/60 mt-5">
+                <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition" data-i18n="cancel">Đóng</button>
+                <button type="button" onclick="saveProfileChanges()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition shadow-md" data-i18n="save">Lưu thay đổi</button>
+            </div>
+        </div>
     </div>
-    <div id="done" class="hidden mt-5 p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-between gap-3">
-      <div><div class="font-bold text-white text-sm">Chính xác!</div><div id="full" class="text-xs text-emerald-300"></div></div>
-      <button onclick="event.stopPropagation();speak()" class="px-3 py-2 rounded-lg bg-emerald-800/40 text-xs"><i class="fa-solid fa-volume-high mr-1"></i>Nghe lại</button>
+
+    <!-- MODAL 3: ĐỔI TÊN NHANH -->
+    <div id="changeNameModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-slate-100 border border-blue-500/30 relative">
+            <div class="flex items-center space-x-2.5 mb-4">
+                <div class="w-8 h-8 rounded-xl bg-blue-600/30 border border-blue-500/40 text-cyan-300 flex items-center justify-center">
+                    <i class="fa-regular fa-circle-user text-base"></i>
+                </div>
+                <h3 class="text-base font-bold text-white" data-i18n="changeNameModalTitle">Đổi tên hiển thị</h3>
+            </div>
+            <p class="text-xs text-blue-200/70 mb-3" data-i18n="changeNameModalDesc">Tên hiển thị sẽ xuất hiện trên bài học và bảng xếp hạng.</p>
+            <input type="text" id="quickNameInput" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-400 mb-4" placeholder="Nhập tên mới của bạn...">
+            <div class="flex justify-end space-x-2 text-xs">
+                <button onclick="closeChangeNameModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition" data-i18n="cancel">Hủy</button>
+                <button onclick="saveQuickName()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition" data-i18n="save">Lưu tên</button>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="sm:hidden w-full mt-3 flex gap-2">
-    <button id="peekBtn" class="flex-1 py-3 rounded-2xl bg-cyan-950/80 border-2 border-cyan-400/60 text-cyan-200 font-bold text-sm"><i class="fa-regular fa-eye mr-1"></i>Giữ để xem từ</button>
-    <button onclick="focusKb(true)" class="px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-xs font-semibold"><i class="fa-solid fa-keyboard text-cyan-400 mr-1"></i>Bật phím</button>
-  </div>
-</main>
- 
-<!-- AUTH MODAL -->
-<div id="authModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
-  <div class="glass w-full max-w-md rounded-3xl p-6 sm:p-8 relative">
-    <button onclick="closeAuth()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700"><i class="fa-solid fa-xmark text-sm"></i></button>
-    <div class="text-center mb-5">
-      <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 items-center justify-center text-2xl mb-3"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-      <h3 id="aTitle" class="text-xl font-bold text-white">Đăng nhập</h3>
-      <p class="text-xs text-blue-200/70 mt-1">Một tài khoản dùng được trên cả điện thoại và máy tính</p>
+
+    <!-- MODAL 4: NHẮC HỌC & THÔNG BÁO -->
+    <div id="reminderModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-slate-100 border border-blue-500/30 relative">
+            <div class="flex items-center space-x-2.5 mb-4">
+                <div class="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
+                    <i class="fa-regular fa-bell text-base"></i>
+                </div>
+                <h3 class="text-base font-bold text-white" data-i18n="reminderSettings">Cài đặt giờ nhắc học</h3>
+            </div>
+            <p class="text-xs text-blue-200/70 mb-4" data-i18n="reminderSettingsDesc">Hệ thống sẽ gửi thông báo mỗi ngày để bạn duy trì chuỗi Streak học tiếng Anh.</p>
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5" data-i18n="reminderTime">Giờ nhắc nhở mỗi ngày:</label>
+                <input type="time" id="reminderTimeInput" value="20:00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400">
+            </div>
+            <div class="flex justify-end space-x-2 text-xs">
+                <button onclick="closeReminderModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition" data-i18n="cancel">Đóng</button>
+                <button onclick="saveReminderSettings()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-white transition" data-i18n="saveReminder">Bật nhắc nhở</button>
+            </div>
+        </div>
     </div>
-    <div class="flex p-1 bg-slate-900 rounded-2xl border border-slate-800 mb-4 text-xs font-bold">
-      <button id="tabL" onclick="authTab('login')" class="flex-1 py-2 rounded-xl">Đăng nhập</button>
-      <button id="tabR" onclick="authTab('register')" class="flex-1 py-2 rounded-xl">Đăng ký</button>
+
+    <!-- MODAL 5: ĐĂNG XUẤT / ĐĂNG NHẬP -->
+    <div id="logoutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-6 text-slate-100 border border-rose-500/30 relative text-center">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </div>
+            <h3 class="text-base font-bold text-white mb-1.5" data-i18n="confirmLogout">Xác nhận đăng xuất?</h3>
+            <p class="text-xs text-slate-300 mb-5" data-i18n="confirmLogoutDesc">Bạn có muốn đăng xuất khỏi tài khoản? Dữ liệu streak và từ vựng vẫn được lưu an toàn trên đám mây của tài khoản này.</p>
+            <div class="flex items-center justify-center space-x-3 text-xs">
+                <button onclick="closeLogoutModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300 transition" data-i18n="cancel">Hủy</button>
+                <button onclick="confirmLogoutAction()" class="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 font-bold text-white transition shadow-md" data-i18n="logout">Đăng xuất</button>
+            </div>
+        </div>
     </div>
-    <div id="setupWarn" class="hidden mb-4 p-3 rounded-xl bg-amber-950/50 border border-amber-500/40 text-[11px] text-amber-200 leading-relaxed">
-      <b>Chưa cấu hình Firebase.</b> Mở file, tìm <code>FIREBASE_CONFIG</code> ở đầu phần script và dán cấu hình của bạn vào. Xem hướng dẫn kèm theo.
+
+    <!-- KEYBOARD SHORTCUTS MODAL -->
+    <div id="shortcutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm hidden" onclick="closeShortcutModal()">
+        <div class="w-full max-w-sm rounded-2xl p-5 border border-blue-500/30 bg-[#0f1d38] text-slate-100 shadow-2xl relative animate-fade-in" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between pb-3 border-b border-blue-900/40">
+                <div class="flex items-center space-x-2 text-white font-bold text-base">
+                    <i class="fa-solid fa-lightbulb text-amber-300 text-lg"></i>
+                    <span>Hướng dẫn phím tắt</span>
+                </div>
+                <button onclick="closeShortcutModal()" class="w-7 h-7 rounded-full bg-slate-800/80 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-blue-200/80 my-4 leading-relaxed font-normal">
+                Dùng các phím tắt này để luyện viết nhanh và liền mạch hơn.
+            </p>
+
+            <div class="space-y-3 text-xs">
+                <div class="flex items-center space-x-3 cursor-pointer group" onmousedown="peekCurrentWord()" onmouseup="hideCurrentWordPeek()" onmouseleave="hideCurrentWordPeek()" ontouchstart="peekCurrentWord()" ontouchend="hideCurrentWordPeek()">
+                    <span class="px-2.5 py-1 rounded-lg bg-blue-950/80 border border-blue-500/40 text-cyan-300 font-bold font-mono tracking-wider shadow-inner group-hover:border-cyan-400 transition">
+                        Ctrl
+                    </span>
+                    <span class="text-slate-200 group-hover:text-cyan-200 transition">Giữ Ctrl: Hiện xem từ (thả ra tự ẩn lại)</span>
+                </div>
+
+                <div class="flex items-center space-x-3 cursor-pointer group" onclick="if(isCompleted) nextQuestion(); closeShortcutModal();">
+                    <span class="px-2.5 py-1 rounded-lg bg-blue-950/80 border border-blue-500/40 text-cyan-300 font-bold font-mono tracking-wider shadow-inner group-hover:border-cyan-400 transition">
+                        Enter
+                    </span>
+                    <span class="text-slate-200 group-hover:text-cyan-200 transition">Sang câu tiếp theo</span>
+                </div>
+
+                <div class="flex items-center space-x-3 cursor-pointer group" onclick="skipQuestion(); closeShortcutModal();">
+                    <span class="px-2.5 py-1 rounded-lg bg-blue-950/80 border border-blue-500/40 text-cyan-300 font-bold font-mono tracking-wider shadow-inner group-hover:border-cyan-400 transition">
+                        Esc
+                    </span>
+                    <span class="text-slate-200 group-hover:text-cyan-200 transition">Bỏ qua câu hiện tại</span>
+                </div>
+            </div>
+        </div>
     </div>
-    <form onsubmit="submitAuth(event)" class="space-y-3">
-      <div id="fName" class="hidden relative"><i class="fa-regular fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i><input id="aName" class="inp" placeholder="Tên hiển thị"></div>
-      <div class="relative"><i class="fa-regular fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-sm"></i><input id="aUser" class="inp" required placeholder="Email hoặc tên đăng nhập" autocapitalize="off"></div>
-      <div class="relative"><i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i><input id="aPass" type="password" class="inp" required minlength="6" placeholder="Mật khẩu (tối thiểu 6 ký tự)"></div>
-      <div id="aErr" class="hidden text-xs text-rose-300 bg-rose-950/50 border border-rose-500/30 rounded-xl px-3 py-2"></div>
-      <button id="aSubmit" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 font-bold text-sm shadow-lg shadow-blue-500/25 disabled:opacity-60"><span id="aSubmitTxt">Đăng nhập</span></button>
-    </form>
-  </div>
-</div>
- 
-<!-- VOCAB MODAL -->
-<div id="vocabModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-  <div class="glass w-full max-w-2xl rounded-3xl p-6 max-h-[90vh] flex flex-col">
-    <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
-      <h3 class="font-bold text-white">Quản lý câu luyện tập (<span id="vCount">0</span>)</h3>
-      <button onclick="closeVocab()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700"><i class="fa-solid fa-xmark"></i></button>
+
+    <!-- MAIN EXERCISE WRAPPER -->
+    <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-10 max-w-4xl mx-auto w-full" onclick="focusTyping()">
+        
+        <!-- QUIZ CONTAINER CARD -->
+        <div id="quizCard" class="glass-card w-full rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden">
+            
+            <!-- Category Subtitle -->
+            <div class="text-center text-xs sm:text-sm font-medium text-blue-200/70 mb-5 tracking-wide" id="categoryHeader">
+                Luyện viết · A1 · Cooking Breakfast
+            </div>
+
+            <!-- Question Progress & Percentage -->
+            <div class="flex items-center justify-between text-sm sm:text-base font-semibold text-slate-200 mb-2">
+                <span id="questionCounter">Câu 1 / 1</span>
+                <span id="progressPercent" class="text-cyan-300">100%</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden mb-8 border border-slate-700/40">
+                <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-500 ease-out" style="width: 100%;"></div>
+            </div>
+
+            <!-- Vietnamese Question Section -->
+            <div class="mb-8">
+                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300 mb-3 shadow-inner">
+                    <i class="fa-regular fa-comment-dots text-cyan-400"></i>
+                    <span data-i18n="vietnameseSentence">Câu tiếng Việt</span>
+                </div>
+                <h2 id="vietnamesePrompt" class="text-xl sm:text-3xl font-bold text-white tracking-tight leading-snug sm:leading-tight">
+                    Chưa có từ vựng trong tài khoản này. Hãy bấm 'Nhập từ' phía trên để thêm!
+                </h2>
+            </div>
+
+            <!-- Divider line -->
+            <div class="w-full border-t border-slate-700/50 mb-7"></div>
+
+            <!-- Answer Section with Masked Character Boxes -->
+            <div class="mb-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-medium text-slate-300 shadow-inner">
+                        <i class="fa-solid fa-pen text-cyan-400 text-[11px]"></i>
+                        <span data-i18n="answerBadge">Câu trả lời</span>
+                    </div>
+
+                    <button onclick="revealAnswer()" class="text-xs text-blue-300/70 hover:text-cyan-300 transition underline underline-offset-4" data-i18n="revealAnswer">
+                        Xem đáp án
+                    </button>
+                </div>
+
+                <!-- Word & Letter Typing Slots Area -->
+                <div id="maskedSentenceContainer" class="flex flex-wrap items-center gap-y-3 gap-x-2 sm:gap-x-3 text-lg sm:text-2xl font-mono min-h-[90px] p-2 rounded-xl">
+                    <!-- Dynamic slots will be generated here -->
+                </div>
+
+                <!-- Subtle user hint notification -->
+                <p class="text-xs text-blue-300/50 mt-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-keyboard text-[10px]"></i>
+                    <span data-i18n="typingHint">Gõ trực tiếp bàn phím để điền ký tự tiếp theo. Nhấn <b>Xem đáp án</b> hoặc <b>Bỏ qua</b> nếu cần.</span>
+                </p>
+            </div>
+
+            <!-- Footer Action Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2">
+                <!-- Skip button -->
+                <button id="skipBtn" onclick="skipQuestion()" class="w-full py-3.5 px-6 rounded-2xl border border-blue-400/30 bg-slate-900/60 hover:bg-slate-800/80 active:scale-[0.98] text-slate-200 font-bold text-base transition-all duration-200 flex items-center justify-center">
+                    <span data-i18n="skipBtn">Bỏ qua</span>
+                </button>
+
+                <!-- Next button -->
+                <button id="nextBtn" onclick="nextQuestion()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 active:scale-[0.98] shadow-lg shadow-blue-500/25 text-white font-bold text-base transition-all duration-200 flex items-center justify-center space-x-2">
+                    <span id="nextBtnText" data-i18n="nextBtn">Câu tiếp</span>
+                    <i class="fa-solid fa-arrow-right text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Sentence Completed Banner (Shown on correct finish) -->
+            <div id="completionBanner" class="hidden mt-6 p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 flex items-center justify-between animate-fade-in">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-white text-sm" data-i18n="correctNice">Chính xác tuyệt vời!</div>
+                        <div class="text-xs text-emerald-300" id="fullEnglishSentence"></div>
+                    </div>
+                </div>
+                <button onclick="speakSentence()" class="p-2 rounded-lg bg-emerald-800/40 hover:bg-emerald-700/50 text-white text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-volume-high"></i> <span data-i18n="listenAgain">Nghe lại</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- NÚT BẤM DÀNH RIÊNG CHO KÍCH THƯỚC ĐIỆN THOẠI (Chạm & Giữ giống phím Ctrl trên máy tính) -->
+        <div class="block sm:hidden w-full max-w-sm mt-3 px-1">
+            <div class="flex items-center gap-2">
+                <button id="mobileCtrlPeekBtn" 
+                    class="mobile-peek-btn flex-1 py-3 px-4 rounded-2xl bg-cyan-950/80 hover:bg-cyan-900/90 active:bg-cyan-800 border-2 border-cyan-400/60 text-cyan-200 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 transition">
+                    <i class="fa-regular fa-eye text-base"></i>
+                    <span>Giữ xem từ (Ctrl)</span>
+                </button>
+
+                <button onclick="focusTyping(true)" class="py-3 px-4 rounded-2xl bg-slate-900/90 border border-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 shadow-md">
+                    <i class="fa-solid fa-keyboard text-cyan-400"></i>
+                    <span>Bật phím</span>
+                </button>
+            </div>
+            <p class="text-[11px] text-center text-blue-300/50 mt-1.5">
+                Chạm giữ nút trên để xem trước từ, buông tay sẽ ẩn lại để gõ tiếp.
+            </p>
+        </div>
+
+    </main>
+
+    <!-- FOOTER INFO -->
+    <footer class="relative z-10 w-full text-center py-4 text-xs text-blue-300/40">
+        Luyện phản xạ gõ từ vựng tiếng Anh theo phương pháp Trần Hưng Tài • Tự do thêm câu học của riêng bạn
+    </footer>
+
+    <!-- VOCABULARY MANAGEMENT MODAL -->
+    <div id="vocabModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-2xl rounded-3xl p-6 sm:p-8 max-h-[90vh] flex flex-col relative text-slate-100">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-700/60">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600/30 text-cyan-300 flex items-center justify-center border border-blue-500/30">
+                        <i class="fa-solid fa-book-bookmark text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Quản lý câu & Từ vựng khảo</h3>
+                        <p class="text-xs text-blue-300/70">Thêm, dán hàng loạt hoặc xóa các câu cần luyện</p>
+                    </div>
+                </div>
+                <button onclick="closeVocabManager()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex space-x-2 my-4">
+                <button id="tabListBtn" onclick="switchModalTab('list')" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition">
+                    Danh sách hiện có (<span id="vocabCount">0</span>)
+                </button>
+                <button id="tabImportBtn" onclick="switchModalTab('import')" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                    + Nhập danh sách câu mới
+                </button>
+                <button onclick="resetDefaultVocab()" class="ml-auto text-xs text-amber-400/80 hover:text-amber-300 transition">
+                    <i class="fa-solid fa-rotate-left"></i> Khôi phục mẫu
+                </button>
+            </div>
+
+            <!-- Tab 1: Current List -->
+            <div id="tabList" class="flex-1 overflow-y-auto pr-1 space-y-2.5 my-2">
+                <div id="vocabListContainer" class="space-y-2">
+                    <!-- Vocab items loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Tab 2: Bulk Import Form -->
+            <div id="tabImport" class="hidden flex-1 flex flex-col space-y-3 my-2">
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Nhập mỗi câu trên một dòng theo định dạng: <br>
+                    <code class="px-2 py-0.5 rounded bg-blue-950 text-cyan-300 font-mono">Nghĩa tiếng Việt | Câu tiếng Anh</code>
+                </p>
+                <textarea id="bulkImportInput" rows="7" placeholder="Ví dụ:&#10;Tôi yêu tiếng Anh | I love English&#10;Hôm nay trời rất đẹp | The weather is great today&#10;Cô ấy đang nấu bữa tối | She is cooking dinner" class="w-full bg-slate-900/90 border border-slate-700 rounded-2xl p-3.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 resize-none"></textarea>
+
+                <div class="flex items-center justify-end space-x-2 pt-2">
+                    <button onclick="appendImportedVocab()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition flex items-center space-x-1.5 shadow-md shadow-blue-600/30">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Thêm vào danh sách hiện tại</span>
+                    </button>
+                    <button onclick="replaceImportedVocab()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-bold text-white transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>Thay thế toàn bộ</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mt-3">
-      <p class="text-xs text-slate-300 mb-2">Mỗi dòng một câu: <code class="px-1.5 rounded bg-blue-950 text-cyan-300">Nghĩa tiếng Việt | Câu tiếng Anh</code></p>
-      <textarea id="bulk" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-2xl p-3 text-xs font-mono text-white outline-none focus:border-cyan-400 resize-none" placeholder="Tôi yêu tiếng Anh | I love English"></textarea>
-      <div class="flex gap-2 justify-end mt-2 text-xs font-bold">
-        <button onclick="importVocab(false)" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500">Thêm vào danh sách</button>
-        <button onclick="importVocab(true)" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500">Thay thế toàn bộ</button>
-      </div>
+
+    <!-- MODAL SUMMARY SCREEN (Hiện khi học xong toàn bộ câu) -->
+    <div id="summaryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-sm rounded-3xl p-6 sm:p-8 text-center text-slate-100 border border-blue-500/40 relative">
+            <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl mx-auto mb-4 border border-emerald-500/30">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Chúc mừng bạn!</h3>
+            <p class="text-xs text-blue-200/80 mb-5">Bạn đã hoàn thành toàn bộ danh sách câu luyện tập hôm nay.</p>
+            <div class="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-slate-900/60 border border-slate-800 text-center mb-6">
+                <div>
+                    <div class="text-[11px] text-slate-400">Tổng số câu</div>
+                    <div class="text-lg font-bold text-cyan-400" id="summaryTotal">0</div>
+                </div>
+                <div>
+                    <div class="text-[11px] text-slate-400">Độ chính xác</div>
+                    <div class="text-lg font-bold text-emerald-400" id="summaryAccuracy">100%</div>
+                </div>
+            </div>
+            <div class="flex flex-col space-y-2 text-xs">
+                <button onclick="restartQuiz()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 font-bold text-white shadow-md">
+                    Luyện tập lại từ đầu
+                </button>
+                <button onclick="closeSummaryAndOpenManager()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-semibold text-slate-300">
+                    Nhập thêm câu mới
+                </button>
+            </div>
+        </div>
     </div>
-    <div id="vList" class="flex-1 overflow-y-auto mt-3 space-y-2"></div>
-  </div>
-</div>
- 
-<!-- SUMMARY -->
-<div id="sumModal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-  <div class="glass w-full max-w-sm rounded-3xl p-8 text-center">
-    <div class="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl mx-auto mb-4"><i class="fa-solid fa-trophy"></i></div>
-    <h3 class="text-xl font-bold text-white mb-1">Bạn đã hoàn thành!</h3>
-    <p class="text-xs text-blue-200/80 mb-5">Độ chính xác: <b id="sAcc" class="text-emerald-400"></b></p>
-    <button onclick="restart()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 font-bold text-sm mb-2">Luyện lại từ đầu</button>
-    <button onclick="closeSum();openVocab()" class="w-full py-2.5 rounded-xl bg-slate-800 text-sm font-semibold">Nhập thêm câu mới</button>
-  </div>
-</div>
- 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
- 
-/* ==========================================================
-   BƯỚC DUY NHẤT BẠN CẦN LÀM: dán cấu hình Firebase vào đây
-   (Firebase Console → Project settings → Your apps → Web app)
-   ========================================================== */
-const FIREBASE_CONFIG = {
-  apiKey: "DÁN_API_KEY",
-  authDomain: "DÁN_AUTH_DOMAIN",
-  projectId: "DÁN_PROJECT_ID",
-  appId: "DÁN_APP_ID"
-};
- 
-const configured = !FIREBASE_CONFIG.apiKey.startsWith("DÁN");
-let auth = null, db = null, user = null;
-if (configured) {
-  const app = initializeApp(FIREBASE_CONFIG);
-  auth = getAuth(app); db = getFirestore(app);
-}
- 
-const $ = id => document.getElementById(id);
-const DEFAULT_VOCAB = [
-  {vi:"Hai lát bánh mì được cho vào máy nướng bánh.", en:"Two slices of bread are put in the toaster."},
-  {vi:"Tôi thích uống cà phê vào buổi sáng.", en:"I like to drink coffee in the morning."},
-  {vi:"Cô ấy đang nấu bữa tối.", en:"She is cooking dinner."}
-];
-let S = {streak:0, longest:0, points:0, last:"", solved:0};
-let vocab = [...DEFAULT_VOCAB];
-let idx = 0, target = "", ci = 0, completed = false, peeking = false, okKeys = 0, allKeys = 0, tab = "login";
- 
-/* ---------- Toast ---------- */
-let tt;
-window.toast = m => { const t=$('toast'); t.textContent=m; t.style.opacity=1; clearTimeout(tt); tt=setTimeout(()=>t.style.opacity=0,2800); };
- 
-/* ---------- Lưu / đồng bộ ---------- */
-const lsKey = () => "tht_" + (user ? user.uid : "guest");
-let saveTimer;
-function save() {
-  const data = {S, vocab};
-  try { localStorage.setItem(lsKey(), JSON.stringify(data)); } catch(e){}
-  if (user && db) {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      setDoc(doc(db,"users",user.uid), {...data, updated: Date.now()}, {merge:true})
-        .catch(e => { console.error(e); toast("Không đồng bộ được lên đám mây. Kiểm tra Firestore Rules."); });
-    }, 600);
-  }
-  ui();
-}
-function normalizeDay() {
-  const today = new Date().toDateString();
-  if (S.last !== today) {
-    const y = new Date(Date.now()-864e5).toDateString();
-    if (S.last !== y || S.points < 10) { if (S.last !== y) S.streak = 0; }
-    S.points = 0; S.last = today;
-  }
-}
-async function loadData() {
-  let local = null;
-  try { local = JSON.parse(localStorage.getItem(lsKey())); } catch(e){}
-  if (local) { S = {...S, ...local.S}; if (local.vocab?.length) vocab = local.vocab; }
-  if (user && db) {
-    try {
-      const snap = await getDoc(doc(db,"users",user.uid));
-      if (snap.exists()) {
-        const c = snap.data();
-        S = {...S, ...(c.S||{})}; if (c.vocab?.length) vocab = c.vocab;
-      }
-    } catch(e) { console.error(e); toast("Không đọc được dữ liệu đám mây. Kiểm tra Firestore Rules."); }
-  }
-  normalizeDay(); idx = 0; save(); render();
-}
- 
-/* ---------- Xác thực ---------- */
-const toEmail = u => { u = u.trim().toLowerCase(); return u.includes("@") ? u : u.replace(/[^a-z0-9._-]/g,"") + "@thtai.app"; };
-const errMsg = c => ({
-  "auth/email-already-in-use":"Email hoặc tên đăng nhập này đã được đăng ký. Hãy chuyển sang tab Đăng nhập.",
-  "auth/invalid-credential":"Sai tài khoản hoặc mật khẩu.",
-  "auth/user-not-found":"Tài khoản chưa đăng ký. Hãy chuyển sang tab Đăng ký.",
-  "auth/wrong-password":"Sai mật khẩu.",
-  "auth/weak-password":"Mật khẩu cần tối thiểu 6 ký tự.",
-  "auth/invalid-email":"Email hoặc tên đăng nhập không hợp lệ.",
-  "auth/network-request-failed":"Mất kết nối mạng. Hãy thử lại.",
-  "auth/too-many-requests":"Thử quá nhiều lần. Vui lòng đợi một lúc.",
-  "auth/operation-not-allowed":"Chưa bật Email/Password trong Firebase Authentication."
-}[c] || "Có lỗi xảy ra (" + c + ").");
- 
-window.authTab = t => {
-  tab = t; const on="flex-1 py-2 rounded-xl bg-blue-600 text-white", off="flex-1 py-2 rounded-xl text-slate-400 hover:text-white";
-  $('tabL').className = t==="login"?on:off; $('tabR').className = t==="register"?on:off;
-  $('fName').classList.toggle('hidden', t==="login");
-  $('aTitle').textContent = t==="login" ? "Đăng nhập" : "Tạo tài khoản mới";
-  $('aSubmitTxt').textContent = t==="login" ? "Đăng nhập" : "Đăng ký";
-  $('aErr').classList.add('hidden');
-};
-window.openAuth = (t="login") => { $('menu').classList.add('hidden'); authTab(t); $('setupWarn').classList.toggle('hidden', configured); $('authModal').classList.remove('hidden'); };
-window.closeAuth = () => $('authModal').classList.add('hidden');
-window.submitAuth = async e => {
-  e.preventDefault();
-  const err = $('aErr'); err.classList.add('hidden');
-  if (!configured) { err.textContent = "Chưa dán cấu hình Firebase vào file."; err.classList.remove('hidden'); return; }
-  const raw = $('aUser').value, pass = $('aPass').value, email = toEmail(raw);
-  if (!email.split("@")[0]) { err.textContent = "Tên đăng nhập chỉ dùng chữ không dấu, số, . _ -"; err.classList.remove('hidden'); return; }
-  const btn = $('aSubmit'); btn.disabled = true;
-  try {
-    if (tab === "register") {
-      const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      await updateProfile(cred.user, {displayName: $('aName').value.trim() || raw.split("@")[0]});
-      user = cred.user; S = {streak:1, longest:1, points:0, last:new Date().toDateString(), solved:0}; vocab=[...DEFAULT_VOCAB];
-      save(); toast("Đăng ký thành công! Chào mừng bạn 🎉");
-    } else {
-      await signInWithEmailAndPassword(auth, email, pass);
-      toast("Đăng nhập thành công ✨");
-    }
-    closeAuth(); $('aPass').value = "";
-  } catch(ex) { err.textContent = errMsg(ex.code); err.classList.remove('hidden'); }
-  btn.disabled = false;
-};
-window.doLogout = async () => { $('menu').classList.add('hidden'); if (auth) await signOut(auth); toast("Đã đăng xuất."); };
-window.userClick = () => user ? $('menu').classList.toggle('hidden') : openAuth('login');
- 
-if (configured) {
-  onAuthStateChanged(auth, async u => {
-    user = u;
-    S = {streak:0, longest:0, points:0, last:"", solved:0}; vocab = [...DEFAULT_VOCAB];
-    await loadData();
-    if (!u && !sessionStorage.getItem("asked")) { sessionStorage.setItem("asked","1"); openAuth('login'); }
-  });
-} else { loadData(); setTimeout(()=>openAuth('login'), 400); }
- 
-function ui() {
-  const name = user ? (user.displayName || user.email.split("@")[0]) : "Đăng nhập";
-  $('userLabel').textContent = name;
-  $('avatar').textContent = user ? name[0].toUpperCase() : "?";
-  $('mName').textContent = name;
-  $('mEmail').textContent = user ? (user.email.endsWith("@thtai.app") ? "@" + user.email.split("@")[0] : user.email) : "";
-  $('mStreak').textContent = S.streak; $('mLong').textContent = S.longest;
-  $('mPts').textContent = `${S.points}/10 điểm hôm nay`;
-  $('mBar').style.width = Math.min(100, S.points*10) + "%";
-  $('vCount').textContent = vocab.length;
-}
-function addPoint() {
-  const before = S.points; S.points = Math.min(10, S.points + 1); S.solved++;
-  if (before < 10 && S.points >= 10) { S.streak++; S.longest = Math.max(S.longest, S.streak); toast("Hoàn thành 10 điểm! Chuỗi +1 🔥"); }
-  save();
-}
-document.addEventListener("click", e => { if (!e.target.closest('#menu') && !e.target.closest('#userBtn')) $('menu').classList.add('hidden'); });
- 
-/* ---------- Âm thanh ---------- */
-let actx;
-function tone(f1, f2, dur, type="triangle", vol=.2) {
-  try {
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if (actx.state==="suspended") actx.resume();
-    const o=actx.createOscillator(), g=actx.createGain(), t=actx.currentTime;
-    o.type=type; o.frequency.setValueAtTime(f1,t); o.frequency.exponentialRampToValueAtTime(f2,t+dur);
-    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
-    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur+.01);
-  } catch(e){}
-}
-const clack = () => tone(1700+Math.random()*400, 300, .05);
-const bad = () => tone(140, 60, .12, "sawtooth", .15);
-const chime = () => [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,f,.3,"sine",.15), i*80));
-const buzz = p => { if (navigator.vibrate) navigator.vibrate(p); };
- 
-/* ---------- Bài tập gõ ---------- */
-const isP = c => /[.,!?;:'"()–—-]/.test(c);
-function render() {
-  if (!vocab.length) { $('vi').textContent = "Chưa có câu nào. Bấm “Nhập câu” để thêm."; $('slots').innerHTML = ""; return; }
-  if (idx >= vocab.length) return showSum();
-  const it = vocab[idx]; target = it.en.trim(); ci = 0; completed = false;
-  const p = Math.round((idx+1)/vocab.length*100);
-  $('counter').textContent = `Câu ${idx+1} / ${vocab.length}`; $('pct').textContent = p + "%"; $('bar').style.width = p + "%";
-  $('vi').textContent = it.vi; $('done').classList.add('hidden');
-  const box = $('slots'); box.innerHTML = ""; let g = 0;
-  target.split(" ").forEach((w, wi, arr) => {
-    const wrap = document.createElement("div"); wrap.className = "flex gap-1 sm:gap-1.5 mr-3 sm:mr-4";
-    for (const ch of w) {
-      const s = document.createElement("div"); s.id = "s" + g++;
-      if (isP(ch)) { s.className = "punc"; s.textContent = ch; }
-      else { s.className = "slot"; s.textContent = "*"; }
-      wrap.appendChild(s);
-    }
-    box.appendChild(wrap); if (wi < arr.length-1) g++;
-  });
-  advance(); focusKb();
-}
-function advance() {
-  while (ci < target.length && (target[ci]===" " || isP(target[ci]))) ci++;
-  document.querySelectorAll('.slot.active').forEach(s=>s.classList.remove('active'));
-  $('s'+ci)?.classList.add('active');
-  if (ci >= target.length) finish(true);
-}
-function finish(audio) {
-  if (completed) return; completed = true;
-  $('done').classList.remove('hidden'); $('full').textContent = target;
-  chime(); buzz([15,30,20]); addPoint();
-  if (audio) setTimeout(speak, 400);
-}
-function typeChar(c) {
-  if (completed || ci >= target.length) return;
-  allKeys++;
-  const s = $('s'+ci);
-  if (c.toLowerCase() === target[ci].toLowerCase()) {
-    okKeys++; clack(); buzz(12);
-    s.textContent = target[ci]; s.classList.remove('active','peek'); s.classList.add('filled');
-    ci++; advance();
-  } else {
-    bad(); buzz([25,40,25]); s.classList.add('err'); setTimeout(()=>s.classList.remove('err'),350);
-  }
-}
-function back() {
-  let p = ci - 1; while (p >= 0 && (target[p]===" " || isP(target[p]))) p--;
-  if (p < 0) return;
-  ci = p; const s = $('s'+p); s.textContent = "*"; s.classList.remove('filled');
-  completed = false; $('done').classList.add('hidden'); advance();
-}
-function wordRange() {
-  let a = Math.min(ci, target.length-1), b = ci;
-  while (a > 0 && target[a-1] !== " ") a--;
-  while (b < target.length && target[b] !== " ") b++;
-  return [a, b];
-}
-window.peek = on => {
-  if (completed || !target) return;
-  if (on === peeking) return; peeking = on;
-  const [a,b] = wordRange();
-  for (let i=a;i<b;i++) { const s=$('s'+i); if (s && s.classList.contains('slot') && !s.classList.contains('filled')) { s.textContent = on ? target[i] : "*"; s.classList.toggle('peek', on); } }
-};
-window.reveal = () => {
-  for (let i=0;i<target.length;i++) { const s=$('s'+i); if (s && s.classList.contains('slot')) { s.textContent=target[i]; s.classList.add('filled'); s.classList.remove('active'); } }
-  finish(false);
-};
-window.next = () => { idx++; render(); };
-window.skip = () => { if (!completed) reveal(); setTimeout(next, 600); };
-window.speak = () => {
-  if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(target || "Hello"); u.lang="en-US"; u.rate=.95; speechSynthesis.speak(u);
-};
-window.focusKb = force => { if (force || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || innerWidth <= 640) $('kb').focus({preventScroll:true}); };
- 
-const modalOpen = () => document.querySelector('.modal:not(.hidden)');
-addEventListener("keydown", e => {
-  if (modalOpen()) return;
-  if (e.key === "Control") { peek(true); e.preventDefault(); return; }
-  if (e.key === "Escape") { skip(); e.preventDefault(); return; }
-  if (e.key === "Enter") { if (completed) next(); return; }
-  if (e.key === "Backspace") { back(); return; }
-  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) typeChar(e.key);
-});
-addEventListener("keyup", e => { if (e.key === "Control") peek(false); });
-addEventListener("blur", () => peek(false));
-$('kb').addEventListener("input", e => { const v = e.target.value; if (v) { typeChar(v[v.length-1]); e.target.value = ""; } });
-$('kb').addEventListener("keydown", e => { if (e.key === "Backspace") back(); });
-const pb = $('peekBtn');
-pb.addEventListener("touchstart", e => { e.preventDefault(); peek(true); buzz(12); }, {passive:false});
-pb.addEventListener("touchend", e => { e.preventDefault(); peek(false); focusKb(true); }, {passive:false});
-pb.addEventListener("touchcancel", () => peek(false));
- 
-/* ---------- Quản lý câu ---------- */
-const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-function renderList() {
-  $('vCount').textContent = vocab.length;
-  $('vList').innerHTML = vocab.length ? vocab.map((v,i)=>`
-    <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3 text-xs">
-      <div class="min-w-0"><div class="font-semibold text-white truncate">${i+1}. ${esc(v.vi)}</div><div class="text-cyan-300/80 font-mono truncate">${esc(v.en)}</div></div>
-      <div class="shrink-0"><button onclick="jump(${i})" class="p-1.5 text-blue-400 hover:text-white"><i class="fa-solid fa-play"></i></button>
-      <button onclick="del(${i})" class="p-1.5 text-red-400 hover:text-red-300"><i class="fa-regular fa-trash-can"></i></button></div>
-    </div>`).join("") : `<div class="p-4 text-center text-slate-400 text-xs">Chưa có câu nào. Dán danh sách vào ô phía trên.</div>`;
-}
-window.openVocab = () => { renderList(); $('vocabModal').classList.remove('hidden'); };
-window.closeVocab = () => { $('vocabModal').classList.add('hidden'); render(); };
-window.jump = i => { idx = i; closeVocab(); };
-window.del = i => { vocab.splice(i,1); if (idx >= vocab.length) idx = Math.max(0, vocab.length-1); save(); renderList(); };
-window.importVocab = replace => {
-  const items = $('bulk').value.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
-    const [vi, ...rest] = l.split("|"); return {vi:(vi||"").trim(), en:rest.join("|").trim()};
-  }).filter(x=>x.vi && x.en);
-  if (!items.length) return toast("Mỗi dòng cần dạng: Tiếng Việt | English");
-  vocab = replace ? items : vocab.concat(items); if (replace) idx = 0;
-  $('bulk').value = ""; save(); renderList(); toast(`Đã lưu ${items.length} câu ☁️`);
-};
-function showSum() { $('sAcc').textContent = (allKeys ? Math.round(okKeys/allKeys*100) : 100) + "%"; $('sumModal').classList.remove('hidden'); }
-window.closeSum = () => $('sumModal').classList.add('hidden');
-window.restart = () => { idx = 0; okKeys = allKeys = 0; closeSum(); render(); };
-authTab('login');
-</script>
+
+    <!-- MODAL 6: MÃ ĐỒNG BỘ NHANH LIÊN THIẾT BỊ -->
+    <div id="backupCodeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 text-slate-100 border border-cyan-500/30 relative">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700/60 mb-4">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Đồng bộ đa thiết bị tức thì</h3>
+                </div>
+                <button onclick="closeBackupCodeModal()" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-blue-200/80 mb-3">
+                Bạn có thể sao chép chuỗi mã này từ máy tính và dán vào điện thoại (hoặc ngược lại) để chuyển ngay tài khoản và toàn bộ từ vựng mà không cần đăng ký lại:
+            </p>
+
+            <div class="mb-4">
+                <label class="block text-[11px] text-slate-400 font-semibold mb-1">Mã đồng bộ tài khoản hiện tại:</label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="currentAccountSyncCode" readonly class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 select-all focus:outline-none">
+                    <button onclick="copySyncCode()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shrink-0">
+                        <i class="fa-regular fa-copy mr-1"></i> Chép
+                    </button>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-700/60 pt-3">
+                <label class="block text-[11px] text-slate-400 font-semibold mb-1">Hoặc nhập mã từ thiết bị khác để nạp:</label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="inputImportSyncCode" placeholder="Dán mã tài khoản vào đây..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-400">
+                    <button onclick="importAccountBySyncCode()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shrink-0">
+                        Nạp ngay
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tranhungtai-vocab-sync';
+        let db = null;
+        let auth = null;
+        let cloudUser = null;
+
+        async function initCloud() {
+            try {
+                if (typeof __firebase_config !== 'undefined') {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    cloudUser = auth.currentUser;
+                }
+            } catch (e) {
+                console.warn("Cloud connection fallback mode active:", e);
+            }
+        }
+
+        const cloudReadyPromise = initCloud();
+
+        window.cloudSync = {
+            async saveUserData(accountKey, payload) {
+                await cloudReadyPromise;
+                const safeKey = accountKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+                // 1. Lưu trên Firebase Firestore
+                if (db && cloudUser) {
+                    try {
+                        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_accounts', safeKey);
+                        await setDoc(userDocRef, {
+                            accountKey: safeKey,
+                            authInfo: payload.authInfo || null,
+                            streakData: payload.streakData || {},
+                            vocabListJson: JSON.stringify(payload.vocabList || []),
+                            updatedAt: new Date().toISOString()
+                        }, { merge: true });
+                    } catch (err) {
+                        console.warn("Firebase save error:", err);
+                    }
+                }
+
+                // 2. Lưu trên máy chủ Cloud trực tuyến (giúp PC & Điện thoại luôn thấy tài khoản của nhau)
+                try {
+                    let blobId = localStorage.getItem('tht_blob_' + safeKey) || payload.blobId || null;
+                    const fullJson = JSON.stringify(payload);
+
+                    try {
+                        if (blobId) {
+                            const putRes = await fetch(`https://jsonblob.com/api/jsonBlob/${blobId}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                body: fullJson
+                            });
+                            if (!putRes.ok) blobId = null;
+                        }
+                        if (!blobId) {
+                            const postRes = await fetch('https://jsonblob.com/api/jsonBlob', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                body: fullJson
+                            });
+                            if (postRes.ok) {
+                                const loc = postRes.headers.get('Location') || postRes.headers.get('location') || postRes.headers.get('x-jsonblob');
+                                if (loc) {
+                                    blobId = loc.split('/').pop();
+                                    localStorage.setItem('tht_blob_' + safeKey, blobId);
+                                }
+                            }
+                        }
+                    } catch (e) {}
+
+                    const syncPacket = {
+                        accountKey: safeKey,
+                        authInfo: payload.authInfo,
+                        streakData: payload.streakData,
+                        blobId: blobId,
+                        vocabList: fullJson.length < 3200 ? payload.vocabList : undefined,
+                        updatedAt: Date.now()
+                    };
+
+                    await fetch(`https://ntfy.sh/tht_lexis_cloud_${safeKey}`, {
+                        method: 'POST',
+                        body: JSON.stringify(syncPacket)
+                    });
+                } catch (e) {}
+            },
+
+            async fetchUserData(accountKey) {
+                await cloudReadyPromise;
+                const safeKey = accountKey.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+                // 1. Tìm trên Firebase Firestore trước
+                if (db && cloudUser) {
+                    try {
+                        const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_accounts', safeKey);
+                        const snap = await getDoc(userDocRef);
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            if (data.vocabListJson && !data.vocabList) {
+                                try { data.vocabList = JSON.parse(data.vocabListJson); } catch (e) {}
+                            }
+                            if (data.authInfo || data.streakData) {
+                                return data;
+                            }
+                        }
+                    } catch (err) {
+                        console.warn("Firebase fetch error:", err);
+                    }
+                }
+
+                // 2. Tìm trên máy chủ Cloud trực tuyến
+                try {
+                    const res = await fetch(`https://ntfy.sh/tht_lexis_cloud_${safeKey}/json?poll=1&since=all`);
+                    if (res.ok) {
+                        const text = await res.text();
+                        const lines = text.trim().split('\n').filter(Boolean);
+                        for (let i = lines.length - 1; i >= 0; i--) {
+                            try {
+                                const msgObj = JSON.parse(lines[i]);
+                                if (msgObj && msgObj.message) {
+                                    const parsed = JSON.parse(msgObj.message);
+                                    if (parsed && (parsed.authInfo || parsed.streakData)) {
+                                        if (parsed.blobId) {
+                                            localStorage.setItem('tht_blob_' + safeKey, parsed.blobId);
+                                            try {
+                                                const blobRes = await fetch(`https://jsonblob.com/api/jsonBlob/${parsed.blobId}`);
+                                                if (blobRes.ok) {
+                                                    return await blobRes.json();
+                                                }
+                                            } catch (e) {}
+                                        }
+                                        return parsed;
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                } catch (e) {}
+
+                return null;
+            }
+        };
+    </script>
+
+    <script>
+        // Default sample sentences
+        const DEFAULT_VOCABULARY = [];
+
+        // App State
+        let vocabList = [];
+        let currentIndex = 0;
+        let currentTarget = "";
+        let currentVi = "";
+        let currentCharIndex = 0;
+        let isCompleted = false;
+        let correctKeystrokes = 0;
+        let totalKeystrokes = 0;
+        let isCtrlPeeking = false;
+
+        // Current Active Account Key
+        let currentAccountKey = "guest";
+        let authCurrentTab = "login";
+
+        // Streak & Profile State
+        let streakData = {
+            currentStreak: 0,
+            longestStreak: 0,
+            todayPoints: 0,
+            lastDate: new Date().toDateString(),
+            userName: "Khách (Chưa đăng nhập)",
+            userEmail: "Nhấn để đăng nhập / đăng ký",
+            userAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
+            level: "A1",
+            totalSolved: 0,
+            showOnLeaderboard: false,
+            isDarkMode: true,
+            language: "vi",
+            reminderEnabled: false,
+            reminderTime: "20:00",
+            isLoggedIn: false
+        };
+
+        function getAccountStoreKey(rawIdentifier) {
+            if (!rawIdentifier) return 'user_guest';
+            return 'user_' + encodeURIComponent(rawIdentifier.trim().toLowerCase()).replace(/%/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', async () => {
+            loadCurrentSession();
+            await syncAccountData();
+            applyTheme(streakData.isDarkMode);
+            applyLanguage(streakData.language);
+            initStarCanvas();
+            renderQuestion();
+            setupEventListeners();
+            setupTouchGestures();
+            setupMobileCtrlButton();
+
+            checkInitialAuthPrompt();
+        });
+
+        // ==========================================
+        // MOBILE SPECIFIC: GIỮ XEM TỪ (GIỐNG PHÍM CTRL) & CHỐNG CHE MÀN HÌNH
+        // ==========================================
+        function setupMobileCtrlButton() {
+            const btn = document.getElementById('mobileCtrlPeekBtn');
+            if (!btn) return;
+
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                peekCurrentWord();
+                triggerHaptic('light');
+                btn.classList.add('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            }, { passive: false });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+                focusTyping(true);
+            }, { passive: false });
+
+            btn.addEventListener('touchcancel', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            });
+
+            btn.addEventListener('mousedown', () => {
+                peekCurrentWord();
+                btn.classList.add('bg-cyan-500', 'text-white');
+            });
+            btn.addEventListener('mouseup', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white');
+                focusTyping(true);
+            });
+            btn.addEventListener('mouseleave', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white');
+            });
+        }
+
+        function triggerHaptic(type = 'light') {
+            if ('vibrate' in navigator) {
+                if (type === 'light') navigator.vibrate(12);
+                else if (type === 'error') navigator.vibrate([25, 40, 25]);
+                else if (type === 'success') navigator.vibrate([15, 30, 20]);
+            }
+        }
+
+        function setupTouchGestures() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            const quizCard = document.getElementById('quizCard');
+            if (!quizCard) return;
+
+            quizCard.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+
+            quizCard.addEventListener('touchend', (e) => {
+                const diffX = e.changedTouches[0].screenX - touchStartX;
+                const diffY = e.changedTouches[0].screenY - touchStartY;
+
+                if (Math.abs(diffX) > 60 && Math.abs(diffY) < 50) {
+                    if (diffX < 0) {
+                        if (isCompleted) nextQuestion();
+                    } else {
+                        speakSentence();
+                    }
+                }
+            }, { passive: true });
+        }
+
+        function checkInitialAuthPrompt() {
+            if (!streakData.isLoggedIn || currentAccountKey === "guest") {
+                openAuthModal('register');
+            }
+        }
+
+        function loadCurrentSession() {
+            try {
+                const sessionKey = localStorage.getItem('Trần Hưng Tài_current_user');
+                if (sessionKey) {
+                    currentAccountKey = sessionKey;
+                } else {
+                    currentAccountKey = "guest";
+                }
+            } catch (e) {
+                currentAccountKey = "guest";
+            }
+        }
+
+        async function syncAccountData() {
+            let loaded = false;
+
+            try {
+                const localData = localStorage.getItem('Trần Hưng Tài_data_' + currentAccountKey);
+                if (localData) {
+                    const parsed = JSON.parse(localData);
+                    streakData = Object.assign(streakData, parsed.streakData || {});
+                    vocabList = parsed.vocabList || [];
+                    loaded = true;
+                }
+            } catch (e) {}
+
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                try {
+                    const cloudData = await window.cloudSync.fetchUserData(currentAccountKey);
+                    if (cloudData) {
+                        streakData = Object.assign(streakData, cloudData.streakData || {});
+                        if (Array.isArray(cloudData.vocabList)) {
+                            vocabList = cloudData.vocabList;
+                        }
+                        if (cloudData.authInfo) {
+                            let reg = {};
+                            try {
+                                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
+                                if (regStr) reg = JSON.parse(regStr);
+                            } catch (e) {}
+                            reg[currentAccountKey] = cloudData.authInfo;
+                            localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(reg));
+                        }
+                        loaded = true;
+                    }
+                } catch (e) {}
+            }
+
+            if (!vocabList || vocabList.length === 0) {
+                vocabList = [...DEFAULT_VOCABULARY];
+            }
+
+            streakData.isLoggedIn = (currentAccountKey !== "guest");
+
+            await saveCurrentAccountData();
+            updateStreakUI();
+            updateAuthStatusUI();
+        }
+
+        async function saveCurrentAccountData() {
+            let authInfo = null;
+            try {
+                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
+                if (regStr) {
+                    const reg = JSON.parse(regStr);
+                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
+                }
+            } catch (e) {}
+
+            const payload = {
+                accountKey: currentAccountKey,
+                streakData: streakData,
+                vocabList: vocabList,
+                authInfo: authInfo
+            };
+
+            try {
+                localStorage.setItem('Trần Hưng Tài_data_' + currentAccountKey, JSON.stringify(payload));
+            } catch (e) {}
+
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                await window.cloudSync.saveUserData(currentAccountKey, payload);
+            }
+
+            const countEl = document.getElementById('vocabCount');
+            if (countEl) countEl.innerText = vocabList.length;
+        }
+
+        function updateAuthStatusUI() {
+            const authStatusText = document.getElementById('authStatusText');
+            const profileAuthActionText = document.getElementById('profileAuthActionText');
+            const authTriggerBtn = document.getElementById('authTriggerBtn');
+
+            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+                if (authStatusText) authStatusText.innerText = "Đã đồng bộ";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng xuất";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.remove('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.add('border-cyan-500/30', 'text-cyan-200');
+                }
+            } else {
+                if (authStatusText) authStatusText.innerText = "Đăng nhập";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng nhập";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.add('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.remove('border-cyan-500/30', 'text-cyan-200');
+                }
+            }
+        }
+
+        function openAuthModal(defaultTab = 'login') {
+            if (profileDropdown) profileDropdown.classList.add('hidden');
+            switchAuthTab(defaultTab);
+            const modal = document.getElementById('authModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('authModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            authCurrentTab = tab;
+            const loginBtn = document.getElementById('authTabLoginBtn');
+            const registerBtn = document.getElementById('authTabRegisterBtn');
+            const nameField = document.getElementById('authDisplayNameField');
+            const title = document.getElementById('authModalTitle');
+            const submitBtnText = document.getElementById('authSubmitBtnText');
+
+            if (tab === 'login') {
+                if (loginBtn) loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                if (registerBtn) registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                if (nameField) nameField.classList.add('hidden');
+                if (title) title.innerText = "Đăng nhập tài khoản";
+                if (submitBtnText) submitBtnText.innerText = "Đăng nhập & Đồng bộ";
+            } else {
+                if (registerBtn) registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                if (loginBtn) loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                if (nameField) nameField.classList.remove('hidden');
+                if (title) title.innerText = "Đăng ký tài khoản mới";
+                if (submitBtnText) submitBtnText.innerText = "Tạo tài khoản & Lưu đám mây";
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const rawIdentifier = document.getElementById('authUsername').value.trim();
+            const passwordInput = document.getElementById('authPassword').value.trim();
+            const displayNameInput = document.getElementById('authDisplayName').value.trim();
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const spinner = document.getElementById('authLoadingSpinner');
+
+            if (!rawIdentifier || !passwordInput) {
+                showToast("Vui lòng điền đầy đủ thông tin!");
+                return;
+            }
+
+            if (submitBtn) submitBtn.disabled = true;
+            if (spinner) spinner.classList.remove('hidden');
+
+            try {
+                const cleanEmailOrUser = rawIdentifier.toLowerCase();
+                const targetKey = getAccountStoreKey(cleanEmailOrUser);
+
+                let registry = {};
+                try {
+                    const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
+                    if (regStr) registry = JSON.parse(regStr);
+                } catch (err) {}
+
+                let cloudAccountData = null;
+                if (window.cloudSync) {
+                    try {
+                        cloudAccountData = await window.cloudSync.fetchUserData(targetKey);
+                    } catch (e) {}
+                }
+
+                if (authCurrentTab === 'register') {
+                    const isTakenLocally = Object.keys(registry).some(k => {
+                        const item = registry[k];
+                        return k === targetKey ||
+                               (item.email && item.email.toLowerCase() === cleanEmailOrUser) ||
+                               (item.username && item.username.toLowerCase() === cleanEmailOrUser);
+                    });
+
+                    const isTakenInCloud = cloudAccountData && (cloudAccountData.authInfo || cloudAccountData.streakData);
+
+                    if (isTakenLocally || isTakenInCloud) {
+                        showToast("❌ Email hoặc tài khoản này đã được đăng ký! Hãy bấm Đăng nhập.");
+                        return;
+                    }
+
+                    const accountInfo = {
+                        username: cleanEmailOrUser,
+                        password: passwordInput,
+                        displayName: displayNameInput || rawIdentifier.split('@')[0],
+                        email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@Trần Hưng Tài.com`
+                    };
+
+                    registry[targetKey] = accountInfo;
+                    localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
+
+                    currentAccountKey = targetKey;
+                    localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
+
+                    streakData.userName = accountInfo.displayName;
+                    streakData.userEmail = accountInfo.email;
+                    streakData.isLoggedIn = true;
+                    streakData.currentStreak = 1;
+                    streakData.longestStreak = 1;
+                    streakData.todayPoints = 0;
+                    streakData.totalSolved = 0;
+                    vocabList = [...DEFAULT_VOCABULARY];
+
+                    await saveCurrentAccountData();
+
+                    closeAuthModal();
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng ký thành công! Chào mừng ${streakData.userName} 🎉`);
+                } else {
+                    let account = null;
+                    let foundKey = targetKey;
+
+                    if (cloudAccountData && cloudAccountData.authInfo) {
+                        account = cloudAccountData.authInfo;
+                        registry[targetKey] = account;
+                        localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
+                    }
+
+                    if (!account && registry[targetKey]) {
+                        account = registry[targetKey];
+                    }
+
+                    if (!account) {
+                        for (const k in registry) {
+                            if ((registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) ||
+                                (registry[k].username && registry[k].username.toLowerCase() === cleanEmailOrUser)) {
+                                account = registry[k];
+                                foundKey = k;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!account) {
+                        showToast("Tài khoản chưa tồn tại! Hãy kiểm tra lại tên/email hoặc chọn tab Đăng ký mới.");
+                        return;
+                    }
+
+                    if (account.password !== passwordInput) {
+                        showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
+                        return;
+                    }
+
+                    currentAccountKey = foundKey;
+                    localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
+                    streakData.isLoggedIn = true;
+                    streakData.userName = account.displayName || rawIdentifier;
+                    streakData.userEmail = account.email || cleanEmailOrUser;
+
+                    if (cloudAccountData) {
+                        if (cloudAccountData.streakData) {
+                            streakData = Object.assign(streakData, cloudAccountData.streakData);
+                        }
+                        if (Array.isArray(cloudAccountData.vocabList)) {
+                            vocabList = cloudAccountData.vocabList;
+                        }
+                        await saveCurrentAccountData();
+                    } else {
+                        await syncAccountData();
+                    }
+
+                    closeAuthModal();
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng nhập thành công! Chào mừng trở lại ${streakData.userName} ✨`);
+                }
+            } catch (err) {
+                console.error("Auth error:", err);
+                showToast("Có lỗi xảy ra trong quá trình xử lý, vui lòng thử lại!");
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // MÃ ĐỒNG BỘ NHANH LIÊN THIẾT BỊ (BACKUP CODE)
+        // ==========================================
+        function openBackupCodeModal() {
+            if (profileDropdown) profileDropdown.classList.add('hidden');
+            let authPass = "";
+            try {
+                const reg = JSON.parse(localStorage.getItem('Trần Hưng Tài_auth_registry') || "{}");
+                if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
+            } catch (e) {}
+
+            const syncPacket = {
+                k: currentAccountKey,
+                u: streakData.userName,
+                e: streakData.userEmail,
+                p: authPass,
+                s: streakData,
+                v: vocabList
+            };
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(syncPacket))));
+            const codeInput = document.getElementById('currentAccountSyncCode');
+            if (codeInput) codeInput.value = code;
+            const modal = document.getElementById('backupCodeModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeBackupCodeModal() {
+            const modal = document.getElementById('backupCodeModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function copySyncCode() {
+            const input = document.getElementById('currentAccountSyncCode');
+            if (!input) return;
+            input.select();
+            document.execCommand('copy');
+            showToast("Đã chép mã đồng bộ vào Clipboard! Bạn có thể dán sang máy khác.");
+        }
+
+        async function importAccountBySyncCode() {
+            const inputEl = document.getElementById('inputImportSyncCode');
+            const code = inputEl ? inputEl.value.trim() : "";
+            if (!code) {
+                showToast("Vui lòng dán mã đồng bộ vào ô!");
+                return;
+            }
+            try {
+                const decodedStr = decodeURIComponent(escape(atob(code)));
+                const data = JSON.parse(decodedStr);
+
+                if (!data.k || !data.s) {
+                    throw new Error("Mã không hợp lệ");
+                }
+
+                currentAccountKey = data.k;
+                localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
+
+                if (data.p) {
+                    let reg = {};
+                    try {
+                        reg = JSON.parse(localStorage.getItem('Trần Hưng Tài_auth_registry') || "{}");
+                    } catch (e) {}
+                    reg[currentAccountKey] = {
+                        username: data.e || currentAccountKey,
+                        password: data.p,
+                        displayName: data.u || "Người dùng",
+                        email: data.e || `${currentAccountKey}@Trần Hưng Tài.com`
+                    };
+                    localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(reg));
+                }
+
+                streakData = Object.assign(streakData, data.s);
+                streakData.isLoggedIn = true;
+                if (data.v && data.v.length > 0) {
+                    vocabList = data.v;
+                }
+
+                await saveCurrentAccountData();
+                closeBackupCodeModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Nạp tài khoản thành công! Đã khôi phục ${vocabList.length} câu từ vựng 🎉`);
+            } catch (err) {
+                showToast("Mã đồng bộ không hợp lệ! Vui lòng sao chép đúng chuỗi mã.");
+            }
+        }
+
+        function handleProfileAuthAction() {
+            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+                openLogoutModal();
+            } else {
+                openAuthModal('login');
+            }
+        }
+
+        function confirmLogoutAction() {
+            closeLogoutModal();
+            currentAccountKey = "guest";
+            localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
+
+            streakData.isLoggedIn = false;
+            streakData.userName = "Khách (Chưa đăng nhập)";
+            streakData.userEmail = "guest@Trần Hưng Tài.com";
+            streakData.userAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80";
+            streakData.todayPoints = 0;
+
+            syncAccountData();
+            showToast("Đã đăng xuất. Bạn có thể Đăng nhập để đồng bộ lại dữ liệu bất cứ lúc nào.");
+        }
+
+        // ==========================================
+        // MECHANICAL KEYBOARD SOUND GENERATOR (Web Audio API)
+        // ==========================================
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playKeyClack() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+
+                const osc = ctx.createOscillator();
+                const clickGain = ctx.createGain();
+                const freq = 1800 + (Math.random() * 600 - 300);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+
+                clickGain.gain.setValueAtTime(0.28, now);
+                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+                osc.connect(clickGain);
+                clickGain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.05);
+
+                const bufferSize = ctx.sampleRate * 0.04;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.008));
+                }
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(950 + (Math.random() * 200 - 100), now);
+
+                const noiseGain = ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.35, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+                noise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(ctx.destination);
+
+                noise.start(now);
+            } catch (err) {}
+        }
+
+        function playErrorSound() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.13);
+            } catch (e) {}
+        }
+
+        function playSuccessChime() {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const noteTime = now + idx * 0.08;
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, noteTime);
+
+                    gain.gain.setValueAtTime(0.18, noteTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(noteTime);
+                    osc.stop(noteTime + 0.36);
+                });
+            } catch (e) {}
+        }
+
+        function spawnSparkles(el) {
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const colors = ['#38ef7d', '#38bdf8', '#fbbf24', '#ffffff', '#a7f3d0'];
+
+            for (let i = 0; i < 7; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'sparkle-particle';
+                const size = Math.random() * 4 + 3;
+                const angle = (Math.PI * 2 * i) / 7 + (Math.random() * 0.4 - 0.2);
+                const distance = Math.random() * 32 + 20;
+
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${centerX}px`;
+                particle.style.top = `${centerY}px`;
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                particle.style.boxShadow = `0 0 6px ${particle.style.backgroundColor}`;
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 600);
+            }
+        }
+
+        const I18N = {
+            vi: {
+                importVocab: "Nhập từ",
+                leaderboard: "Bảng xếp hạng",
+                profile: "Hồ sơ cá nhân",
+                changeName: "Đổi tên hiển thị",
+                showOnLeaderboard: "Hiện trên bảng xếp hạng",
+                showOnLeaderboardDesc: "Chỉ công khai tên và ảnh đại diện",
+                settings: "CÀI ĐẶT",
+                darkMode: "Giao diện tối",
+                darkModeDesc: "Tắt để dùng giao diện sáng",
+                language: "Ngôn ngữ giao diện",
+                reminder: "Nhắc học",
+                reminderDesc: "Nhận thông báo theo lịch của bạn",
+                logout: "Đăng xuất",
+                currentStreak: "Chuỗi hiện tại",
+                longestStreak: "Chuỗi dài nhất",
+                streakRules: "Đạt 10 điểm/ngày: mỗi câu Nghe hoặc Viết (kể cả bỏ qua câu Viết) = 1 điểm; hoàn thành bài Từ vựng = 10 điểm.",
+                vietnameseSentence: "Câu tiếng Việt",
+                answerBadge: "Câu trả lời",
+                revealAnswer: "Xem đáp án",
+                typingHint: "Gõ trực tiếp bàn phím để điền ký tự tiếp theo. Nhấn Xem đáp án hoặc Bỏ qua nếu cần.",
+                skipBtn: "Bỏ qua",
+                nextBtn: "Câu tiếp",
+                correctNice: "Chính xác tuyệt vời!",
+                listenAgain: "Nghe lại",
+                profileModalTitle: "Hồ sơ cá nhân",
+                chooseAvatar: "Chọn ảnh đại diện nhanh:",
+                fullName: "Họ và tên hiển thị",
+                currentLevel: "Trình độ hiện tại",
+                totalSolved: "Tổng câu đã làm",
+                streakDays: "Chuỗi ngày học",
+                cancel: "Đóng / Hủy",
+                save: "Lưu thay đổi",
+                changeNameModalTitle: "Đổi tên hiển thị",
+                changeNameModalDesc: "Tên hiển thị sẽ xuất hiện trên bài học và bảng xếp hạng.",
+                reminderSettings: "Cài đặt giờ nhắc học",
+                reminderSettingsDesc: "Hệ thống sẽ gửi thông báo mỗi ngày để bạn duy trì chuỗi Streak học tiếng Anh.",
+                reminderTime: "Giờ nhắc nhở mỗi ngày:",
+                saveReminder: "Bật nhắc nhở",
+                confirmLogout: "Xác nhận đăng xuất?",
+                confirmLogoutDesc: "Bạn có muốn đăng xuất khỏi tài khoản? Dữ liệu streak và từ vựng vẫn được lưu an toàn trên đám mây của tài khoản này."
+            },
+            en: {
+                importVocab: "Import Vocab",
+                leaderboard: "Leaderboard",
+                profile: "Personal Profile",
+                changeName: "Change Display Name",
+                showOnLeaderboard: "Show on Leaderboard",
+                showOnLeaderboardDesc: "Only publicly display name and avatar",
+                settings: "SETTINGS",
+                darkMode: "Dark Mode",
+                darkModeDesc: "Turn off to use light theme",
+                language: "Interface Language",
+                reminder: "Daily Reminder",
+                reminderDesc: "Receive reminders on your schedule",
+                logout: "Log out",
+                currentStreak: "Current streak",
+                longestStreak: "Longest streak",
+                streakRules: "Earn 10 pts/day: each sentence = 1 pt; completing vocabulary set = 10 pts.",
+                vietnameseSentence: "Vietnamese Sentence",
+                answerBadge: "Your Answer",
+                revealAnswer: "Show answer",
+                typingHint: "Type letters directly to fill characters. Press Show answer or Skip if needed.",
+                skipBtn: "Skip",
+                nextBtn: "Next",
+                correctNice: "Excellent! Correct!",
+                listenAgain: "Replay",
+                profileModalTitle: "Personal Profile",
+                chooseAvatar: "Quick avatar select:",
+                fullName: "Display Name",
+                currentLevel: "Current Level",
+                totalSolved: "Total completed",
+                streakDays: "Streak days",
+                cancel: "Close",
+                save: "Save Changes",
+                changeNameModalTitle: "Change Display Name",
+                changeNameModalDesc: "Display name will appear on lessons and leaderboards.",
+                reminderSettings: "Study Reminder Time",
+                reminderSettingsDesc: "System will send daily notification to help maintain your streak.",
+                reminderTime: "Daily reminder time:",
+                saveReminder: "Enable Reminder",
+                confirmLogout: "Confirm Logout?",
+                confirmLogoutDesc: "Are you sure you want to log out? Your streak and vocab remain securely saved."
+            }
+        };
+
+        const vietnamesePrompt = document.getElementById('vietnamesePrompt');
+        const maskedSentenceContainer = document.getElementById('maskedSentenceContainer');
+        const questionCounter = document.getElementById('questionCounter');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressBar = document.getElementById('progressBar');
+        const categoryHeader = document.getElementById('categoryHeader');
+        const topicBreadcrumb = document.getElementById('topicBreadcrumb');
+        const completionBanner = document.getElementById('completionBanner');
+        const fullEnglishSentence = document.getElementById('fullEnglishSentence');
+        const hiddenKeyboardInput = document.getElementById('hiddenKeyboardInput');
+        const vocabModal = document.getElementById('vocabModal');
+        const summaryModal = document.getElementById('summaryModal');
+        const shortcutModal = document.getElementById('shortcutModal');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        const profileModal = document.getElementById('profileModal');
+        const changeNameModal = document.getElementById('changeNameModal');
+        const reminderModal = document.getElementById('reminderModal');
+        const logoutModal = document.getElementById('logoutModal');
+        const toastNotice = document.getElementById('toastNotice');
+        const toastMessage = document.getElementById('toastMessage');
+
+        function showToast(msg) {
+            if (!toastNotice || !toastMessage) return;
+            toastMessage.innerText = msg;
+            toastNotice.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+            toastNotice.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toastNotice.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+                toastNotice.classList.remove('opacity-100', 'translate-y-0');
+            }, 2600);
+        }
+
+        function addStreakPoints(pts = 1) {
+            streakData.todayPoints = Math.min(10, (streakData.todayPoints || 0) + pts);
+            streakData.totalSolved = (streakData.totalSolved || 0) + 1;
+            saveCurrentAccountData();
+            updateStreakUI();
+        }
+
+        function updateStreakUI() {
+            const curStreakEl = document.getElementById('currentStreakDisplay');
+            const longStreakEl = document.getElementById('longestStreakDisplay');
+            const streakPointsEl = document.getElementById('streakPointsLabel');
+            const streakBarEl = document.getElementById('streakProgressBar');
+
+            if (curStreakEl) curStreakEl.innerText = streakData.currentStreak || 0;
+            if (longStreakEl) longStreakEl.innerText = streakData.longestStreak || 0;
+            if (streakPointsEl) streakPointsEl.innerText = `${streakData.todayPoints || 0}/10 điểm streak hôm nay`;
+            const pct = Math.min(100, Math.round(((streakData.todayPoints || 0) / 10) * 100));
+            if (streakBarEl) streakBarEl.style.width = `${pct}%`;
+
+            const nameEl = document.getElementById('userDisplayName');
+            const nameHeaderEl = document.getElementById('userDisplayNameHeader');
+            const emailEl = document.getElementById('userEmailDisplay');
+            const avatarHeaderEl = document.getElementById('userAvatarHeader');
+            const avatarDropEl = document.getElementById('userAvatarDropdown');
+
+            if (nameEl) nameEl.innerText = streakData.userName;
+            if (nameHeaderEl) nameHeaderEl.innerText = streakData.userName;
+            if (emailEl) emailEl.innerText = streakData.userEmail;
+            if (avatarHeaderEl) avatarHeaderEl.src = streakData.userAvatar;
+            if (avatarDropEl) avatarDropEl.src = streakData.userAvatar;
+
+            const lbToggle = document.getElementById('leaderboardToggle');
+            const dmToggle = document.getElementById('darkModeToggle');
+            const langSelect = document.getElementById('languageSelect');
+            const remToggle = document.getElementById('reminderToggle');
+            const remDesc = document.getElementById('reminderStatusDesc');
+
+            if (lbToggle) lbToggle.checked = !!streakData.showOnLeaderboard;
+            if (dmToggle) dmToggle.checked = !!streakData.isDarkMode;
+            if (langSelect) langSelect.value = streakData.language || "vi";
+            if (remToggle) remToggle.checked = !!streakData.reminderEnabled;
+            if (streakData.reminderEnabled && remDesc) {
+                remDesc.innerText = `Nhắc nhở lúc ${streakData.reminderTime}`;
+            }
+
+            const totalSolvedEl = document.getElementById('profileTotalSolved');
+            const profileStreakEl = document.getElementById('profileStreakDisplay');
+            if (totalSolvedEl) totalSolvedEl.innerText = `${streakData.totalSolved || 0} câu`;
+            if (profileStreakEl) profileStreakEl.innerText = `${streakData.currentStreak || 0} ngày 🔥`;
+        }
+
+        function openProfileModal() {
+            if (profileDropdown) profileDropdown.classList.add('hidden');
+            const editName = document.getElementById('profileEditName');
+            const editEmail = document.getElementById('profileEditEmail');
+            const editLevel = document.getElementById('profileEditLevel');
+            const editAvatar = document.getElementById('profileEditAvatarPreview');
+            const totalSolved = document.getElementById('profileTotalSolved');
+            const streakDisp = document.getElementById('profileStreakDisplay');
+
+            if (editName) editName.value = streakData.userName;
+            if (editEmail) editEmail.value = streakData.userEmail;
+            if (editLevel) editLevel.value = streakData.level || "A1";
+            if (editAvatar) editAvatar.src = streakData.userAvatar;
+            if (totalSolved) totalSolved.innerText = `${streakData.totalSolved || 0} câu`;
+            if (streakDisp) streakDisp.innerText = `${streakData.currentStreak || 0} ngày 🔥`;
+            if (profileModal) profileModal.classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            if (profileModal) profileModal.classList.add('hidden');
+        }
+
+        function selectPresetAvatar(url) {
+            const preview = document.getElementById('profileEditAvatarPreview');
+            if (preview) preview.src = url;
+        }
+
+        function saveProfileChanges() {
+            const name = document.getElementById('profileEditName').value.trim();
+            const email = document.getElementById('profileEditEmail').value.trim();
+            const level = document.getElementById('profileEditLevel').value;
+            const avatar = document.getElementById('profileEditAvatarPreview').src;
+
+            if (name) streakData.userName = name;
+            if (email) streakData.userEmail = email;
+            streakData.level = level;
+            streakData.userAvatar = avatar;
+
+            saveCurrentAccountData();
+            updateStreakUI();
+            closeProfileModal();
+            showToast("Đã cập nhật và đồng bộ hồ sơ cá nhân thành công! ✨");
+        }
+
+        function openChangeNameModal() {
+            if (profileDropdown) profileDropdown.classList.add('hidden');
+            const input = document.getElementById('quickNameInput');
+            if (input) input.value = streakData.userName;
+            if (changeNameModal) changeNameModal.classList.remove('hidden');
+        }
+
+        function closeChangeNameModal() {
+            if (changeNameModal) changeNameModal.classList.add('hidden');
+        }
+
+        function saveQuickName() {
+            const val = document.getElementById('quickNameInput').value.trim();
+            if (val) {
+                streakData.userName = val;
+                saveCurrentAccountData();
+                updateStreakUI();
+                closeChangeNameModal();
+                showToast(`Đã đổi tên thành công: ${val}`);
+            }
+        }
+
+        function toggleLeaderboardPreference(val) {
+            streakData.showOnLeaderboard = val;
+            saveCurrentAccountData();
+            if (val) {
+                showToast("Đã bật: Hiện tên & ảnh trên bảng xếp hạng 🏆");
+            } else {
+                showToast("Đã tắt: Ẩn thông tin khỏi bảng xếp hạng");
+            }
+        }
+
+        function showLeaderboardToast() {
+            showToast("Bảng xếp hạng tuần: Bạn đang đứng hạng 3! 🏆");
+        }
+
+        function toggleDarkMode(isDark) {
+            streakData.isDarkMode = isDark;
+            saveCurrentAccountData();
+            applyTheme(isDark);
+            showToast(isDark ? "Đã chuyển sang Giao diện tối 🌙" : "Đã chuyển sang Giao diện sáng ☀️");
+        }
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.body.classList.remove('light-mode');
+            } else {
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        function changeLanguage(lang) {
+            streakData.language = lang;
+            saveCurrentAccountData();
+            applyLanguage(lang);
+            showToast(lang === 'vi' ? "Đã đổi sang Tiếng Việt" : "Language set to English");
+        }
+
+        function applyLanguage(lang) {
+            const dict = I18N[lang] || I18N.vi;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (dict[key]) {
+                    el.innerText = dict[key];
+                }
+            });
+        }
+
+        function handleReminderToggle(checked) {
+            if (checked) {
+                openReminderModal();
+            } else {
+                streakData.reminderEnabled = false;
+                saveCurrentAccountData();
+                const desc = document.getElementById('reminderStatusDesc');
+                if (desc) desc.innerText = "Nhận thông báo theo lịch của bạn";
+                showToast("Đã tắt nhắc học hàng ngày");
+            }
+        }
+
+        function openReminderModal() {
+            if (profileDropdown) profileDropdown.classList.add('hidden');
+            const timeInput = document.getElementById('reminderTimeInput');
+            if (timeInput) timeInput.value = streakData.reminderTime || "20:00";
+            if (reminderModal) reminderModal.classList.remove('hidden');
+        }
+
+        function closeReminderModal() {
+            if (reminderModal) reminderModal.classList.add('hidden');
+            const toggle = document.getElementById('reminderToggle');
+            if (toggle) toggle.checked = streakData.reminderEnabled;
+        }
+
+        function saveReminderSettings() {
+            const time = document.getElementById('reminderTimeInput').value;
+            streakData.reminderEnabled = true;
+            streakData.reminderTime = time;
+            saveCurrentAccountData();
+            closeReminderModal();
+            showToast(`Đã bật nhắc học vào lúc ${time} hàng ngày! ⏰`);
+        }
+
+        function openLogoutModal() {
+            if (profileDropdown) profileDropdown.classList.add('hidden');
+            if (logoutModal) logoutModal.classList.remove('hidden');
+        }
+
+        function closeLogoutModal() {
+            if (logoutModal) logoutModal.classList.add('hidden');
+        }
+
+        function toggleProfileDropdown() {
+            if (profileDropdown) profileDropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', (e) => {
+            if (profileDropdown && !profileDropdown.contains(e.target) && !e.target.closest('#userDisplayNameHeader') && !e.target.closest('button[onclick="toggleProfileDropdown()"]')) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+
+        function openShortcutModal() {
+            if (shortcutModal) shortcutModal.classList.remove('hidden');
+        }
+
+        function closeShortcutModal() {
+            if (shortcutModal) shortcutModal.classList.add('hidden');
+        }
+
+        function peekCurrentWord() {
+            if (isCompleted || currentCharIndex >= currentTarget.length || isCtrlPeeking) return;
+            isCtrlPeeking = true;
+
+            let start = currentCharIndex;
+            while (start > 0 && currentTarget[start - 1] !== ' ') {
+                start--;
+            }
+            let end = currentCharIndex;
+            while (end < currentTarget.length && currentTarget[end] !== ' ') {
+                end++;
+            }
+
+            for (let i = start; i < end; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                if (slot && !isPunctuationChar(currentTarget[i])) {
+                    if (!slot.classList.contains('filled')) {
+                        slot.innerText = currentTarget[i];
+                        slot.classList.add('preview-hint');
+                    }
+                }
+            }
+        }
+
+        function hideCurrentWordPeek() {
+            if (!isCtrlPeeking) return;
+            isCtrlPeeking = false;
+
+            let start = currentCharIndex;
+            while (start > 0 && currentTarget[start - 1] !== ' ') {
+                start--;
+            }
+            let end = currentCharIndex;
+            while (end < currentTarget.length && currentTarget[end] !== ' ') {
+                end++;
+            }
+
+            for (let i = start; i < end; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                if (slot && !isPunctuationChar(currentTarget[i])) {
+                    if (!slot.classList.contains('filled')) {
+                        slot.innerText = "*";
+                        slot.classList.remove('preview-hint');
+                    }
+                }
+            }
+
+            updateActiveSlot();
+        }
+
+        function renderQuestion() {
+            if (vocabList.length === 0) {
+                if (vietnamesePrompt) vietnamesePrompt.innerText = "Chưa có từ vựng trong tài khoản này. Hãy bấm 'Nhập từ' phía trên để thêm!";
+                if (maskedSentenceContainer) maskedSentenceContainer.innerHTML = "";
+                return;
+            }
+
+            if (currentIndex >= vocabList.length) {
+                showSummaryScreen();
+                return;
+            }
+
+            const item = vocabList[currentIndex];
+            currentVi = item.vi;
+            currentTarget = item.en.trim();
+            currentCharIndex = 0;
+            isCompleted = false;
+
+            const currentNumber = currentIndex + 1;
+            const total = vocabList.length;
+            const percent = Math.round((currentNumber / total) * 100);
+
+            if (questionCounter) questionCounter.innerText = `Câu ${currentNumber} / ${total}`;
+            if (progressPercent) progressPercent.innerText = `${percent}%`;
+            if (progressBar) progressBar.style.width = `${percent}%`;
+
+            if (vietnamesePrompt) vietnamesePrompt.innerText = currentVi;
+            if (categoryHeader) categoryHeader.innerText = item.category || "Luyện viết · A1 · Daily Conversation";
+            if (topicBreadcrumb) topicBreadcrumb.innerText = item.category ? item.category.split('·')[1]?.trim() || "Tiếng Anh" : "Tự do";
+
+            if (completionBanner) completionBanner.classList.add('hidden');
+            if (fullEnglishSentence) fullEnglishSentence.innerText = "";
+
+            renderCharacterSlots();
+            skipToNextValidChar();
+            focusTyping();
+        }
+
+        function renderCharacterSlots() {
+            if (!maskedSentenceContainer) return;
+            maskedSentenceContainer.innerHTML = "";
+            const words = currentTarget.split(' ');
+            let globalIndex = 0;
+
+            words.forEach((word, wIdx) => {
+                const wordWrap = document.createElement('div');
+                wordWrap.className = "flex items-center space-x-1 sm:space-x-1.5 my-1 mr-3 sm:mr-4";
+
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    const charSlot = document.createElement('div');
+                    charSlot.id = `slot-${globalIndex}`;
+                    charSlot.dataset.index = globalIndex;
+                    charSlot.dataset.char = char;
+
+                    const isPunctuation = isPunctuationChar(char);
+
+                    if (isPunctuation) {
+                        charSlot.className = "w-4 sm:w-6 h-8 sm:h-11 flex items-center justify-center font-bold text-slate-300 text-lg sm:text-2xl";
+                        charSlot.innerText = char;
+                    } else {
+                        charSlot.className = "char-slot w-7 h-9 sm:w-9 sm:h-11 rounded-lg sm:rounded-xl border border-blue-400/30 bg-slate-900/60 flex items-center justify-center font-bold text-base sm:text-xl transition-all duration-150 cursor-pointer shadow-sm";
+                        charSlot.innerText = "*";
+                        charSlot.onclick = (e) => {
+                            e.stopPropagation();
+                            focusTyping(true);
+                        };
+                    }
+
+                    wordWrap.appendChild(charSlot);
+                    globalIndex++;
+                }
+
+                maskedSentenceContainer.appendChild(wordWrap);
+
+                if (wIdx < words.length - 1) {
+                    globalIndex++;
+                }
+            });
+
+            updateActiveSlot();
+        }
+
+        function isPunctuationChar(c) {
+            return /[.,!?;:'"()–—-]/.test(c);
+        }
+
+        function skipToNextValidChar() {
+            while (currentCharIndex < currentTarget.length) {
+                const ch = currentTarget[currentCharIndex];
+                if (ch === ' ') {
+                    currentCharIndex++;
+                } else if (isPunctuationChar(ch)) {
+                    currentCharIndex++;
+                } else {
+                    break;
+                }
+            }
+            updateActiveSlot();
+
+            if (currentCharIndex >= currentTarget.length) {
+                completeCurrentSentence();
+            }
+        }
+
+        function updateActiveSlot() {
+            document.querySelectorAll('.char-slot').forEach(slot => slot.classList.remove('active'));
+
+            const targetSlot = document.getElementById(`slot-${currentCharIndex}`);
+            if (targetSlot) {
+                targetSlot.classList.add('active');
+            }
+        }
+
+        function handleKeyInput(char) {
+            if (isCompleted || currentCharIndex >= currentTarget.length) return;
+
+            totalKeystrokes++;
+            const expectedChar = currentTarget[currentCharIndex];
+
+            if (char.toLowerCase() === expectedChar.toLowerCase()) {
+                correctKeystrokes++;
+                playKeyClack();
+                triggerHaptic('light');
+
+                const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
+                if (activeSlot) {
+                    activeSlot.innerText = expectedChar;
+                    activeSlot.classList.remove('active');
+                    activeSlot.classList.add('filled', 'correct-pop');
+                    spawnSparkles(activeSlot);
+                }
+
+                currentCharIndex++;
+                skipToNextValidChar();
+            } else {
+                playErrorSound();
+                triggerHaptic('error');
+                const activeSlot = document.getElementById(`slot-${currentCharIndex}`);
+                if (activeSlot) {
+                    activeSlot.classList.add('error');
+                    setTimeout(() => {
+                        activeSlot.classList.remove('error');
+                    }, 350);
+                }
+            }
+        }
+
+        function revealAnswer() {
+            for (let i = 0; i < currentTarget.length; i++) {
+                const slot = document.getElementById(`slot-${i}`);
+                if (slot && !isPunctuationChar(currentTarget[i])) {
+                    slot.innerText = currentTarget[i];
+                    slot.classList.add('filled');
+                    slot.classList.remove('active');
+                }
+            }
+            completeCurrentSentence(false);
+        }
+
+        function completeCurrentSentence(triggerAudio = true) {
+            if (isCompleted) return;
+            isCompleted = true;
+
+            if (completionBanner) completionBanner.classList.remove('hidden');
+            if (fullEnglishSentence) fullEnglishSentence.innerText = currentTarget;
+
+            playSuccessChime();
+            triggerHaptic('success');
+            addStreakPoints(1);
+
+            if (triggerAudio) {
+                setTimeout(() => {
+                    speakSentence();
+                }, 400);
+            }
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            renderQuestion();
+        }
+
+        function skipQuestion() {
+            revealAnswer();
+            addStreakPoints(1);
+            setTimeout(() => {
+                nextQuestion();
+            }, 600);
+        }
+
+        function speakSentence() {
+            if (!('speechSynthesis' in window)) {
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(currentTarget || "Hello");
+            utterance.lang = 'en-US';
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function setupEventListeners() {
+            window.addEventListener('keydown', (e) => {
+                if (vocabModal && vocabModal.classList.contains('hidden') === false) return;
+                if (summaryModal && summaryModal.classList.contains('hidden') === false) return;
+                const authModal = document.getElementById('authModal');
+                if (authModal && authModal.classList.contains('hidden') === false) return;
+                if (profileModal && profileModal.classList.contains('hidden') === false) return;
+                if (changeNameModal && changeNameModal.classList.contains('hidden') === false) return;
+
+                if (e.key === 'Control') {
+                    peekCurrentWord();
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === 'Escape') {
+                    if (shortcutModal && !shortcutModal.classList.contains('hidden')) {
+                        closeShortcutModal();
+                    } else {
+                        skipQuestion();
+                    }
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === 'Enter') {
+                    if (isCompleted) {
+                        nextQuestion();
+                    }
+                    return;
+                }
+
+                if (e.key === 'Backspace') {
+                    handleBackspace();
+                    return;
+                }
+
+                if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    handleKeyInput(e.key);
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.key === 'Control') {
+                    hideCurrentWordPeek();
+                    e.preventDefault();
+                }
+            });
+
+            window.addEventListener('blur', () => {
+                hideCurrentWordPeek();
+            });
+
+            if (hiddenKeyboardInput) {
+                hiddenKeyboardInput.addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    if (val && val.length > 0) {
+                        const lastChar = val[val.length - 1];
+                        handleKeyInput(lastChar);
+                        hiddenKeyboardInput.value = "";
+                    }
+                });
+            }
+        }
+
+        function handleBackspace() {
+            if (currentCharIndex <= 0) return;
+
+            let prevIdx = currentCharIndex - 1;
+            while (prevIdx >= 0) {
+                if (currentTarget[prevIdx] === ' ' || isPunctuationChar(currentTarget[prevIdx])) {
+                    prevIdx--;
+                } else {
+                    break;
+                }
+            }
+
+            if (prevIdx >= 0) {
+                currentCharIndex = prevIdx;
+                const slot = document.getElementById(`slot-${currentCharIndex}`);
+                if (slot) {
+                    slot.innerText = "*";
+                    slot.classList.remove('filled');
+                }
+                isCompleted = false;
+                if (completionBanner) completionBanner.classList.add('hidden');
+                updateActiveSlot();
+            }
+        }
+
+        function focusTyping(forceMobile = false) {
+            if (forceMobile || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 640) {
+                if (hiddenKeyboardInput) hiddenKeyboardInput.focus({ preventScroll: true });
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function openVocabManager() {
+            if (vocabModal) vocabModal.classList.remove('hidden');
+            renderVocabManagerList();
+            switchModalTab('list');
+        }
+
+        function closeVocabManager() {
+            if (vocabModal) vocabModal.classList.add('hidden');
+            renderQuestion();
+        }
+
+        function switchModalTab(tab) {
+            const tabList = document.getElementById('tabList');
+            const tabImport = document.getElementById('tabImport');
+            const tabListBtn = document.getElementById('tabListBtn');
+            const tabImportBtn = document.getElementById('tabImportBtn');
+
+            if (tab === 'list') {
+                if (tabList) tabList.classList.remove('hidden');
+                if (tabImport) tabImport.classList.add('hidden');
+                if (tabListBtn) tabListBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
+                if (tabImportBtn) tabImportBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            } else {
+                if (tabList) tabList.classList.add('hidden');
+                if (tabImport) tabImport.classList.remove('hidden');
+                if (tabImportBtn) tabImportBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 text-white transition";
+                if (tabListBtn) tabListBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            }
+        }
+
+        function renderVocabManagerList() {
+            const container = document.getElementById('vocabListContainer');
+            if (!container) return;
+            container.innerHTML = "";
+            const countEl = document.getElementById('vocabCount');
+            if (countEl) countEl.innerText = vocabList.length;
+
+            if (vocabList.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">Chưa có câu nào trong tài khoản này. Hãy nhấn "Nhập danh sách câu mới".</div>`;
+                return;
+            }
+
+            vocabList.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3 text-xs";
+                itemDiv.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-white truncate">${index + 1}. ${escapeHtml(item.vi)}</div>
+                        <div class="text-cyan-300/80 font-mono truncate text-[11px]">${escapeHtml(item.en)}</div>
+                    </div>
+                    <div class="flex items-center space-x-1 shrink-0">
+                        <button onclick="jumpToQuestion(${index})" title="Học câu này ngay" class="p-1.5 text-blue-400 hover:text-white rounded hover:bg-slate-800">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="deleteVocabItem(${index})" title="Xoá câu này" class="p-1.5 text-red-400 hover:text-red-300 rounded hover:bg-slate-800">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        async function deleteVocabItem(idx) {
+            vocabList.splice(idx, 1);
+            if (currentIndex >= vocabList.length) {
+                currentIndex = Math.max(0, vocabList.length - 1);
+            }
+            await saveCurrentAccountData();
+            renderVocabManagerList();
+            showToast("Đã xoá và cập nhật lên tài khoản");
+        }
+
+        function jumpToQuestion(idx) {
+            currentIndex = idx;
+            closeVocabManager();
+        }
+
+        function parseBulkInput(text) {
+            const lines = text.split('\n');
+            const parsed = [];
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+
+                let vi = "";
+                let en = "";
+
+                if (trimmed.includes('|')) {
+                    const parts = trimmed.split('|');
+                    vi = parts[0].trim();
+                    en = parts[1].trim();
+                } else if (trimmed.includes('-')) {
+                    const parts = trimmed.split('-');
+                    vi = parts[0].trim();
+                    en = parts[1].trim();
+                } else {
+                    vi = trimmed;
+                    en = trimmed;
+                }
+
+                if (vi && en) {
+                    parsed.push({
+                        vi: vi,
+                        en: en,
+                        category: "Bộ từ vựng của " + (streakData.userName || "bạn")
+                    });
+                }
+            });
+
+            return parsed;
+        }
+
+        async function appendImportedVocab() {
+            const input = document.getElementById('bulkImportInput');
+            const text = input ? input.value : "";
+            const newItems = parseBulkInput(text);
+            if (newItems.length === 0) {
+                return;
+            }
+            vocabList = vocabList.concat(newItems);
+            await saveCurrentAccountData();
+            if (input) input.value = "";
+            switchModalTab('list');
+            renderVocabManagerList();
+            showToast(`Đã lưu thêm ${newItems.length} câu vào tài khoản! ☁️`);
+        }
+
+        async function replaceImportedVocab() {
+            const input = document.getElementById('bulkImportInput');
+            const text = input ? input.value : "";
+            const newItems = parseBulkInput(text);
+            if (newItems.length === 0) {
+                return;
+            }
+            vocabList = newItems;
+            currentIndex = 0;
+            await saveCurrentAccountData();
+            if (input) input.value = "";
+            switchModalTab('list');
+            renderVocabManagerList();
+            showToast(`Đã thay thế bộ từ vựng cho tài khoản! ☁️`);
+        }
+
+        async function resetDefaultVocab() {
+            vocabList = [...DEFAULT_VOCABULARY];
+            currentIndex = 0;
+            await saveCurrentAccountData();
+            renderVocabManagerList();
+            showToast("Đã khôi phục các câu mẫu mặc định!");
+        }
+
+        function showSummaryScreen() {
+            if (summaryModal) summaryModal.classList.remove('hidden');
+            const totalEl = document.getElementById('summaryTotal');
+            const accEl = document.getElementById('summaryAccuracy');
+            if (totalEl) totalEl.innerText = vocabList.length;
+            const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
+            if (accEl) accEl.innerText = `${acc}%`;
+        }
+
+        function restartQuiz() {
+            currentIndex = 0;
+            correctKeystrokes = 0;
+            totalKeystrokes = 0;
+            if (summaryModal) summaryModal.classList.add('hidden');
+            renderQuestion();
+        }
+
+        function closeSummaryAndOpenManager() {
+            if (summaryModal) summaryModal.classList.add('hidden');
+            openVocabManager();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function initStarCanvas() {
+            const canvas = document.getElementById('starsCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                createStars();
+            }
+
+            function createStars() {
+                stars = [];
+                const count = Math.floor((width * height) / 3800);
+                for (let i = 0; i < count; i++) {
+                    stars.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        radius: Math.random() * 1.3 + 0.3,
+                        alpha: Math.random() * 0.8 + 0.2,
+                        speed: Math.random() * 0.015 + 0.005,
+                        color: Math.random() > 0.4 ? '#ffffff' : (Math.random() > 0.5 ? '#93c5fd' : '#67e8f9')
+                    });
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                stars.forEach(star => {
+                    star.alpha += star.speed;
+                    if (star.alpha > 0.95 || star.alpha < 0.15) {
+                        star.speed = -star.speed;
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = star.color;
+                    ctx.globalAlpha = Math.max(0, Math.min(1, star.alpha));
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            animate();
+        }
+    </script>
 </body>
 </html>
- 
-Claude is responding
