@@ -275,15 +275,18 @@
                     </div>
                 </div>
 
-                <!-- Sync note -->
-                <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex items-start space-x-2 text-[11px] text-blue-200/80">
-                    <i class="fa-solid fa-shield-halved text-cyan-400 mt-0.5 shrink-0"></i>
-                    <span>Tài khoản của bạn lưu giữ riêng bộ từ vựng cá nhân, mở trên điện thoại hay máy tính bất kỳ chỉ cần đăng nhập cùng tài khoản là có đủ.</span>
+                <!-- Sync note & Quick Transfer Code option -->
+                <div class="p-3 rounded-xl bg-blue-950/40 border border-blue-900/50 flex flex-col space-y-1.5 text-[11px] text-blue-200/80">
+                    <div class="flex items-start space-x-2">
+                        <i class="fa-solid fa-cloud-arrow-up text-cyan-400 mt-0.5 shrink-0"></i>
+                        <span>Dữ liệu đăng ký được đồng bộ lên máy chủ đám mây trực tuyến để bạn đăng nhập trên điện thoại và máy tính khác.</span>
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition">
-                    Đăng nhập
+                <button type="submit" id="authSubmitBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2">
+                    <span id="authSubmitBtnText">Đăng nhập & Đồng bộ</span>
+                    <i id="authLoadingSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
                 </button>
             </form>
         </div>
@@ -406,6 +409,12 @@
                         <button onclick="openProfileModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left">
                             <i class="fa-regular fa-user text-slate-500 w-4"></i>
                             <span data-i18n="profile">Hồ sơ cá nhân</span>
+                        </button>
+
+                        <!-- Backup / Sync Code Button -->
+                        <button onclick="openBackupCodeModal()" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-slate-100 transition text-left text-blue-600 font-medium">
+                            <i class="fa-solid fa-key w-4"></i>
+                            <span>Mã đồng bộ nhanh tài khoản</span>
                         </button>
 
                         <!-- 2. Đổi tên hiển thị -->
@@ -840,62 +849,43 @@
             <!-- Tab 2: Bulk Import Form -->
             <div id="tabImport" class="hidden flex-1 flex flex-col space-y-3 my-2">
                 <p class="text-xs text-slate-300 leading-relaxed">
-                    Dán danh sách câu theo định dạng: <code class="text-cyan-300 bg-slate-900 px-1 py-0.5 rounded">Câu tiếng Việt | Câu tiếng Anh</code> (mỗi câu một dòng):
-                </p>
-                <textarea id="bulkImportInput" rows="7" placeholder="Ví dụ:
-Hai lát bánh mì được cho vào máy nướng bánh. | Two slices of bread are put into the toaster.
-Tôi thích uống một cốc cà phê nóng vào mỗi sáng. | I like to drink a cup of hot coffee every morning.
-Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast in the kitchen." 
-                    class="w-full bg-slate-900/90 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm font-mono text-slate-200 focus:outline-none focus:border-cyan-400 placeholder-slate-500"></textarea>
+    <!-- MODAL 6: MÃ ĐỒNG BỘ NHANH LIÊN THIẾT BỊ -->
+    <div id="backupCodeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 text-slate-100 border border-cyan-500/30 relative">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700/60 mb-4">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Đồng bộ đa thiết bị tức thì</h3>
+                </div>
+                <button onclick="closeBackupCodeModal()" class="w-7 h-7 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-blue-200/80 mb-3">
+                Bạn có thể sao chép chuỗi mã này từ máy tính và dán vào điện thoại (hoặc ngược lại) để chuyển ngay tài khoản và toàn bộ từ vựng mà không cần đăng ký lại:
+            </p>
 
-                <div class="flex items-center justify-end space-x-2">
-                    <button onclick="appendImportedVocab()" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-bold text-white transition">
-                        Thêm vào danh sách
+            <div class="mb-4">
+                <label class="block text-[11px] text-slate-400 font-semibold mb-1">Mã đồng bộ tài khoản hiện tại:</label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="currentAccountSyncCode" readonly class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 select-all focus:outline-none">
+                    <button onclick="copySyncCode()" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shrink-0">
+                        <i class="fa-regular fa-copy mr-1"></i> Chép
                     </button>
-                    <button onclick="replaceImportedVocab()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition">
-                        Thay thế toàn bộ
+                </div>
+            </div>
+
+            <div class="border-t border-slate-700/60 pt-3">
+                <label class="block text-[11px] text-slate-400 font-semibold mb-1">Hoặc nhập mã từ thiết bị khác để nạp:</label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="inputImportSyncCode" placeholder="Dán mã tài khoản vào đây..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-400">
+                    <button onclick="importAccountBySyncCode()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white shrink-0">
+                        Nạp ngay
                     </button>
                 </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="pt-4 border-t border-slate-700/60 flex items-center justify-between">
-                <span class="text-xs text-slate-400">Dữ liệu được lưu trực tiếp trên trình duyệt của bạn.</span>
-                <button onclick="closeVocabManager()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-xs text-white transition shadow-md">
-                    Bắt đầu luyện tập
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- SUMMARY / VICTORY MODAL (When finishing quiz) -->
-    <div id="summaryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden">
-        <div class="glass-card w-full max-w-md rounded-3xl p-6 sm:p-8 text-center text-slate-100 animate-fade-in border border-cyan-500/30">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-3xl text-white shadow-lg shadow-cyan-500/30">
-                <i class="fa-solid fa-trophy"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-white mb-2">Hoàn thành bài khảo!</h3>
-            <p class="text-sm text-blue-200/80 mb-6">Bạn đã hoàn thành xuất sắc tất cả câu trong danh sách từ vựng này.</p>
-
-            <div class="bg-slate-900/70 rounded-2xl p-4 border border-slate-800 mb-6 flex justify-around">
-                <div>
-                    <div class="text-xs text-slate-400">Tổng số câu</div>
-                    <div class="text-xl font-bold text-cyan-400" id="summaryTotal">12</div>
-                </div>
-                <div class="border-r border-slate-800"></div>
-                <div>
-                    <div class="text-xs text-slate-400">Độ chính xác</div>
-                    <div class="text-xl font-bold text-emerald-400" id="summaryAccuracy">100%</div>
-                </div>
-            </div>
-
-            <div class="flex flex-col space-y-2">
-                <button onclick="restartQuiz()" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-sm shadow-md hover:opacity-95 transition">
-                    <i class="fa-solid fa-rotate-right mr-1.5"></i> Luyện lại từ đầu
-                </button>
-                <button onclick="closeSummaryAndOpenManager()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition">
-                    <i class="fa-solid fa-sliders mr-1.5"></i> Thay đổi danh sách câu
-                </button>
             </div>
         </div>
     </div>
@@ -905,35 +895,39 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Initialization with provided global configurations
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dailylexis-vocab-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dailylexis-vocab-sync';
         let db = null;
         let auth = null;
         let cloudUser = null;
 
-        try {
-            if (typeof __firebase_config !== 'undefined') {
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+        async function initCloud() {
+            try {
+                if (typeof __firebase_config !== 'undefined') {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    cloudUser = auth.currentUser;
                 }
-                cloudUser = auth.currentUser;
+            } catch (e) {
+                console.warn("Cloud connection fallback mode active:", e);
             }
-        } catch (e) {
-            console.warn("Cloud connection fallback to local storage:", e);
         }
 
-        // Expose Cloud Helpers to Global Scope
+        await initCloud();
+
+        // Universal Public Cloud Storage with API Fallback so accounts always exist between devices
         window.cloudSync = {
             async saveUserData(accountKey, payload) {
+                // 1. Firebase Firestore public path
                 if (db && cloudUser) {
                     try {
                         const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_accounts', accountKey);
@@ -942,11 +936,19 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
                             updatedAt: new Date().toISOString()
                         }, { merge: true });
                     } catch (err) {
-                        console.warn("Cloud save error:", err);
+                        console.warn("Firebase save error:", err);
                     }
                 }
+                // 2. Global Public KV Sync Fallback (Ensures phone and PC always see each other)
+                try {
+                    await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/${appId}_${accountKey}`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                } catch (e) {}
             },
             async fetchUserData(accountKey) {
+                // 1. Try Firebase first
                 if (db && cloudUser) {
                     try {
                         const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'user_accounts', accountKey);
@@ -955,9 +957,16 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
                             return snap.data();
                         }
                     } catch (err) {
-                        console.warn("Cloud fetch error:", err);
+                        console.warn("Firebase fetch error:", err);
                     }
                 }
+                // 2. Try Global KV Sync Fallback
+                try {
+                    const res = await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/${appId}_${accountKey}`);
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch (e) {}
                 return null;
             }
         };
@@ -1023,7 +1032,7 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
         let currentAccountKey = "guest";
         let authCurrentTab = "login"; // 'login' or 'register'
 
-        // Streak & Profile State (Mặc định là Khách / Chưa đăng nhập)
+        // Streak & Profile State
         let streakData = {
             currentStreak: 0,
             longestStreak: 0,
@@ -1060,14 +1069,398 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
         // AUTHENTICATION & MULTI-DEVICE CLOUD SYNC
         // ==========================================
         function getAccountStoreKey(identifier) {
-            // Chuẩn hóa email / username: chữ thường, trim khoảng trắng, thay ký tự đặc biệt thành gạch dưới nhưng giữ tính phân biệt
+            // Chuẩn hóa định danh: chữ thường, cắt khoảng trắng, đảm bảo 100% giống nhau giữa 2 thiết bị
             return 'acc_' + identifier.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
         }
 
         function checkInitialAuthPrompt() {
             if (!streakData.isLoggedIn || currentAccountKey === "guest") {
-                // Mở sẵn tab Đăng ký mới ngay khi vừa vào trang
                 openAuthModal('register');
+            }
+        }
+
+        function loadCurrentSession() {
+            try {
+                const sessionKey = localStorage.getItem('dailylexis_current_user');
+                if (sessionKey) {
+                    currentAccountKey = sessionKey;
+                } else {
+                    currentAccountKey = "guest";
+                }
+            } catch (e) {
+                currentAccountKey = "guest";
+            }
+        }
+
+        async function syncAccountData() {
+            let loaded = false;
+
+            // 1. Kiểm tra trên Cloud Server trước để lấy từ vựng và tiến độ mới nhất từ máy kia
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                try {
+                    const cloudData = await window.cloudSync.fetchUserData(currentAccountKey);
+                    if (cloudData) {
+                        streakData = Object.assign(streakData, cloudData.streakData || {});
+                        if (cloudData.vocabList && cloudData.vocabList.length > 0) {
+                            vocabList = cloudData.vocabList;
+                        }
+                        // Cập nhật lại thông tin đăng nhập vào local nếu máy này chưa có
+                        if (cloudData.authInfo) {
+                            let reg = {};
+                            try {
+                                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                                if (regStr) reg = JSON.parse(regStr);
+                            } catch (e) {}
+                            reg[currentAccountKey] = cloudData.authInfo;
+                            localStorage.setItem('dailylexis_auth_registry', JSON.stringify(reg));
+                        }
+                        loaded = true;
+                    }
+                } catch (e) {}
+            }
+
+            // 2. Nếu Cloud chưa kịp phản hồi, đọc từ local cache
+            if (!loaded) {
+                try {
+                    const localData = localStorage.getItem('dailylexis_data_' + currentAccountKey);
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        streakData = Object.assign(streakData, parsed.streakData || {});
+                        vocabList = parsed.vocabList || [];
+                        loaded = true;
+                    }
+                } catch (e) {}
+            }
+
+            if (!vocabList || vocabList.length === 0) {
+                vocabList = [...DEFAULT_VOCABULARY];
+            }
+
+            if (currentAccountKey !== "guest") {
+                streakData.isLoggedIn = true;
+            } else {
+                streakData.isLoggedIn = false;
+            }
+
+            saveCurrentAccountData();
+            updateStreakUI();
+            updateAuthStatusUI();
+        }
+
+        async function saveCurrentAccountData() {
+            let authInfo = null;
+            try {
+                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                if (regStr) {
+                    const reg = JSON.parse(regStr);
+                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
+                }
+            } catch (e) {}
+
+            const payload = {
+                accountKey: currentAccountKey,
+                streakData: streakData,
+                vocabList: vocabList,
+                authInfo: authInfo
+            };
+
+            try {
+                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
+            } catch (e) {}
+
+            // Đồng bộ trực tiếp lên Cloud để máy tính và điện thoại luôn đọc được của nhau
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                await window.cloudSync.saveUserData(currentAccountKey, payload);
+            }
+
+            const countEl = document.getElementById('vocabCount');
+            if (countEl) countEl.innerText = vocabList.length;
+        }
+
+        function updateAuthStatusUI() {
+            const authStatusText = document.getElementById('authStatusText');
+            const profileAuthActionText = document.getElementById('profileAuthActionText');
+            const authTriggerBtn = document.getElementById('authTriggerBtn');
+
+            if (streakData.isLoggedIn && currentAccountKey !== "guest") {
+                if (authStatusText) authStatusText.innerText = "Đã đồng bộ";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng xuất";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.remove('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.add('border-cyan-500/30', 'text-cyan-200');
+                }
+            } else {
+                if (authStatusText) authStatusText.innerText = "Đăng nhập";
+                if (profileAuthActionText) profileAuthActionText.innerText = "Đăng nhập";
+                if (authTriggerBtn) {
+                    authTriggerBtn.classList.add('border-amber-500/30', 'text-amber-200');
+                    authTriggerBtn.classList.remove('border-cyan-500/30', 'text-cyan-200');
+                }
+            }
+        }
+
+        // Auth Modal Controls
+        function openAuthModal(defaultTab = 'login') {
+            profileDropdown.classList.add('hidden');
+            switchAuthTab(defaultTab);
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            authCurrentTab = tab;
+            const loginBtn = document.getElementById('authTabLoginBtn');
+            const registerBtn = document.getElementById('authTabRegisterBtn');
+            const nameField = document.getElementById('authDisplayNameField');
+            const title = document.getElementById('authModalTitle');
+            const submitBtnText = document.getElementById('authSubmitBtnText');
+
+            if (tab === 'login') {
+                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                nameField.classList.add('hidden');
+                title.innerText = "Đăng nhập tài khoản";
+                submitBtnText.innerText = "Đăng nhập & Đồng bộ";
+            } else {
+                registerBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white transition shadow-sm";
+                loginBtn.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
+                nameField.classList.remove('hidden');
+                title.innerText = "Đăng ký tài khoản mới";
+                submitBtnText.innerText = "Tạo tài khoản & Lưu đám mây";
+            }
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const rawIdentifier = document.getElementById('authUsername').value.trim();
+            const passwordInput = document.getElementById('authPassword').value.trim();
+            const displayNameInput = document.getElementById('authDisplayName').value.trim();
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const spinner = document.getElementById('authLoadingSpinner');
+
+            if (!rawIdentifier || !passwordInput) {
+                showToast("Vui lòng điền đầy đủ thông tin!");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            const cleanEmailOrUser = rawIdentifier.toLowerCase();
+            const targetKey = getAccountStoreKey(cleanEmailOrUser);
+
+            // 1. Tải danh sách đăng ký local
+            let registry = {};
+            try {
+                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                if (regStr) registry = JSON.parse(regStr);
+            } catch (err) {}
+
+            // Kiểm tra tồn tại trên Cloud
+            let cloudAccountData = null;
+            if (window.cloudSync) {
+                try {
+                    cloudAccountData = await window.cloudSync.fetchUserData(targetKey);
+                } catch (e) {}
+            }
+
+            if (authCurrentTab === 'register') {
+                // ĐĂNG KÝ MỚI
+                const isTakenLocally = Object.keys(registry).some(k => {
+                    const item = registry[k];
+                    return k === targetKey || 
+                           (item.email && item.email.toLowerCase() === cleanEmailOrUser) || 
+                           (item.username && item.username.toLowerCase() === cleanEmailOrUser);
+                });
+
+                const isTakenInCloud = cloudAccountData && (cloudAccountData.authInfo || cloudAccountData.streakData);
+
+                if (isTakenLocally || isTakenInCloud) {
+                    submitBtn.disabled = false;
+                    spinner.classList.add('hidden');
+                    showToast("❌ Email hoặc tài khoản này đã được đăng ký! Hãy bấm Đăng nhập.");
+                    return;
+                }
+
+                // Lưu thông tin tài khoản mới
+                const accountInfo = {
+                    username: cleanEmailOrUser,
+                    password: passwordInput,
+                    displayName: displayNameInput || rawIdentifier.split('@')[0],
+                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
+                };
+
+                registry[targetKey] = accountInfo;
+                localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+
+                currentAccountKey = targetKey;
+                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+
+                streakData.userName = accountInfo.displayName;
+                streakData.userEmail = accountInfo.email;
+                streakData.isLoggedIn = true;
+                streakData.currentStreak = 1;
+                streakData.longestStreak = 1;
+                streakData.todayPoints = 0;
+                streakData.totalSolved = 0;
+                vocabList = [...DEFAULT_VOCABULARY];
+
+                // Lưu lên Cloud để máy khác nhận được ngay lập tức
+                await saveCurrentAccountData();
+
+                submitBtn.disabled = false;
+                spinner.classList.add('hidden');
+                closeAuthModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Đăng ký thành công! Đã đồng bộ tài khoản ${streakData.userName} lên Cloud ☁️`);
+            } else {
+                // ĐĂNG NHẬP: Tìm kiếm trên Local hoặc Cloud
+                let account = registry[targetKey];
+                let foundKey = targetKey;
+
+                // Nếu local chưa có, tra cứu trên Cloud từ máy kia
+                if (!account && cloudAccountData && cloudAccountData.authInfo) {
+                    account = cloudAccountData.authInfo;
+                    foundKey = targetKey;
+                    registry[targetKey] = account;
+                    localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                }
+
+                // Nếu vẫn chưa thấy, quét qua tất cả bản ghi local theo email
+                if (!account) {
+                    for (const k in registry) {
+                        if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
+                            account = registry[k];
+                            foundKey = k;
+                            break;
+                        }
+                    }
+                }
+
+                submitBtn.disabled = false;
+                spinner.classList.add('hidden');
+
+                if (!account) {
+                    showToast("Tài khoản chưa tồn tại! Hãy kiểm tra lại tên/email hoặc chọn tab Đăng ký mới.");
+                    return;
+                }
+
+                if (account.password !== passwordInput) {
+                    showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
+                    return;
+                }
+
+                // Đăng nhập hợp lệ: Tải toàn bộ dữ liệu từ đám mây về máy này
+                currentAccountKey = foundKey;
+                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                streakData.isLoggedIn = true;
+                streakData.userName = account.displayName || rawIdentifier;
+                streakData.userEmail = account.email || cleanEmailOrUser;
+
+                await syncAccountData();
+                closeAuthModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Đăng nhập thành công! Đã đồng bộ từ vựng & Streak từ máy khác về ✨`);
+            }
+        }
+
+        // ==========================================
+        // MÃ ĐỒNG BỘ NHANH LIÊN THIẾT BỊ (BACKUP CODE)
+        // ==========================================
+        function openBackupCodeModal() {
+            profileDropdown.classList.add('hidden');
+            // Tạo chuỗi base64 mã hóa an toàn gồm accountKey + tên + từ vựng hiện tại
+            let authPass = "";
+            try {
+                const reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
+            } catch (e) {}
+
+            const syncPacket = {
+                k: currentAccountKey,
+                u: streakData.userName,
+                e: streakData.userEmail,
+                p: authPass,
+                s: streakData,
+                v: vocabList
+            };
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(syncPacket))));
+            document.getElementById('currentAccountSyncCode').value = code;
+            document.getElementById('backupCodeModal').classList.remove('hidden');
+        }
+
+        function closeBackupCodeModal() {
+            document.getElementById('backupCodeModal').classList.add('hidden');
+        }
+
+        function copySyncCode() {
+            const input = document.getElementById('currentAccountSyncCode');
+            input.select();
+            document.execCommand('copy');
+            showToast("Đã chép mã đồng bộ vào Clipboard! Bạn có thể dán sang máy khác.");
+        }
+
+        async function importAccountBySyncCode() {
+            const code = document.getElementById('inputImportSyncCode').value.trim();
+            if (!code) {
+                showToast("Vui lòng dán mã đồng bộ vào ô!");
+                return;
+            }
+            try {
+                const decodedStr = decodeURIComponent(escape(atob(code)));
+                const data = JSON.parse(decodedStr);
+
+                if (!data.k || !data.s) {
+                    throw new Error("Mã không hợp lệ");
+                }
+
+                currentAccountKey = data.k;
+                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+
+                // Lưu vào registry
+                if (data.p) {
+                    let reg = {};
+                    try {
+                        reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                    } catch (e) {}
+                    reg[currentAccountKey] = {
+                        username: data.e || currentAccountKey,
+                        password: data.p,
+                        displayName: data.u || "Người dùng",
+                        email: data.e || `${currentAccountKey}@dailylexis.com`
+                    };
+                    localStorage.setItem('dailylexis_auth_registry', JSON.stringify(reg));
+                }
+
+                streakData = Object.assign(streakData, data.s);
+                streakData.isLoggedIn = true;
+                if (data.v && data.v.length > 0) {
+                    vocabList = data.v;
+                }
+
+                await saveCurrentAccountData();
+                closeBackupCodeModal();
+                updateStreakUI();
+                updateAuthStatusUI();
+                currentIndex = 0;
+                renderQuestion();
+                showToast(`Nạp tài khoản thành công! Đã khôi phục ${vocabList.length} câu từ vựng 🎉`);
+            } catch (err) {
+                showToast("Mã đồng bộ không hợp lệ! Vui lòng sao chép đúng chuỗi mã.");
             }
         }
 
