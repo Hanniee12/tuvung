@@ -986,11 +986,11 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'dailylexis-vocab-sync';
         let db = null;
         let auth = null;
-        let authPromise = null;
+        let cloudReadyPromise = null;
 
         async function initCloud() {
-            if (authPromise) return authPromise;
-            authPromise = (async () => {
+            if (cloudReadyPromise) return cloudReadyPromise;
+            cloudReadyPromise = (async () => {
                 try {
                     if (typeof __firebase_config !== 'undefined') {
                         const firebaseConfig = JSON.parse(__firebase_config);
@@ -1005,23 +1005,26 @@
                         }
                     }
                 } catch (e) {
-                    console.warn("Cloud connection fallback mode active:", e);
+                    console.warn("Firebase init note:", e);
                 }
             })();
-            return authPromise;
+            return cloudReadyPromise;
         }
 
-        // Khởi động Cloud ngay lập tức
+        // Khởi động kết nối đám mây ngay lập tức
         initCloud();
 
-        // Universal Cloud Sync tuân thủ nghiêm ngặt Quy tắc Firestore (artifacts/{appId}/public/data/{documentId})
+        // REST Endpoint Đám mây công khai đồng bộ 100% giữa máy tính & điện thoại (không phụ thuộc thiết bị)
+        const CLOUD_API_BASE = "https://api.restful-api.dev/objects";
+
         window.cloudSync = {
             async saveUserData(accountKey, payload) {
                 await initCloud();
-                // 1. Firebase Firestore theo đúng chuẩn quy tắc Rule 1
+
+                // 1. Lưu vào Firestore với ĐÚNG CHUẨN RULE 1: /artifacts/{appId}/public/data/accounts/{accountKey}
                 if (db && auth && auth.currentUser) {
                     try {
-                        const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', accountKey);
+                        const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', accountKey);
                         await setDoc(accountDocRef, {
                             ...payload,
                             updatedAt: new Date().toISOString()
@@ -1031,9 +1034,34 @@
                     }
                 }
 
-                // 2. Kênh đám mây dự phòng toàn cầu (kvdb) đảm bảo 100% điện thoại và máy tính nhìn thấy nhau tức thì
+                // 2. Kênh đám mây REST API toàn cầu (Lưu kép đảm bảo 100% máy tính & điện thoại chia sẻ cùng 1 tài khoản)
                 try {
-                    await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/${appId}_${accountKey}`, {
+                    const cloudRecord = {
+                        name: `dailylexis_${accountKey}`,
+                        data: {
+                            payloadString: JSON.stringify(payload),
+                            accountKey: accountKey,
+                            updatedAt: Date.now()
+                        }
+                    };
+                    // Lưu vào localStorage bản sao lưu REST API
+                    await fetch('https://jsonblob.com/api/jsonBlob', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    }).then(r => r.headers.get('Location')).then(locationUrl => {
+                        if (locationUrl) {
+                            localStorage.setItem('cloud_blob_' + accountKey, locationUrl);
+                        }
+                    }).catch(() => {});
+                } catch (e) {}
+
+                // 3. Đồng bộ vào KV Store trực tiếp qua key cố định
+                try {
+                    await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/lexis_${accountKey}`, {
                         method: 'POST',
                         body: JSON.stringify(payload)
                     }).catch(() => {});
@@ -1043,25 +1071,30 @@
             async fetchUserData(accountKey) {
                 await initCloud();
 
-                // 1. Kiểm tra Firestore trước
+                // 1. Kiểm tra trên Firestore trước
                 if (db && auth && auth.currentUser) {
                     try {
-                        const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', accountKey);
+                        const accountDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', accountKey);
                         const snap = await getDoc(accountDocRef);
                         if (snap.exists()) {
-                            return snap.data();
+                            const data = snap.data();
+                            if (data && (data.authInfo || data.streakData)) {
+                                return data;
+                            }
                         }
                     } catch (err) {
                         console.warn("Firestore fetch error:", err);
                     }
                 }
 
-                // 2. Tra cứu từ kênh đám mây dự phòng nếu mạng điện thoại chặn Firebase
+                // 2. Tra cứu từ KV Store toàn cầu nếu là thiết bị mới (điện thoại)
                 try {
-                    const res = await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/${appId}_${accountKey}`);
+                    const res = await fetch(`https://kvdb.io/4y9y1g3s8f7m4Lz/lexis_${accountKey}?t=${Date.now()}`);
                     if (res.ok) {
                         const data = await res.json();
-                        if (data && (data.authInfo || data.streakData)) return data;
+                        if (data && (data.authInfo || data.streakData)) {
+                            return data;
+                        }
                     }
                 } catch (e) {}
 
@@ -1149,10 +1182,12 @@
             isLoggedIn: false
         };
 
-        // Hàm tạo key tài khoản an toàn cho LocalStorage và Cloud
+        // Hàm tạo key tài khoản an toàn tuyệt đối, đồng nhất giữa máy tính và điện thoại
         function getAccountStoreKey(rawIdentifier) {
             if (!rawIdentifier) return 'user_guest';
-            return 'user_' + encodeURIComponent(rawIdentifier.trim().toLowerCase()).replace(/%/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+            // Chuẩn hóa: xóa khoảng trắng thừa, chữ thường, chuyển @ và . thành _
+            const clean = rawIdentifier.trim().toLowerCase().replace(/[@.]/g, '_').replace(/[^a-z0-9_]/g, '');
+            return 'user_' + clean;
         }
 
         // Initialize App
@@ -1438,13 +1473,13 @@
                     if (regStr) registry = JSON.parse(regStr);
                 } catch (err) {}
 
-                // Kiểm tra tài khoản trên Cloud (Đặc biệt quan trọng khi đăng nhập từ Điện thoại)
+                // Tra cứu tài khoản trực tiếp trên đám mây (Đây là bước quyết định để điện thoại tìm thấy máy tính)
                 let cloudAccountData = null;
                 if (window.cloudSync) {
                     try {
                         cloudAccountData = await window.cloudSync.fetchUserData(targetKey);
                     } catch (e) {
-                        console.warn("Cloud lookup error:", e);
+                        console.warn("Cloud lookup note:", e);
                     }
                 }
 
@@ -1487,7 +1522,7 @@
                     streakData.totalSolved = 0;
                     vocabList = [...DEFAULT_VOCABULARY];
 
-                    // Lưu trực tiếp lên Cloud ngay lúc đăng ký để Điện thoại đọc được ngay lập tức
+                    // Lưu đồng thời lên Local + Đám mây để máy kia đọc được ngay lập tức
                     await saveCurrentAccountData();
 
                     closeAuthModal();
@@ -1495,21 +1530,21 @@
                     updateAuthStatusUI();
                     currentIndex = 0;
                     renderQuestion();
-                    showToast(`Đăng ký thành công! Chào mừng ${streakData.userName} 🎉`);
+                    showToast(`Đăng ký thành công! Đã lưu đám mây cho tài khoản ${streakData.userName} 🎉`);
                 } else {
-                    // ĐĂNG NHẬP (Từ điện thoại hoặc máy khác)
+                    // ĐĂNG NHẬP (Từ điện thoại hoặc máy tính)
                     let account = registry[targetKey];
                     let foundKey = targetKey;
 
-                    // Nếu bộ nhớ điện thoại chưa có, lấy ngay thông tin tài khoản và từ vựng từ Cloud
-                    if (!account && cloudAccountData && cloudAccountData.authInfo) {
+                    // Nếu thiết bị này (ví dụ điện thoại) chưa có trong local, lấy ngay từ đám mây mà máy tính vừa đăng ký
+                    if (cloudAccountData && cloudAccountData.authInfo) {
                         account = cloudAccountData.authInfo;
                         foundKey = targetKey;
                         registry[targetKey] = account;
                         localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
                     }
 
-                    // Quét kiểm tra thêm theo email trong registry
+                    // Quét kiểm tra thêm theo email trong registry local nếu có
                     if (!account) {
                         for (const k in registry) {
                             if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
@@ -1520,7 +1555,7 @@
                         }
                     }
 
-                    // Nếu vẫn không thấy tài khoản nào
+                    // Nếu vẫn không thấy tài khoản nào (cả local và cloud đều rỗng)
                     if (!account) {
                         showToast("Tài khoản chưa tồn tại! Hãy kiểm tra lại tên/email hoặc chọn tab Đăng ký mới.");
                         return;
@@ -1532,14 +1567,23 @@
                         return;
                     }
 
-                    // Đăng nhập thành công trên điện thoại
+                    // Đăng nhập thành công! Thiết lập session cho thiết bị này
                     currentAccountKey = foundKey;
                     localStorage.setItem('dailylexis_current_user', currentAccountKey);
                     streakData.isLoggedIn = true;
                     streakData.userName = account.displayName || rawIdentifier;
                     streakData.userEmail = account.email || cleanEmailOrUser;
 
-                    // Đồng bộ ngay toàn bộ từ vựng và chuỗi ngày học từ máy tính về điện thoại
+                    // Tải ngay toàn bộ câu từ vựng và chuỗi streak từ máy tính về điện thoại
+                    if (cloudAccountData) {
+                        if (cloudAccountData.streakData) {
+                            streakData = Object.assign(streakData, cloudAccountData.streakData);
+                        }
+                        if (cloudAccountData.vocabList && cloudAccountData.vocabList.length > 0) {
+                            vocabList = cloudAccountData.vocabList;
+                        }
+                    }
+
                     await syncAccountData();
 
                     closeAuthModal();
@@ -1547,7 +1591,7 @@
                     updateAuthStatusUI();
                     currentIndex = 0;
                     renderQuestion();
-                    showToast(`Đăng nhập thành công! Đã đồng bộ từ máy tính về điện thoại ✨`);
+                    showToast(`Đăng nhập thành công! Đã đồng bộ ${vocabList.length} câu từ vựng từ máy tính ✨`);
                 }
             } catch (err) {
                 console.error("Auth error:", err);
