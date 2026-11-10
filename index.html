@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DailyLexis - Luyện viết & Khảo từ vựng</title>
+    <title>Trần Hưng Tài - Luyện viết & Khảo từ vựng</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -340,10 +340,10 @@
                 <span class="hidden sm:inline">Quay lại</span>
             </button>
 
-            <!-- DailyLexis Logo / Branding -->
+            <!-- Trần Hưng Tài Logo / Branding -->
             <div class="flex items-center space-x-2">
                 <span class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center">
-                    Daily<span class="text-cyan-400 font-black">Lexis</span>
+                    Trần<span class="text-cyan-400 font-black">Hưng Tài</span>
                 </span>
             </div>
         </div>
@@ -727,7 +727,7 @@
     <!-- MAIN EXERCISE WRAPPER -->
     <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-10 max-w-4xl mx-auto w-full" onclick="focusTyping()">
         
-        <!-- QUIZ CONTAINER CARD (Exact DailyLexis replica) -->
+        <!-- QUIZ CONTAINER CARD (Exact Trần Hưng Tài replica) -->
         <div id="quizCard" class="glass-card w-full rounded-3xl p-6 sm:p-10 transition-all duration-300 relative overflow-hidden">
             
             <!-- Category Subtitle -->
@@ -842,7 +842,7 @@
 
     <!-- FOOTER INFO -->
     <footer class="relative z-10 w-full text-center py-4 text-xs text-blue-300/40">
-        Luyện phản xạ gõ từ vựng tiếng Anh theo phương pháp DailyLexis • Tự do thêm câu học của riêng bạn
+        Luyện phản xạ gõ từ vựng tiếng Anh theo phương pháp Trần Hưng Tài • Tự do thêm câu học của riêng bạn
     </footer>
 
     <!-- VOCABULARY MANAGEMENT MODAL -->
@@ -983,7 +983,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dailylexis-vocab-sync';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'Trần Hưng Tài-vocab-sync';
         let db = null;
         let auth = null;
         let cloudUser = null;
@@ -1059,7 +1059,7 @@
     </script>
 
     <script>
-        // Default sample sentences representing DailyLexis A1-A2 topics
+        // Default sample sentences representing Trần Hưng Tài A1-A2 topics
         const DEFAULT_VOCABULARY = [
             {
                 vi: "Hai lát bánh mì được cho vào máy nướng bánh.",
@@ -1247,7 +1247,7 @@
 
         function loadCurrentSession() {
             try {
-                const sessionKey = localStorage.getItem('dailylexis_current_user');
+                const sessionKey = localStorage.getItem('Trần Hưng Tài_current_user');
                 if (sessionKey) {
                     currentAccountKey = sessionKey;
                 } else {
@@ -1274,11 +1274,11 @@
                         if (cloudData.authInfo) {
                             let reg = {};
                             try {
-                                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
                                 if (regStr) reg = JSON.parse(regStr);
                             } catch (e) {}
                             reg[currentAccountKey] = cloudData.authInfo;
-                            localStorage.setItem('dailylexis_auth_registry', JSON.stringify(reg));
+                            localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(reg));
                         }
                         loaded = true;
                     }
@@ -1288,7 +1288,7 @@
             // 2. Nếu Cloud chưa kịp phản hồi, đọc từ local cache
             if (!loaded) {
                 try {
-                    const localData = localStorage.getItem('dailylexis_data_' + currentAccountKey);
+                    const localData = localStorage.getItem('Trần Hưng Tài_data_' + currentAccountKey);
                     if (localData) {
                         const parsed = JSON.parse(localData);
                         streakData = Object.assign(streakData, parsed.streakData || {});
@@ -1316,7 +1316,7 @@
         async function saveCurrentAccountData() {
             let authInfo = null;
             try {
-                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
                 if (regStr) {
                     const reg = JSON.parse(regStr);
                     if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
@@ -1331,7 +1331,7 @@
             };
 
             try {
-                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
+                localStorage.setItem('Trần Hưng Tài_data_' + currentAccountKey, JSON.stringify(payload));
             } catch (e) {}
 
             // Đồng bộ trực tiếp lên Cloud để máy tính và điện thoại luôn đọc được của nhau
@@ -1427,7 +1427,7 @@
                 // 1. Tải danh sách đăng ký local
                 let registry = {};
                 try {
-                    const regStr = localStorage.getItem('dailylexis_auth_registry');
+                    const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
                     if (regStr) registry = JSON.parse(regStr);
                 } catch (err) {}
 
@@ -1460,14 +1460,14 @@
                         username: cleanEmailOrUser,
                         password: passwordInput,
                         displayName: displayNameInput || rawIdentifier.split('@')[0],
-                        email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
+                        email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@Trần Hưng Tài.com`
                     };
 
                     registry[targetKey] = accountInfo;
-                    localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                    localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
 
                     currentAccountKey = targetKey;
-                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                    localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
 
                     streakData.userName = accountInfo.displayName;
                     streakData.userEmail = accountInfo.email;
@@ -1497,7 +1497,7 @@
                         account = cloudAccountData.authInfo;
                         foundKey = targetKey;
                         registry[targetKey] = account;
-                        localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                        localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
                     }
 
                     // Nếu vẫn chưa thấy, quét qua tất cả bản ghi local theo email
@@ -1523,7 +1523,7 @@
 
                     // Đăng nhập hợp lệ: Tải toàn bộ dữ liệu từ đám mây về máy này
                     currentAccountKey = foundKey;
-                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                    localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
                     streakData.isLoggedIn = true;
                     streakData.userName = account.displayName || rawIdentifier;
                     streakData.userEmail = account.email || cleanEmailOrUser;
@@ -1553,7 +1553,7 @@
             // Tạo chuỗi base64 mã hóa an toàn gồm accountKey + tên + từ vựng hiện tại
             let authPass = "";
             try {
-                const reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                const reg = JSON.parse(localStorage.getItem('Trần Hưng Tài_auth_registry') || "{}");
                 if (reg[currentAccountKey]) authPass = reg[currentAccountKey].password;
             } catch (e) {}
 
@@ -1596,21 +1596,21 @@
                 }
 
                 currentAccountKey = data.k;
-                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
 
                 // Lưu vào registry
                 if (data.p) {
                     let reg = {};
                     try {
-                        reg = JSON.parse(localStorage.getItem('dailylexis_auth_registry') || "{}");
+                        reg = JSON.parse(localStorage.getItem('Trần Hưng Tài_auth_registry') || "{}");
                     } catch (e) {}
                     reg[currentAccountKey] = {
                         username: data.e || currentAccountKey,
                         password: data.p,
                         displayName: data.u || "Người dùng",
-                        email: data.e || `${currentAccountKey}@dailylexis.com`
+                        email: data.e || `${currentAccountKey}@Trần Hưng Tài.com`
                     };
-                    localStorage.setItem('dailylexis_auth_registry', JSON.stringify(reg));
+                    localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(reg));
                 }
 
                 streakData = Object.assign(streakData, data.s);
@@ -1633,7 +1633,7 @@
 
         function loadCurrentSession() {
             try {
-                const sessionKey = localStorage.getItem('dailylexis_current_user');
+                const sessionKey = localStorage.getItem('Trần Hưng Tài_current_user');
                 if (sessionKey) {
                     currentAccountKey = sessionKey;
                 } else {
@@ -1648,7 +1648,7 @@
             // First try reading from local cache
             let loaded = false;
             try {
-                const localData = localStorage.getItem('dailylexis_data_' + currentAccountKey);
+                const localData = localStorage.getItem('Trần Hưng Tài_data_' + currentAccountKey);
                 if (localData) {
                     const parsed = JSON.parse(localData);
                     streakData = Object.assign(streakData, parsed.streakData || {});
@@ -1690,7 +1690,7 @@
             // Lấy thông tin đăng nhập của tài khoản để đồng bộ sang thiết bị khác
             let authInfo = null;
             try {
-                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
                 if (regStr) {
                     const reg = JSON.parse(regStr);
                     if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
@@ -1706,7 +1706,7 @@
 
             // Save to localStorage for quick offline loading
             try {
-                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
+                localStorage.setItem('Trần Hưng Tài_data_' + currentAccountKey, JSON.stringify(payload));
             } catch (e) {}
 
             // Sync to Cloud Firestore so other devices (phones, tablets, other PCs) receive it
@@ -1796,7 +1796,7 @@
             // 1. Tải danh sách đăng ký hiện có từ localStorage
             let registry = {};
             try {
-                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                const regStr = localStorage.getItem('Trần Hưng Tài_auth_registry');
                 if (regStr) registry = JSON.parse(regStr);
             } catch (err) {}
 
@@ -1830,15 +1830,15 @@
                     username: cleanEmailOrUser,
                     password: passwordInput,
                     displayName: displayNameInput || rawIdentifier.split('@')[0],
-                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
+                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@Trần Hưng Tài.com`
                 };
 
                 registry[targetKey] = accountInfo;
-                localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
 
                 // Chuyển phiên làm việc sang tài khoản mới vừa tạo
                 currentAccountKey = targetKey;
-                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
 
                 streakData.userName = accountInfo.displayName;
                 streakData.userEmail = accountInfo.email;
@@ -1880,7 +1880,7 @@
                             account = cloudData.authInfo;
                             foundKey = targetKey;
                             registry[targetKey] = account;
-                            localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                            localStorage.setItem('Trần Hưng Tài_auth_registry', JSON.stringify(registry));
                         }
                     } catch (e) {}
                 }
@@ -1899,7 +1899,7 @@
 
                 // Đăng nhập hợp lệ
                 currentAccountKey = foundKey;
-                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
                 streakData.isLoggedIn = true;
                 streakData.userName = account.displayName || rawIdentifier;
                 streakData.userEmail = account.email || cleanEmailOrUser;
@@ -1925,11 +1925,11 @@
         function confirmLogoutAction() {
             closeLogoutModal();
             currentAccountKey = "guest";
-            localStorage.setItem('dailylexis_current_user', currentAccountKey);
+            localStorage.setItem('Trần Hưng Tài_current_user', currentAccountKey);
 
             streakData.isLoggedIn = false;
             streakData.userName = "Khách (Chưa đăng nhập)";
-            streakData.userEmail = "guest@dailylexis.com";
+            streakData.userEmail = "guest@Trần Hưng Tài.com";
             streakData.userAvatar = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80";
             streakData.todayPoints = 0;
 
@@ -2515,7 +2515,7 @@
             focusTyping();
         }
 
-        // Generate character slots with word grouping (similar to DailyLexis)
+        // Generate character slots with word grouping (similar to Trần Hưng Tài)
         function renderCharacterSlots() {
             maskedSentenceContainer.innerHTML = "";
             const words = currentTarget.split(' ');
