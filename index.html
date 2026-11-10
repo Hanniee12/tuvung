@@ -1051,6 +1051,9 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
             initStarCanvas();
             renderQuestion();
             setupEventListeners();
+
+            // Nếu chưa có tài khoản nào đăng nhập trên máy này, tự động hiện popup đăng ký ngay
+            checkInitialAuthPrompt();
         });
 
         // ==========================================
@@ -1058,6 +1061,13 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
         // ==========================================
         function getAccountStoreKey(username) {
             return 'acc_' + username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        }
+
+        function checkInitialAuthPrompt() {
+            if (!streakData.isLoggedIn || currentAccountKey === "guest") {
+                // Mở sẵn tab Đăng ký mới ngay khi vừa vào trang
+                openAuthModal('register');
+            }
         }
 
         function loadCurrentSession() {
