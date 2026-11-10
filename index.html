@@ -1023,23 +1023,23 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
         let currentAccountKey = "guest";
         let authCurrentTab = "login"; // 'login' or 'register'
 
-        // Streak & Profile State
+        // Streak & Profile State (Mặc định là Khách / Chưa đăng nhập)
         let streakData = {
-            currentStreak: 1,
-            longestStreak: 1,
-            todayPoints: 10,
+            currentStreak: 0,
+            longestStreak: 0,
+            todayPoints: 0,
             lastDate: new Date().toDateString(),
-            userName: "Trần Hưng Tài",
-            userEmail: "tainopro6@gmail.com",
-            userAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+            userName: "Khách (Chưa đăng nhập)",
+            userEmail: "Nhấn để đăng nhập / đăng ký",
+            userAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
             level: "A1",
-            totalSolved: 14,
-            showOnLeaderboard: true,
+            totalSolved: 0,
+            showOnLeaderboard: false,
             isDarkMode: true,
             language: "vi",
             reminderEnabled: false,
             reminderTime: "20:00",
-            isLoggedIn: true
+            isLoggedIn: false
         };
 
         // Initialize App
@@ -1066,8 +1066,7 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
                 if (sessionKey) {
                     currentAccountKey = sessionKey;
                 } else {
-                    currentAccountKey = getAccountStoreKey("tainopro6@gmail.com");
-                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                    currentAccountKey = "guest";
                 }
             } catch (e) {
                 currentAccountKey = "guest";
@@ -1103,6 +1102,12 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
 
             if (!vocabList || vocabList.length === 0) {
                 vocabList = [...DEFAULT_VOCABULARY];
+            }
+
+            if (currentAccountKey !== "guest") {
+                streakData.isLoggedIn = true;
+            } else {
+                streakData.isLoggedIn = false;
             }
 
             saveCurrentAccountData();
@@ -1204,7 +1209,7 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
 
             const targetKey = getAccountStoreKey(usernameInput);
 
-            // Fetch existing account credentials registry
+            // Fetch existing account credentials registry from local and cloud
             let registry = {};
             try {
                 const regStr = localStorage.getItem('dailylexis_auth_registry');
@@ -1212,63 +1217,83 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
             } catch (err) {}
 
             if (authCurrentTab === 'register') {
-                // Đăng ký tài khoản mới
-                if (registry[targetKey]) {
+                // Đăng ký tài khoản mới: kiểm tra trùng
+                let existsInCloud = false;
+                if (window.cloudSync) {
+                    try {
+                        const cloudAcc = await window.cloudSync.fetchUserData(targetKey);
+                        if (cloudAcc && cloudAcc.authInfo) existsInCloud = true;
+                    } catch (e) {}
+                }
+
+                if (registry[targetKey] || existsInCloud) {
                     showToast("Tên tài khoản này đã tồn tại! Vui lòng chọn tên khác hoặc Đăng nhập.");
                     return;
                 }
 
-                // Register account with password hash/store
-                registry[targetKey] = {
+                // Lưu thông tin tài khoản đăng ký mới
+                const accountInfo = {
                     password: passwordInput,
                     displayName: displayNameInput || usernameInput,
                     email: usernameInput.includes('@') ? usernameInput : `${usernameInput}@dailylexis.com`
                 };
+                registry[targetKey] = accountInfo;
                 localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
 
-                // Switch session to new account
+                // Chuyển phiên sang tài khoản mới
                 currentAccountKey = targetKey;
                 localStorage.setItem('dailylexis_current_user', currentAccountKey);
 
-                streakData.userName = registry[targetKey].displayName;
-                streakData.userEmail = registry[targetKey].email;
+                streakData.userName = accountInfo.displayName;
+                streakData.userEmail = accountInfo.email;
                 streakData.isLoggedIn = true;
                 streakData.currentStreak = 1;
                 streakData.longestStreak = 1;
                 streakData.todayPoints = 0;
                 streakData.totalSolved = 0;
+                vocabList = [...DEFAULT_VOCABULARY];
 
-                // Copy over current or default vocabulary to this new account
                 await saveCurrentAccountData();
                 closeAuthModal();
                 updateStreakUI();
                 updateAuthStatusUI();
+                currentIndex = 0;
                 renderQuestion();
                 showToast(`Đăng ký thành công! Chào mừng ${streakData.userName} 🎉`);
             } else {
-                // Đăng nhập
-                const existing = registry[targetKey];
-                if (existing) {
-                    if (existing.password !== passwordInput) {
-                        showToast("Mật khẩu không chính xác!");
-                        return;
-                    }
-                } else {
-                    // Auto-register convenience: if not found, create new account with this login info
-                    registry[targetKey] = {
-                        password: passwordInput,
-                        displayName: usernameInput.split('@')[0],
-                        email: usernameInput.includes('@') ? usernameInput : `${usernameInput}@dailylexis.com`
-                    };
-                    localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                // ĐĂNG NHẬP: Kiểm tra nghiêm ngặt tài khoản đã tồn tại chưa
+                let account = registry[targetKey];
+
+                // Nếu chưa có ở local, kiểm tra trên cloud (cho trường hợp đăng nhập máy tính/điện thoại khác)
+                if (!account && window.cloudSync) {
+                    try {
+                        const cloudData = await window.cloudSync.fetchUserData(targetKey);
+                        if (cloudData && cloudData.authInfo) {
+                            account = cloudData.authInfo;
+                            registry[targetKey] = account;
+                            localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                        }
+                    } catch (e) {}
                 }
 
-                // Set current account & load its specific vocabulary and progress
+                // Nếu hoàn toàn chưa đăng ký -> Chặn và báo lỗi
+                if (!account) {
+                    showToast("Tài khoản không tồn tại! Vui lòng chọn tab Đăng ký mới.");
+                    return;
+                }
+
+                // Kiểm tra mật khẩu
+                if (account.password !== passwordInput) {
+                    showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
+                    return;
+                }
+
+                // Đăng nhập hợp lệ
                 currentAccountKey = targetKey;
                 localStorage.setItem('dailylexis_current_user', currentAccountKey);
                 streakData.isLoggedIn = true;
-                streakData.userName = registry[targetKey].displayName;
-                streakData.userEmail = registry[targetKey].email;
+                streakData.userName = account.displayName;
+                streakData.userEmail = account.email;
 
                 await syncAccountData();
                 closeAuthModal();
@@ -1276,12 +1301,43 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
                 updateAuthStatusUI();
                 currentIndex = 0;
                 renderQuestion();
-                showToast(`Đã đồng bộ tài khoản: ${streakData.userName} ✨`);
+                showToast(`Đăng nhập thành công! Chào mừng trở lại ${streakData.userName} ✨`);
             }
         }
 
+        async function saveCurrentAccountData() {
+            // Lấy thông tin đăng nhập của tài khoản để đồng bộ sang thiết bị khác
+            let authInfo = null;
+            try {
+                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                if (regStr) {
+                    const reg = JSON.parse(regStr);
+                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
+                }
+            } catch (e) {}
+
+            const payload = {
+                accountKey: currentAccountKey,
+                streakData: streakData,
+                vocabList: vocabList,
+                authInfo: authInfo
+            };
+
+            // Save to localStorage for quick offline loading
+            try {
+                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
+            } catch (e) {}
+
+            // Sync to Cloud Firestore so other devices (phones, tablets, other PCs) receive it
+            if (window.cloudSync && currentAccountKey !== "guest") {
+                await window.cloudSync.saveUserData(currentAccountKey, payload);
+            }
+
+            const countEl = document.getElementById('vocabCount');
+            if (countEl) countEl.innerText = vocabList.length;
+        }
+
         function handleProfileAuthAction() {
-            profileDropdown.classList.add('hidden');
             if (streakData.isLoggedIn && currentAccountKey !== "guest") {
                 openLogoutModal();
             } else {
