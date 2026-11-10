@@ -168,16 +168,16 @@
             opacity: 0.18;
         }
 
-        /* Mobile On-screen keyboard keys styling */
-        .mobile-key {
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: manipulation;
-            transition: all 0.1s ease;
-        }
-        .mobile-key:active {
-            transform: scale(0.92);
-            filter: brightness(1.3);
+        /* Mobile specific adjustments when keyboard is open */
+        @media (max-width: 640px) {
+            body {
+                min-height: 100dvh;
+            }
+            .mobile-peek-btn {
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: none;
+            }
         }
 
         /* Toast notification styling */
@@ -226,8 +226,8 @@
     <!-- Canvas for deep starry night sky effect -->
     <canvas id="starsCanvas"></canvas>
 
-    <!-- Invisible input to capture mobile keyboard seamlessly -->
-    <input type="text" id="hiddenKeyboardInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="absolute opacity-0 pointer-events-none w-0 h-0" />
+    <!-- Invisible input to capture mobile keyboard seamlessly without jumping page -->
+    <input type="text" id="hiddenKeyboardInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="fixed opacity-0 pointer-events-none w-1 h-1 -top-10 left-0" />
 
     <!-- AUTH MODAL (Đăng ký / Đăng nhập đồng bộ đám mây) -->
     <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden">
@@ -790,65 +790,27 @@
 
         </div>
 
-        <!-- Mobile Floating Dock (Điều khiển nhanh vừa tầm tay cái trên điện thoại) -->
-        <div class="sm:hidden mt-5 w-full flex items-center justify-center gap-2">
-            <button onclick="toggleMobileKeyboard()" class="px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-cyan-500/40 text-xs font-semibold text-cyan-300 flex items-center gap-1.5 shadow-lg active:scale-95 transition">
-                <i class="fa-solid fa-keyboard"></i>
-                <span id="mobileKeyboardToggleText">Bàn phím</span>
-            </button>
-            <button ontouchstart="peekCurrentWord()" ontouchend="hideCurrentWordPeek()" onmousedown="peekCurrentWord()" onmouseup="hideCurrentWordPeek()" class="px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-amber-500/40 text-xs font-semibold text-amber-300 flex items-center gap-1.5 shadow-lg active:scale-95 transition">
-                <i class="fa-regular fa-eye"></i>
-                <span>Xem từ</span>
-            </button>
-            <button onclick="speakSentence()" class="w-10 h-10 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-200 flex items-center justify-center shadow-lg active:scale-95 transition">
-                <i class="fa-solid fa-volume-high text-xs"></i>
-            </button>
-            <button onclick="focusTyping(true)" title="Mở bàn phím gốc điện thoại" class="w-10 h-10 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-300 flex items-center justify-center shadow-lg active:scale-95 transition">
-                <i class="fa-solid fa-font text-xs"></i>
-            </button>
-        </div>
+        <!-- NÚT BẤM DÀNH RIÊNG CHO KÍCH THƯỚC ĐIỆN THOẠI (Chạm & Giữ giống phím Ctrl trên máy tính) -->
+        <div class="block sm:hidden w-full max-w-sm mt-3 px-1">
+            <div class="flex items-center gap-2">
+                <!-- Nút Xem từ (Ctrl) dành cho điện thoại: Giữ là hiện, nhả ra là tự ẩn -->
+                <button id="mobileCtrlPeekBtn" 
+                    class="mobile-peek-btn flex-1 py-3 px-4 rounded-2xl bg-cyan-950/80 hover:bg-cyan-900/90 active:bg-cyan-800 border-2 border-cyan-400/60 text-cyan-200 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 transition">
+                    <i class="fa-regular fa-eye text-base"></i>
+                    <span>Giữ xem từ (Ctrl)</span>
+                </button>
 
-        <!-- VIRTUAL ON-SCREEN KEYBOARD FOR MOBILE (Không bị bàn phím hệ thống che) -->
-        <div id="mobileKeyboardContainer" class="sm:hidden w-full mt-4 p-2 rounded-2xl bg-slate-950/90 backdrop-blur-md border border-blue-900/50 shadow-2xl space-y-1.5 select-none transition-all">
-            <!-- Row 1 -->
-            <div class="flex justify-center gap-1">
-                <button onclick="handleKeyInput('q')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">Q</button>
-                <button onclick="handleKeyInput('w')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">W</button>
-                <button onclick="handleKeyInput('e')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">E</button>
-                <button onclick="handleKeyInput('r')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">R</button>
-                <button onclick="handleKeyInput('t')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">T</button>
-                <button onclick="handleKeyInput('y')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">Y</button>
-                <button onclick="handleKeyInput('u')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">U</button>
-                <button onclick="handleKeyInput('i')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">I</button>
-                <button onclick="handleKeyInput('o')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">O</button>
-                <button onclick="handleKeyInput('p')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">P</button>
-            </div>
-            <!-- Row 2 -->
-            <div class="flex justify-center gap-1 px-2">
-                <button onclick="handleKeyInput('a')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">A</button>
-                <button onclick="handleKeyInput('s')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">S</button>
-                <button onclick="handleKeyInput('d')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">D</button>
-                <button onclick="handleKeyInput('f')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">F</button>
-                <button onclick="handleKeyInput('g')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">G</button>
-                <button onclick="handleKeyInput('h')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">H</button>
-                <button onclick="handleKeyInput('j')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">J</button>
-                <button onclick="handleKeyInput('k')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">K</button>
-                <button onclick="handleKeyInput('l')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">L</button>
-            </div>
-            <!-- Row 3 -->
-            <div class="flex justify-center gap-1">
-                <button onclick="handleKeyInput('z')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">Z</button>
-                <button onclick="handleKeyInput('x')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">X</button>
-                <button onclick="handleKeyInput('c')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">C</button>
-                <button onclick="handleKeyInput('v')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">V</button>
-                <button onclick="handleKeyInput('b')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">B</button>
-                <button onclick="handleKeyInput('n')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">N</button>
-                <button onclick="handleKeyInput('m')" class="mobile-key flex-1 py-2.5 bg-slate-800/90 rounded-lg text-white font-bold text-sm border border-slate-700/60 shadow">M</button>
-                <button onclick="handleBackspace()" class="mobile-key w-12 py-2.5 bg-slate-700/90 hover:bg-slate-600 rounded-lg text-rose-300 font-bold text-xs border border-slate-600 shadow flex items-center justify-center">
-                    <i class="fa-solid fa-delete-left text-sm"></i>
+                <!-- Nút kích hoạt lại bàn phím điện thoại nếu bị ẩn -->
+                <button onclick="focusTyping(true)" class="py-3 px-4 rounded-2xl bg-slate-900/90 border border-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 active:scale-95 shadow-md">
+                    <i class="fa-solid fa-keyboard text-cyan-400"></i>
+                    <span>Bật phím</span>
                 </button>
             </div>
+            <p class="text-[11px] text-center text-blue-300/50 mt-1.5">
+                Chạm giữ nút trên để xem trước từ, buông tay sẽ ẩn lại để gõ tiếp.
+            </p>
         </div>
+
     </main>
 
     <!-- FOOTER INFO -->
@@ -1158,24 +1120,53 @@
             renderQuestion();
             setupEventListeners();
             setupTouchGestures();
+            setupMobileCtrlButton();
 
             // Nếu chưa có tài khoản nào đăng nhập trên máy này, tự động hiện popup đăng ký ngay
             checkInitialAuthPrompt();
         });
 
         // ==========================================
-        // MOBILE UTILITIES & TOUCH INTERACTIONS
+        // MOBILE SPECIFIC: GIỮ XEM TỪ (GIỐNG PHÍM CTRL) & CHỐNG CHE MÀN HÌNH
         // ==========================================
-        function toggleMobileKeyboard() {
-            const kb = document.getElementById('mobileKeyboardContainer');
-            const toggleText = document.getElementById('mobileKeyboardToggleText');
-            if (kb.classList.contains('hidden')) {
-                kb.classList.remove('hidden');
-                if (toggleText) toggleText.innerText = "Ẩn phím";
-            } else {
-                kb.classList.add('hidden');
-                if (toggleText) toggleText.innerText = "Bàn phím";
-            }
+        function setupMobileCtrlButton() {
+            const btn = document.getElementById('mobileCtrlPeekBtn');
+            if (!btn) return;
+
+            // Touch events for mobile phones
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                peekCurrentWord();
+                triggerHaptic('light');
+                btn.classList.add('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            }, { passive: false });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+                focusTyping(true); // Tiếp tục giữ focus bàn phím sau khi nhả nút
+            }, { passive: false });
+
+            btn.addEventListener('touchcancel', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white', 'border-white', 'scale-95');
+            });
+
+            // Mouse fallbacks if tested on responsive devtools
+            btn.addEventListener('mousedown', () => {
+                peekCurrentWord();
+                btn.classList.add('bg-cyan-500', 'text-white');
+            });
+            btn.addEventListener('mouseup', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white');
+                focusTyping(true);
+            });
+            btn.addEventListener('mouseleave', () => {
+                hideCurrentWordPeek();
+                btn.classList.remove('bg-cyan-500', 'text-white');
+            });
         }
 
         // Haptic feedback for mobile touches
@@ -2568,6 +2559,11 @@
             const targetSlot = document.getElementById(`slot-${currentCharIndex}`);
             if (targetSlot) {
                 targetSlot.classList.add('active');
+
+                // Trên điện thoại, tự động giữ vùng ô đang gõ nằm trọn trong tầm nhìn, không bị bàn phím che
+                if (window.innerWidth <= 640) {
+                    targetSlot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
             }
         }
 
@@ -2756,8 +2752,15 @@
         }
 
         function focusTyping(forceMobile = false) {
-            if (forceMobile || /Mobi|Android/i.test(navigator.userAgent)) {
+            if (forceMobile || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 640) {
                 hiddenKeyboardInput.focus();
+                // Ngăn hiện tượng viewport bị giật nhảy lên trên khi mở bàn phím
+                setTimeout(() => {
+                    const activeSlot = document.getElementById(`slot-${currentCharIndex}`) || document.getElementById('quizCard');
+                    if (activeSlot) {
+                        activeSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 300);
             }
         }
 
