@@ -1059,8 +1059,9 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
         // ==========================================
         // AUTHENTICATION & MULTI-DEVICE CLOUD SYNC
         // ==========================================
-        function getAccountStoreKey(username) {
-            return 'acc_' + username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        function getAccountStoreKey(identifier) {
+            // Chuẩn hóa email / username: chữ thường, trim khoảng trắng, thay ký tự đặc biệt thành gạch dưới nhưng giữ tính phân biệt
+            return 'acc_' + identifier.toLowerCase().trim().replace(/[^a-z0-9]/g, '_');
         }
 
         function checkInitialAuthPrompt() {
@@ -1126,10 +1127,21 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
         }
 
         async function saveCurrentAccountData() {
+            // Lấy thông tin đăng nhập của tài khoản để đồng bộ sang thiết bị khác
+            let authInfo = null;
+            try {
+                const regStr = localStorage.getItem('dailylexis_auth_registry');
+                if (regStr) {
+                    const reg = JSON.parse(regStr);
+                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
+                }
+            } catch (e) {}
+
             const payload = {
                 accountKey: currentAccountKey,
                 streakData: streakData,
-                vocabList: vocabList
+                vocabList: vocabList,
+                authInfo: authInfo
             };
 
             // Save to localStorage for quick offline loading
@@ -1142,7 +1154,8 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
                 await window.cloudSync.saveUserData(currentAccountKey, payload);
             }
 
-            document.getElementById('vocabCount').innerText = vocabList.length;
+            const countEl = document.getElementById('vocabCount');
+            if (countEl) countEl.innerText = vocabList.length;
         }
 
         function updateAuthStatusUI() {
@@ -1208,49 +1221,62 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
 
         async function handleAuthSubmit(e) {
             e.preventDefault();
-            const usernameInput = document.getElementById('authUsername').value.trim();
+            const rawIdentifier = document.getElementById('authUsername').value.trim();
             const passwordInput = document.getElementById('authPassword').value.trim();
             const displayNameInput = document.getElementById('authDisplayName').value.trim();
 
-            if (!usernameInput || !passwordInput) {
+            if (!rawIdentifier || !passwordInput) {
                 showToast("Vui lòng điền đầy đủ thông tin!");
                 return;
             }
 
-            const targetKey = getAccountStoreKey(usernameInput);
+            const cleanEmailOrUser = rawIdentifier.toLowerCase();
+            const targetKey = getAccountStoreKey(cleanEmailOrUser);
 
-            // Fetch existing account credentials registry from local and cloud
+            // 1. Tải danh sách đăng ký hiện có từ localStorage
             let registry = {};
             try {
                 const regStr = localStorage.getItem('dailylexis_auth_registry');
                 if (regStr) registry = JSON.parse(regStr);
             } catch (err) {}
 
+            // Kiểm tra xem email / username đã tồn tại trong local registry chưa
+            const isEmailOrUserTakenLocally = Object.keys(registry).some(k => {
+                const item = registry[k];
+                return k === targetKey || 
+                       (item.email && item.email.toLowerCase() === cleanEmailOrUser) || 
+                       (item.username && item.username.toLowerCase() === cleanEmailOrUser);
+            });
+
             if (authCurrentTab === 'register') {
-                // Đăng ký tài khoản mới: kiểm tra trùng
+                // ĐĂNG KÝ MỚI: Kiểm tra trùng Email / Username cả Local lẫn Cloud
                 let existsInCloud = false;
                 if (window.cloudSync) {
                     try {
                         const cloudAcc = await window.cloudSync.fetchUserData(targetKey);
-                        if (cloudAcc && cloudAcc.authInfo) existsInCloud = true;
+                        if (cloudAcc && (cloudAcc.authInfo || cloudAcc.streakData)) {
+                            existsInCloud = true;
+                        }
                     } catch (e) {}
                 }
 
-                if (registry[targetKey] || existsInCloud) {
-                    showToast("Tên tài khoản này đã tồn tại! Vui lòng chọn tên khác hoặc Đăng nhập.");
+                if (isEmailOrUserTakenLocally || existsInCloud) {
+                    showToast("❌ Email hoặc tài khoản này đã được đăng ký! Vui lòng Đăng nhập.");
                     return;
                 }
 
                 // Lưu thông tin tài khoản đăng ký mới
                 const accountInfo = {
+                    username: cleanEmailOrUser,
                     password: passwordInput,
-                    displayName: displayNameInput || usernameInput,
-                    email: usernameInput.includes('@') ? usernameInput : `${usernameInput}@dailylexis.com`
+                    displayName: displayNameInput || rawIdentifier.split('@')[0],
+                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
                 };
+
                 registry[targetKey] = accountInfo;
                 localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
 
-                // Chuyển phiên sang tài khoản mới
+                // Chuyển phiên làm việc sang tài khoản mới vừa tạo
                 currentAccountKey = targetKey;
                 localStorage.setItem('dailylexis_current_user', currentAccountKey);
 
@@ -1271,39 +1297,52 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
                 renderQuestion();
                 showToast(`Đăng ký thành công! Chào mừng ${streakData.userName} 🎉`);
             } else {
-                // ĐĂNG NHẬP: Kiểm tra nghiêm ngặt tài khoản đã tồn tại chưa
+                // ĐĂNG NHẬP: Tìm kiếm tài khoản qua Key hoặc qua trường Email
                 let account = registry[targetKey];
+                let foundKey = targetKey;
 
-                // Nếu chưa có ở local, kiểm tra trên cloud (cho trường hợp đăng nhập máy tính/điện thoại khác)
+                if (!account) {
+                    // Quét trong registry theo email
+                    for (const k in registry) {
+                        if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
+                            account = registry[k];
+                            foundKey = k;
+                            break;
+                        }
+                    }
+                }
+
+                // Nếu local chưa có, tra cứu trên cloud (khi đăng nhập trên máy khác)
                 if (!account && window.cloudSync) {
                     try {
                         const cloudData = await window.cloudSync.fetchUserData(targetKey);
                         if (cloudData && cloudData.authInfo) {
                             account = cloudData.authInfo;
+                            foundKey = targetKey;
                             registry[targetKey] = account;
                             localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
                         }
                     } catch (e) {}
                 }
 
-                // Nếu hoàn toàn chưa đăng ký -> Chặn và báo lỗi
+                // Nếu hoàn toàn không tìm thấy tài khoản
                 if (!account) {
-                    showToast("Tài khoản không tồn tại! Vui lòng chọn tab Đăng ký mới.");
+                    showToast("Tài khoản chưa tồn tại! Vui lòng chọn tab Đăng ký mới.");
                     return;
                 }
 
-                // Kiểm tra mật khẩu
+                // Kiểm tra khớp mật khẩu
                 if (account.password !== passwordInput) {
                     showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
                     return;
                 }
 
                 // Đăng nhập hợp lệ
-                currentAccountKey = targetKey;
+                currentAccountKey = foundKey;
                 localStorage.setItem('dailylexis_current_user', currentAccountKey);
                 streakData.isLoggedIn = true;
-                streakData.userName = account.displayName;
-                streakData.userEmail = account.email;
+                streakData.userName = account.displayName || rawIdentifier;
+                streakData.userEmail = account.email || cleanEmailOrUser;
 
                 await syncAccountData();
                 closeAuthModal();
@@ -1313,38 +1352,6 @@ Anh ấy đang chuẩn bị bữa sáng trong bếp. | He is preparing breakfast
                 renderQuestion();
                 showToast(`Đăng nhập thành công! Chào mừng trở lại ${streakData.userName} ✨`);
             }
-        }
-
-        async function saveCurrentAccountData() {
-            // Lấy thông tin đăng nhập của tài khoản để đồng bộ sang thiết bị khác
-            let authInfo = null;
-            try {
-                const regStr = localStorage.getItem('dailylexis_auth_registry');
-                if (regStr) {
-                    const reg = JSON.parse(regStr);
-                    if (reg[currentAccountKey]) authInfo = reg[currentAccountKey];
-                }
-            } catch (e) {}
-
-            const payload = {
-                accountKey: currentAccountKey,
-                streakData: streakData,
-                vocabList: vocabList,
-                authInfo: authInfo
-            };
-
-            // Save to localStorage for quick offline loading
-            try {
-                localStorage.setItem('dailylexis_data_' + currentAccountKey, JSON.stringify(payload));
-            } catch (e) {}
-
-            // Sync to Cloud Firestore so other devices (phones, tablets, other PCs) receive it
-            if (window.cloudSync && currentAccountKey !== "guest") {
-                await window.cloudSync.saveUserData(currentAccountKey, payload);
-            }
-
-            const countEl = document.getElementById('vocabCount');
-            if (countEl) countEl.innerText = vocabList.length;
         }
 
         function handleProfileAuthAction() {
