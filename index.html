@@ -1137,6 +1137,12 @@
             isLoggedIn: false
         };
 
+        // Hàm tạo key tài khoản an toàn cho LocalStorage và Cloud (Khắc phục lỗi getAccountStoreKey is not defined)
+        function getAccountStoreKey(rawIdentifier) {
+            if (!rawIdentifier) return 'user_guest';
+            return 'user_' + encodeURIComponent(rawIdentifier.trim().toLowerCase()).replace(/%/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+        }
+
         // Initialize App
         window.addEventListener('DOMContentLoaded', async () => {
             loadCurrentSession();
@@ -1411,130 +1417,131 @@
                 return;
             }
 
-            submitBtn.disabled = true;
-            spinner.classList.remove('hidden');
+            if (submitBtn) submitBtn.disabled = true;
+            if (spinner) spinner.classList.remove('hidden');
 
-            const cleanEmailOrUser = rawIdentifier.toLowerCase();
-            const targetKey = getAccountStoreKey(cleanEmailOrUser);
-
-            // 1. Tải danh sách đăng ký local
-            let registry = {};
             try {
-                const regStr = localStorage.getItem('dailylexis_auth_registry');
-                if (regStr) registry = JSON.parse(regStr);
-            } catch (err) {}
+                const cleanEmailOrUser = rawIdentifier.toLowerCase();
+                const targetKey = getAccountStoreKey(cleanEmailOrUser);
 
-            // Kiểm tra tồn tại trên Cloud
-            let cloudAccountData = null;
-            if (window.cloudSync) {
+                // 1. Tải danh sách đăng ký local
+                let registry = {};
                 try {
-                    cloudAccountData = await window.cloudSync.fetchUserData(targetKey);
-                } catch (e) {}
-            }
+                    const regStr = localStorage.getItem('dailylexis_auth_registry');
+                    if (regStr) registry = JSON.parse(regStr);
+                } catch (err) {}
 
-            if (authCurrentTab === 'register') {
-                // ĐĂNG KÝ MỚI
-                const isTakenLocally = Object.keys(registry).some(k => {
-                    const item = registry[k];
-                    return k === targetKey || 
-                           (item.email && item.email.toLowerCase() === cleanEmailOrUser) || 
-                           (item.username && item.username.toLowerCase() === cleanEmailOrUser);
-                });
-
-                const isTakenInCloud = cloudAccountData && (cloudAccountData.authInfo || cloudAccountData.streakData);
-
-                if (isTakenLocally || isTakenInCloud) {
-                    submitBtn.disabled = false;
-                    spinner.classList.add('hidden');
-                    showToast("❌ Email hoặc tài khoản này đã được đăng ký! Hãy bấm Đăng nhập.");
-                    return;
+                // Kiểm tra tồn tại trên Cloud
+                let cloudAccountData = null;
+                if (window.cloudSync) {
+                    try {
+                        cloudAccountData = await window.cloudSync.fetchUserData(targetKey);
+                    } catch (e) {}
                 }
 
-                // Lưu thông tin tài khoản mới
-                const accountInfo = {
-                    username: cleanEmailOrUser,
-                    password: passwordInput,
-                    displayName: displayNameInput || rawIdentifier.split('@')[0],
-                    email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
-                };
+                if (authCurrentTab === 'register') {
+                    // ĐĂNG KÝ MỚI
+                    const isTakenLocally = Object.keys(registry).some(k => {
+                        const item = registry[k];
+                        return k === targetKey || 
+                               (item.email && item.email.toLowerCase() === cleanEmailOrUser) || 
+                               (item.username && item.username.toLowerCase() === cleanEmailOrUser);
+                    });
 
-                registry[targetKey] = accountInfo;
-                localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                    const isTakenInCloud = cloudAccountData && (cloudAccountData.authInfo || cloudAccountData.streakData);
 
-                currentAccountKey = targetKey;
-                localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                    if (isTakenLocally || isTakenInCloud) {
+                        showToast("❌ Email hoặc tài khoản này đã được đăng ký! Hãy bấm Đăng nhập.");
+                        return;
+                    }
 
-                streakData.userName = accountInfo.displayName;
-                streakData.userEmail = accountInfo.email;
-                streakData.isLoggedIn = true;
-                streakData.currentStreak = 1;
-                streakData.longestStreak = 1;
-                streakData.todayPoints = 0;
-                streakData.totalSolved = 0;
-                vocabList = [...DEFAULT_VOCABULARY];
+                    // Lưu thông tin tài khoản mới
+                    const accountInfo = {
+                        username: cleanEmailOrUser,
+                        password: passwordInput,
+                        displayName: displayNameInput || rawIdentifier.split('@')[0],
+                        email: cleanEmailOrUser.includes('@') ? cleanEmailOrUser : `${cleanEmailOrUser}@dailylexis.com`
+                    };
 
-                // Lưu lên Cloud để máy khác nhận được ngay lập tức
-                await saveCurrentAccountData();
-
-                submitBtn.disabled = false;
-                spinner.classList.add('hidden');
-                closeAuthModal();
-                updateStreakUI();
-                updateAuthStatusUI();
-                currentIndex = 0;
-                renderQuestion();
-                showToast(`Đăng ký thành công! Đã đồng bộ tài khoản ${streakData.userName} lên Cloud ☁️`);
-            } else {
-                // ĐĂNG NHẬP: Tìm kiếm trên Local hoặc Cloud
-                let account = registry[targetKey];
-                let foundKey = targetKey;
-
-                // Nếu local chưa có, tra cứu trên Cloud từ máy kia
-                if (!account && cloudAccountData && cloudAccountData.authInfo) {
-                    account = cloudAccountData.authInfo;
-                    foundKey = targetKey;
-                    registry[targetKey] = account;
+                    registry[targetKey] = accountInfo;
                     localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
-                }
 
-                // Nếu vẫn chưa thấy, quét qua tất cả bản ghi local theo email
-                if (!account) {
-                    for (const k in registry) {
-                        if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
-                            account = registry[k];
-                            foundKey = k;
-                            break;
+                    currentAccountKey = targetKey;
+                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
+
+                    streakData.userName = accountInfo.displayName;
+                    streakData.userEmail = accountInfo.email;
+                    streakData.isLoggedIn = true;
+                    streakData.currentStreak = 1;
+                    streakData.longestStreak = 1;
+                    streakData.todayPoints = 0;
+                    streakData.totalSolved = 0;
+                    vocabList = [...DEFAULT_VOCABULARY];
+
+                    // Lưu lên Cloud để máy khác nhận được ngay lập tức
+                    await saveCurrentAccountData();
+
+                    closeAuthModal();
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng ký thành công! Chào mừng ${streakData.userName} 🎉`);
+                } else {
+                    // ĐĂNG NHẬP: Tìm kiếm trên Local hoặc Cloud
+                    let account = registry[targetKey];
+                    let foundKey = targetKey;
+
+                    // Nếu local chưa có, tra cứu trên Cloud từ máy kia
+                    if (!account && cloudAccountData && cloudAccountData.authInfo) {
+                        account = cloudAccountData.authInfo;
+                        foundKey = targetKey;
+                        registry[targetKey] = account;
+                        localStorage.setItem('dailylexis_auth_registry', JSON.stringify(registry));
+                    }
+
+                    // Nếu vẫn chưa thấy, quét qua tất cả bản ghi local theo email
+                    if (!account) {
+                        for (const k in registry) {
+                            if (registry[k].email && registry[k].email.toLowerCase() === cleanEmailOrUser) {
+                                account = registry[k];
+                                foundKey = k;
+                                break;
+                            }
                         }
                     }
+
+                    if (!account) {
+                        showToast("Tài khoản chưa tồn tại! Hãy kiểm tra lại tên/email hoặc chọn tab Đăng ký mới.");
+                        return;
+                    }
+
+                    if (account.password !== passwordInput) {
+                        showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
+                        return;
+                    }
+
+                    // Đăng nhập hợp lệ: Tải toàn bộ dữ liệu từ đám mây về máy này
+                    currentAccountKey = foundKey;
+                    localStorage.setItem('dailylexis_current_user', currentAccountKey);
+                    streakData.isLoggedIn = true;
+                    streakData.userName = account.displayName || rawIdentifier;
+                    streakData.userEmail = account.email || cleanEmailOrUser;
+
+                    await syncAccountData();
+                    closeAuthModal();
+                    updateStreakUI();
+                    updateAuthStatusUI();
+                    currentIndex = 0;
+                    renderQuestion();
+                    showToast(`Đăng nhập thành công! Chào mừng trở lại ${streakData.userName} ✨`);
                 }
-
-                submitBtn.disabled = false;
-                spinner.classList.add('hidden');
-
-                if (!account) {
-                    showToast("Tài khoản chưa tồn tại! Hãy kiểm tra lại tên/email hoặc chọn tab Đăng ký mới.");
-                    return;
-                }
-
-                if (account.password !== passwordInput) {
-                    showToast("Mật khẩu không chính xác! Vui lòng thử lại.");
-                    return;
-                }
-
-                // Đăng nhập hợp lệ: Tải toàn bộ dữ liệu từ đám mây về máy này
-                currentAccountKey = foundKey;
-                localStorage.setItem('dailylexis_current_user', currentAccountKey);
-                streakData.isLoggedIn = true;
-                streakData.userName = account.displayName || rawIdentifier;
-                streakData.userEmail = account.email || cleanEmailOrUser;
-
-                await syncAccountData();
-                closeAuthModal();
-                updateStreakUI();
-                updateAuthStatusUI();
-                currentIndex = 0;
-                renderQuestion();
-                showToast(`Đăng nhập thành công! Đã đồng bộ từ vựng & Streak từ máy khác về ✨`);
+            } catch (err) {
+                console.error("Auth error:", err);
+                showToast("Có lỗi xảy ra trong quá trình xử lý, vui lòng thử lại!");
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+                if (spinner) spinner.classList.add('hidden');
             }
         }
 
